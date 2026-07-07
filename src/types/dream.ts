@@ -1,4 +1,3 @@
-import type { VideoStatus } from './video'
 
 export interface Dream {
   id: string

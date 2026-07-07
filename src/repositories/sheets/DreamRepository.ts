@@ -4,8 +4,6 @@ import { query } from '../../lib/alaSqlService'
 import { appendSheetRow, updateSheetRow, fetchSheetAsRows } from '../../lib/googleSheetsClient'
 import { generateId } from '../../utils/idGenerator'
 
-const COLUMNS = ['id', 'email', 'date', 'description', 'title', 'category', 'edit_log', 'created_at', 'updated_at']
-
 export class DreamRepository implements IDreamRepository {
   async findById(id: string): Promise<Dream | null> {
     const dreams = await query<Dream>(

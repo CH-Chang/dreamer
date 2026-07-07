@@ -4,7 +4,7 @@ import { getUserRepository } from '../repositories/factory'
 import { initDatabase } from '../lib/alaSqlService'
 
 export function useAuth() {
-  const { user, isAuthenticated, setSession, logout } = useAuthStore()
+  const { user, isAuthenticated, logout } = useAuthStore()
   const navigate = useNavigate()
 
   const onLoginSuccess = async (accessToken: string) => {
@@ -15,7 +15,7 @@ export function useAuth() {
     const userInfo: { email: string; name: string; picture?: string } =
       await userInfoRes.json()
 
-    useAuthStore.getState().setSession({ email: userInfo.email, name: userInfo.name, avatar_url: userInfo.picture ?? '' }, accessToken)
+    useAuthStore.getState().setSession({ email: userInfo.email, name: userInfo.name, avatar_url: userInfo.picture ?? '', created_at: '' }, accessToken)
 
     await initDatabase(true)
 

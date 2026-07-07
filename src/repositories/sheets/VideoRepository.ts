@@ -4,8 +4,6 @@ import { query } from '../../lib/alaSqlService'
 import { appendSheetRow, updateSheetRow, fetchSheetAsRows } from '../../lib/googleSheetsClient'
 import { generateId } from '../../utils/idGenerator'
 
-const COLUMNS = ['id', 'dream_id', 'email', 'status', 'video_url', 'created_at', 'updated_at']
-
 export class VideoRepository implements IVideoRepository {
   async findByDreamId(dreamId: string): Promise<Video | null> {
     const videos = await this.findAllByDreamId(dreamId)

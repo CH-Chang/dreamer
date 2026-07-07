@@ -46,5 +46,5 @@ async function fetchVideoBlob(
     onProgress?.(loaded / total)
   }
 
-  return new Blob(chunks, { type: 'video/mp4' })
+  return new Blob(chunks as BlobPart[], { type: 'video/mp4' })
 }

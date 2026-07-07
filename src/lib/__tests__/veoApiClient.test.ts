@@ -7,7 +7,7 @@ beforeEach(() => {
   vi.restoreAllMocks()
   useAuthStore.setState({ token: 'test-oauth-token', user: null, isAuthenticated: false })
   useSettingsStore.setState({
-    settings: { googleSheetsUrl: '', veoApiKey: '', googleClientId: '', gcpProjectId: 'test-project', gcpLocation: 'us-central1' },
+    settings: { googleSheetsUrl: '', googleClientId: '', gcpProjectId: 'test-project', gcpLocation: 'us-central1', driveFolderName: '' },
   })
 })
 
@@ -44,7 +44,7 @@ describe('veoApiClient', () => {
 
   it('throws when GCP project not configured', async () => {
     useSettingsStore.setState({
-      settings: { googleSheetsUrl: '', veoApiKey: '', googleClientId: '', gcpProjectId: '', gcpLocation: 'us-central1' },
+      settings: { googleSheetsUrl: '', googleClientId: '', gcpProjectId: '', gcpLocation: 'us-central1', driveFolderName: '' },
     })
     await expect(
       veoApiClient.generateVideo({ prompt: 'test' }),

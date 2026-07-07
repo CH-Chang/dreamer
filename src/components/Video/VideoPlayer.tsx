@@ -67,7 +67,7 @@ function VideoPlayerInner({ src, url, dreamId, description, title }: { src: stri
   const [currentTime, setCurrentTime] = useState(0)
   const [duration, setDuration] = useState(0)
   const [showControls, setShowControls] = useState(true)
-  const hideTimer = useRef<ReturnType<typeof setTimeout>>()
+  const hideTimer = useRef<ReturnType<typeof setTimeout>>(undefined)
 
   useEffect(() => {
     const el = videoRef.current

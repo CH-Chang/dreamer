@@ -5,7 +5,7 @@ describe('settingsStore', () => {
   beforeEach(() => {
     localStorage.clear()
     useSettingsStore.setState({
-      settings: { googleSheetsUrl: '', googleClientId: '', gcpProjectId: '', gcpLocation: 'us-central1' },
+      settings: { googleSheetsUrl: '', googleClientId: '', gcpProjectId: '', gcpLocation: 'us-central1', driveFolderName: '' },
     })
   })
 
