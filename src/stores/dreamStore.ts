@@ -16,7 +16,10 @@ interface DreamState {
 
 export const useDreamStore = create<DreamState>((set) => ({
   dreams: [],
-  selectedDate: null,
+  selectedDate: (() => {
+    const d = new Date()
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
+  })(),
   currentMonth: (() => {
     const now = new Date()
     return { year: now.getFullYear(), month: now.getMonth() }

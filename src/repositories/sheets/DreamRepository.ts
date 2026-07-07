@@ -7,6 +7,14 @@ import { generateId } from '../../utils/idGenerator'
 const COLUMNS = ['id', 'email', 'date', 'description', 'title', 'category', 'edit_log', 'created_at', 'updated_at']
 
 export class DreamRepository implements IDreamRepository {
+  async findById(id: string): Promise<Dream | null> {
+    const dreams = await query<Dream>(
+      'SELECT * FROM dreams WHERE id = ?',
+      [id],
+    )
+    return dreams[0] || null
+  }
+
   async findByDate(email: string, date: string): Promise<Dream | null> {
     const dreams = await query<Dream>(
       'SELECT * FROM dreams WHERE email = ? AND date = ?',

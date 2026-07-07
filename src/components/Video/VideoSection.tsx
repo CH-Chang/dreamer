@@ -7,10 +7,11 @@ import type { Video } from '../../types/video'
 
 interface Props {
   dreamId: string
+  title?: string
   description: string
 }
 
-export function VideoSection({ dreamId, description }: Props) {
+export function VideoSection({ dreamId, title, description }: Props) {
   const [videos, setVideos] = useState<Video[]>([])
 
   const loadVideos = useCallback(async () => {
@@ -37,7 +38,7 @@ export function VideoSection({ dreamId, description }: Props) {
                 <VideoStatusBadge status={video.status} />
               </div>
               {video.status === 'done' && video.video_url && (
-                <VideoPlayer url={video.video_url} />
+                <VideoPlayer url={video.video_url} dreamId={dreamId} title={title} description={description} />
               )}
             </div>
           ))}

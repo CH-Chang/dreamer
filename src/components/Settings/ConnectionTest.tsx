@@ -1,7 +1,11 @@
 import { useState } from 'react'
 import { fetchSheetAsRows } from '../../lib/googleSheetsClient'
 
-export function ConnectionTest() {
+interface Props {
+  onTested?: (success: boolean) => void
+}
+
+export function ConnectionTest({ onTested }: Props) {
   const [status, setStatus] = useState<
     'idle' | 'testing' | 'success' | 'error'
   >('idle')
@@ -13,9 +17,11 @@ export function ConnectionTest() {
       await fetchSheetAsRows('users')
       setStatus('success')
       setMessage('連線成功')
+      onTested?.(true)
     } catch (err) {
       setStatus('error')
       setMessage(err instanceof Error ? err.message : '連線失敗')
+      onTested?.(false)
     }
   }
 
