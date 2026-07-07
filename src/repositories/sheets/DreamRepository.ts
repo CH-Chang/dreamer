@@ -45,6 +45,10 @@ export class DreamRepository implements IDreamRepository {
       dream.title || '', dream.category || '', dream.edit_log || '',
       dream.created_at, dream.updated_at,
     ]])
+    await query(
+      `INSERT INTO dreams (id, email, date, description, title, category, edit_log, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      [dream.id, dream.email, dream.date, dream.description, dream.title || '', dream.category || '', dream.edit_log || '', dream.created_at, dream.updated_at],
+    )
     return dream
   }
 
@@ -98,6 +102,16 @@ export class DreamRepository implements IDreamRepository {
     }
 
     await updateSheetRow('dreams', rowIdx + 1, newValues)
+
+    const updateFields: string[] = ["updated_at = ?"]
+    const updateValues: unknown[] = [now]
+    if (data.title !== undefined) { updateFields.push("title = ?"); updateValues.push(data.title) }
+    if (data.category !== undefined) { updateFields.push("category = ?"); updateValues.push(data.category) }
+    if (data.description !== undefined) { updateFields.push("description = ?"); updateValues.push(data.description) }
+    updateValues.push(id)
+    if (updateFields.length > 1) {
+      await query(`UPDATE dreams SET ${updateFields.join(", ")} WHERE id = ?`, updateValues)
+    }
 
     const dream: Dream = {
       id: newValues[colIndex('id')] || id,

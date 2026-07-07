@@ -29,6 +29,10 @@ export class VideoRepository implements IVideoRepository {
     await appendSheetRow('videos', [[
       video.id, video.dream_id, video.email, video.status, '', video.created_at, '',
     ]])
+    await query(
+      `INSERT INTO videos (id, dream_id, email, status, video_url, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?)`,
+      [video.id, video.dream_id, video.email, video.status, '', video.created_at, ''],
+    )
     return video
   }
 
@@ -57,6 +61,15 @@ export class VideoRepository implements IVideoRepository {
     if (updatedAtCol !== -1) newValues[updatedAtCol] = now
 
     await updateSheetRow('videos', rowIdx + 1, newValues)
+
+    const updateFields = ["status = ?", "updated_at = ?"]
+    const updateValues: unknown[] = [status, now]
+    if (videoUrl !== undefined) {
+      updateFields.push("video_url = ?")
+      updateValues.push(videoUrl)
+    }
+    updateValues.push(id)
+    await query(`UPDATE videos SET ${updateFields.join(", ")} WHERE id = ?`, updateValues)
 
     const video: Video = {
       id: newValues[colIndex('id')] || id,
