@@ -48,7 +48,7 @@ export function DreamDetailPage() {
     )
   }
 
-  const appUrl = `${window.location.origin}/dream/${id}`
+  const appUrl = `${window.location.origin}/dreamer/dream/${id}`
 
   return (
     <m.div

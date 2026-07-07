@@ -37,7 +37,7 @@ export function ShareSection({ videoUrl, dreamId, title, description }: Props) {
   }
 
   const text = shareText(description)
-  const appUrl = `${window.location.origin}/dream/${dreamId}`
+  const appUrl = `${window.location.origin}/dreamer/dream/${dreamId}`
   const encodedText = encodeURIComponent(text)
   const encodedUrl = encodeURIComponent(appUrl)
 

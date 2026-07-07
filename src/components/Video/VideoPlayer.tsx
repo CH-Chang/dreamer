@@ -268,7 +268,7 @@ function ShareIcons({ url, dreamId, description, title }: { url: string; dreamId
   }
 
   const text = shareText(description)
-  const appUrl = dreamId ? `${window.location.origin}/dream/${dreamId}` : window.location.href
+  const appUrl = dreamId ? `${window.location.origin}/dreamer/dream/${dreamId}` : window.location.href
   const encodedText = encodeURIComponent(text)
   const encodedUrl = encodeURIComponent(appUrl)
 

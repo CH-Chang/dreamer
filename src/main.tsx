@@ -12,7 +12,7 @@ function Root() {
   const { settings } = useSettingsStore()
   return (
     <StrictMode>
-      <BrowserRouter>
+      <BrowserRouter basename="/dreamer">
         {settings.googleClientId ? (
           <GoogleOAuthProvider clientId={settings.googleClientId}>
             <App />
