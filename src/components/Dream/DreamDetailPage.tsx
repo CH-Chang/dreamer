@@ -63,7 +63,7 @@ export function DreamDetailPage() {
         >
           ← 返回日曆
         </Link>
-        <DreamShareButtons title={dream.title || '無標題'} description={dream.description} url={appUrl} />
+        <DreamShareButtons description={dream.description} url={appUrl} />
       </div>
       <DreamContent dream={dream} />
       <div className="mt-8 pt-8 border-t border-gray-200">
@@ -77,7 +77,7 @@ function openIntent(url: string) {
   window.open(url, '_blank', 'noopener,noreferrer')
 }
 
-function DreamShareButtons({ title, description, url }: { title: string; description: string; url: string }) {
+function DreamShareButtons({ description, url }: { description: string; url: string }) {
   const text = `我做了一個夢⋯${description ? '\n' + description.slice(0, 100) : ''}\n\n#夢貘`
   const encodedText = encodeURIComponent(text)
   const encodedUrl = encodeURIComponent(url)

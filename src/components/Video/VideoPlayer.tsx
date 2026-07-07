@@ -52,7 +52,7 @@ export function VideoPlayer({ url, dreamId, description, title }: Props) {
     )
   }
 
-  return <VideoPlayerInner src={objectUrl} url={url} dreamId={dreamId} title={title} description={description} />
+  return <VideoPlayerInner src={objectUrl!} url={url} dreamId={dreamId} title={title} description={description} />
 }
 
 function formatTime(s: number): string {
@@ -61,7 +61,7 @@ function formatTime(s: number): string {
   return `${m}:${sec.toString().padStart(2, '0')}`
 }
 
-function VideoPlayerInner({ src, url, dreamId, description, title }: { src: string; url?: string; dreamId?: string; description?: string; title?: string }) {
+function VideoPlayerInner({ src, url, dreamId, description, title }: { src: string; url: string; dreamId?: string; description?: string; title?: string }) {
   const videoRef = useRef<HTMLVideoElement>(null)
   const [playing, setPlaying] = useState(false)
   const [currentTime, setCurrentTime] = useState(0)
