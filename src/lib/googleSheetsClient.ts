@@ -142,6 +142,7 @@ export function parseRowsToObjects(rows: string[][]): Record<string, unknown>[] 
 function getHeadersForSheet(name: string): string[] {
   const schema: Record<string, string[]> = {
     users: ['email', 'name', 'avatar_url', 'created_at'],
+    categories: ['id', 'name', 'color', 'icon', 'email', 'sort_order', 'created_at'],
     dreams: [
       'id', 'email', 'date', 'description',
       'title', 'category', 'edit_log', 'created_at', 'updated_at',

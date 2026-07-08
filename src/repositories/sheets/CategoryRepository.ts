@@ -60,15 +60,14 @@ export class CategoryRepository implements ICategoryRepository {
       await query(`UPDATE categories SET ${updateFields.join(', ')} WHERE id = ?`, updateValues)
     }
 
-    const ci = (name: string) => colIndex(name)
     return {
-      id: newValues[ci('id')] || id,
-      name: newValues[ci('name')] || '',
-      color: newValues[ci('color')] || '#6B7280',
-      icon: newValues[ci('icon')] || '',
-      email: newValues[ci('email')] || '',
-      sort_order: parseInt(newValues[ci('sort_order')]) || 0,
-      created_at: newValues[ci('created_at')] || '',
+      id: newValues[colIndex('id')] || id,
+      name: newValues[colIndex('name')] || '',
+      color: newValues[colIndex('color')] || '#6B7280',
+      icon: newValues[colIndex('icon')] || '',
+      email: newValues[colIndex('email')] || '',
+      sort_order: parseInt(newValues[colIndex('sort_order')]) || 0,
+      created_at: newValues[colIndex('created_at')] || '',
     }
   }
 
