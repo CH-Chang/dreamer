@@ -1,18 +1,41 @@
+import { useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { Link } from 'react-router-dom'
 import { useAuthStore } from '../../stores/authStore'
 
 export function Header() {
   const { user, logout } = useAuthStore()
+  const navigate = useNavigate()
+  const [searchValue, setSearchValue] = useState('')
+
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter' && !e.nativeEvent.isComposing && searchValue.trim()) {
+      navigate('/search?q=' + encodeURIComponent(searchValue.trim()))
+      setSearchValue('')
+    }
+  }
 
   return (
-    <header className="flex items-center justify-between px-8 py-5">
-      <Link
-        to="/calendar"
-        className="text-lg tracking-[0.3em] font-light text-gray-600"
-      >
-        夢貘
-      </Link>
-      <div className="flex items-center gap-8 text-xs tracking-widest text-gray-400">
+    <header className="grid grid-cols-3 items-center px-8 py-5">
+      <div>
+        <Link
+          to="/calendar"
+          className="text-lg tracking-[0.3em] font-light text-gray-600"
+        >
+          夢貘
+        </Link>
+      </div>
+      <div className="flex justify-center">
+        <input
+          aria-label="搜尋"
+          value={searchValue}
+          onChange={(e) => setSearchValue(e.target.value)}
+          onKeyDown={handleKeyDown}
+          placeholder="搜尋夢境..."
+          className="max-w-xl w-full text-xs tracking-wider text-gray-500 bg-transparent border-b border-gray-200 focus:outline-none focus:border-gray-400 transition-colors placeholder-gray-200"
+        />
+      </div>
+      <div className="flex justify-end items-center gap-8 text-xs tracking-widest text-gray-400">
         {user && (
           <div className="flex items-center gap-3">
             {user.avatar_url && (
