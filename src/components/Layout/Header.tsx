@@ -24,6 +24,7 @@ export function Header() {
         夢貘
       </Link>
       <input
+        aria-label="搜尋"
         value={searchValue}
         onChange={(e) => setSearchValue(e.target.value)}
         onKeyDown={handleKeyDown}

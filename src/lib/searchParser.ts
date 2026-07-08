@@ -15,7 +15,8 @@ export function parseSearchQuery(input: string): SearchQuery {
 
   for (const token of tokens) {
     if (token.startsWith('#')) {
-      tags.push(token.slice(1))
+      const name = token.slice(1)
+      if (name) tags.push(name)
     } else if (token.startsWith('since:')) {
       since = normalizeDate(token.slice(6), 'start')
     } else if (token.startsWith('to:')) {

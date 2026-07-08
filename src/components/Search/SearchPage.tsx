@@ -12,7 +12,7 @@ export function SearchPage() {
   const q = searchParams.get('q') || ''
   const { user } = useAuthStore()
   const [results, setResults] = useState<Dream[]>([])
-  const [loading, setLoading] = useState(true)
+  const [loading, setLoading] = useState(() => !!(user && q))
 
   useEffect(() => {
     if (!user || !q) { setLoading(false); return }
@@ -20,6 +20,7 @@ export function SearchPage() {
     const parsed = parseSearchQuery(q)
     searchDreams(parsed, user.email)
       .then(setResults)
+      .catch(() => setResults([]))
       .finally(() => setLoading(false))
   }, [q, user])
 

@@ -14,16 +14,14 @@ export async function searchDreams(query: SearchQuery, email: string): Promise<D
       query.tags,
     )
     const catIds = catRows.map((r) => r.id)
-    if (catIds.length > 0) {
-      dreams = dreams.filter((d) => {
-        try {
-          const tagIds: string[] = JSON.parse((d as any).tags || '[]')
-          return tagIds.some((id) => catIds.includes(id))
-        } catch {
-          return false
-        }
-      })
-    }
+    dreams = dreams.filter((d) => {
+      try {
+        const tagIds: string[] = JSON.parse(d.tags || '[]')
+        return tagIds.some((id) => catIds.includes(id))
+      } catch {
+        return false
+      }
+    })
   }
 
   if (query.since) {
