@@ -32,6 +32,12 @@ export function Header() {
           </div>
         )}
         <Link
+          to="/categories"
+          className="hover:text-gray-600 transition-colors"
+        >
+          類別
+        </Link>
+        <Link
           to="/settings"
           className="hover:text-gray-600 transition-colors"
         >
