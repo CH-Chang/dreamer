@@ -4,6 +4,7 @@ import type { Dream, UpdateDreamInput } from '../../types/dream'
 import { useDreamStore } from '../../stores/dreamStore'
 import { getDreamRepository } from '../../repositories/factory'
 import { TagInput } from '../ui/TagInput'
+import { Switch } from '../ui/Switch'
 import { useCategoryStore } from '../../stores/categoryStore'
 
 interface Props {
@@ -16,6 +17,7 @@ export function DreamContent({ dream }: Props) {
   const [tags, setTags] = useState<string[]>(dream.tags || [])
   const [description, setDescription] = useState(dream.description)
   const [saving, setSaving] = useState(false)
+  const [visibility, setVisibility] = useState<'public' | 'private'>(dream.visibility || 'private')
   const updateDream = useDreamStore((s) => s.updateDream)
   const { categories } = useCategoryStore()
 
@@ -26,6 +28,7 @@ export function DreamContent({ dream }: Props) {
       const data: UpdateDreamInput = {}
       if (title !== (dream.title || '')) data.title = title
       if (JSON.stringify(tags) !== JSON.stringify(dream.tags || [])) data.tags = tags
+      if (visibility !== (dream.visibility || 'private')) data.visibility = visibility
       if (description !== dream.description) data.description = description
       if (Object.keys(data).length === 0) {
         setEditing(false)
@@ -45,6 +48,7 @@ export function DreamContent({ dream }: Props) {
     setTitle(dream.title || '')
     setTags(dream.tags || [])
     setDescription(dream.description)
+    setVisibility(dream.visibility || 'private')
     setEditing(false)
   }
 
@@ -58,8 +62,11 @@ export function DreamContent({ dream }: Props) {
           placeholder="標題（選填）"
           className="w-full font-serif tracking-widest text-gray-700 text-xl bg-transparent border-b border-gray-200 pb-1 mb-4 focus:outline-none focus:border-gray-400 transition-colors placeholder-gray-200"
         />
-        <div className="mb-4">
-          <TagInput selected={tags} onChange={setTags} />
+        <div className="flex items-center justify-between mb-4">
+          <div className="flex-1">
+            <TagInput selected={tags} onChange={setTags} />
+          </div>
+          <Switch checked={visibility === 'public'} onChange={(v) => setVisibility(v ? 'public' : 'private')} />
         </div>
         <textarea
           value={description}
