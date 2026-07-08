@@ -22,7 +22,7 @@ describe('dreamStore', () => {
     const dreams: Dream[] = [
       {
         id: '1', email: 'a@b.com', date: '2026-07-05',
-        description: 'test', created_at: '', updated_at: '',
+        description: 'test', tags: [], created_at: '', updated_at: '',
       },
     ]
     useDreamStore.getState().setDreams(dreams)
@@ -37,7 +37,7 @@ describe('dreamStore', () => {
   it('adds a dream', () => {
     const dream: Dream = {
       id: '1', email: 'a@b.com', date: '2026-07-05',
-      description: 'test', created_at: '', updated_at: '',
+      description: 'test', tags: [], created_at: '', updated_at: '',
     }
     useDreamStore.getState().addDream(dream)
     expect(useDreamStore.getState().dreams).toHaveLength(1)

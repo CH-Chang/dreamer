@@ -34,7 +34,7 @@ export function TagInput({ selected, onChange }: Props) {
 
   const q = query.replace(/^#/, '')
   const filtered = categories.filter(
-    (c) => !selected.includes(c.id) && c.name.toLowerCase().includes(q.toLowerCase()),
+    (c) => c && c.id && !selected.includes(c.id) && (c.name || '').toLowerCase().includes(q.toLowerCase()),
   )
 
   const select = (cat: Category) => {
@@ -56,12 +56,12 @@ export function TagInput({ selected, onChange }: Props) {
           <span
             key={cat.id}
             className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] tracking-wider"
-            style={{ backgroundColor: cat.color + '20', color: cat.color }}
+            style={{ backgroundColor: cat.color + '15', color: cat.color }}
           >
             {cat.icon} {cat.name}
             <button
               onClick={() => remove(cat.id)}
-              className="ml-0.5 hover:opacity-60 transition-opacity"
+              className="ml-0.5 hover:opacity-50 transition-opacity"
             >
               ×
             </button>
@@ -82,15 +82,16 @@ export function TagInput({ selected, onChange }: Props) {
             initial={{ opacity: 0, y: -4 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -4 }}
-            className="absolute z-10 top-full mt-1 left-0 right-0 bg-white border border-gray-200 rounded-md shadow-lg max-h-40 overflow-y-auto"
+            transition={{ duration: 0.15, ease: [0.16, 1, 0.3, 1] as const }}
+            className="absolute z-10 top-full mt-1 left-0 right-0 bg-[#fcfcf9] border border-gray-100 rounded-sm shadow-[0_2px_8px_rgba(0,0,0,0.04)] max-h-40 overflow-y-auto"
           >
             {filtered.map((cat) => (
               <button
                 key={cat.id}
                 onClick={() => select(cat)}
-                className="w-full text-left px-3 py-1.5 text-xs text-gray-600 hover:bg-gray-50 flex items-center gap-2 transition-colors"
+                className="w-full text-left px-3 py-2 text-xs tracking-wider text-gray-400 hover:text-gray-600 hover:bg-gray-50/50 flex items-center gap-2 transition-colors"
               >
-                <span>{cat.icon}</span>
+                <span className="text-sm">{cat.icon}</span>
                 <span style={{ color: cat.color }}>{cat.name}</span>
               </button>
             ))}
