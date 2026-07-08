@@ -7,7 +7,7 @@ import {
 
 let dbInited = false
 
-const SHEET_NAMES = ['users', 'dreams', 'videos'] as const
+const SHEET_NAMES = ['users', 'dreams', 'videos', 'categories'] as const
 
 export async function initDatabase(force = false): Promise<void> {
   if (dbInited && !force) return

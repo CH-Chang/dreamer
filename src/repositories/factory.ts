@@ -1,13 +1,16 @@
 import type { IUserRepository } from './interfaces/IUserRepository'
 import type { IDreamRepository } from './interfaces/IDreamRepository'
 import type { IVideoRepository } from './interfaces/IVideoRepository'
+import type { ICategoryRepository } from './interfaces/ICategoryRepository'
 import { UserRepository } from './sheets/UserRepository'
 import { DreamRepository } from './sheets/DreamRepository'
 import { VideoRepository } from './sheets/VideoRepository'
+import { CategoryRepository } from './sheets/CategoryRepository'
 
 let userRepo: IUserRepository
 let dreamRepo: IDreamRepository
 let videoRepo: IVideoRepository
+let categoryRepo: ICategoryRepository
 
 export function getUserRepository(): IUserRepository {
   if (!userRepo) userRepo = new UserRepository()
@@ -22,4 +25,9 @@ export function getDreamRepository(): IDreamRepository {
 export function getVideoRepository(): IVideoRepository {
   if (!videoRepo) videoRepo = new VideoRepository()
   return videoRepo
+}
+
+export function getCategoryRepository(): ICategoryRepository {
+  if (!categoryRepo) categoryRepo = new CategoryRepository()
+  return categoryRepo
 }
