@@ -16,6 +16,7 @@ export interface CreateDreamInput {
   email: string
   date: string
   description: string
+  visibility?: 'public' | 'private'
 }
 
 export interface UpdateDreamInput {
