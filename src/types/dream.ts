@@ -6,6 +6,7 @@ export interface Dream {
   description: string
   title?: string
   tags: string[]
+  visibility: 'public' | 'private'
   edit_log?: string
   created_at: string
   updated_at: string
@@ -20,5 +21,6 @@ export interface CreateDreamInput {
 export interface UpdateDreamInput {
   title?: string
   tags?: string[]
+  visibility?: 'public' | 'private'
   description?: string
 }
