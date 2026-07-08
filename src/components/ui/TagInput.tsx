@@ -19,7 +19,7 @@ export function TagInput({ selected, onChange }: Props) {
   useEffect(() => {
     const user = useAuthStore.getState().user
     if (!user) return
-    getCategoryRepository().findAll(user.email).then(setCategories)
+    getCategoryRepository().findAll(user.email).then(setCategories).catch(() => setCategories([]))
   }, [])
 
   useEffect(() => {
@@ -32,8 +32,9 @@ export function TagInput({ selected, onChange }: Props) {
     return () => document.removeEventListener('mousedown', handler)
   }, [])
 
+  const q = query.replace(/^#/, '')
   const filtered = categories.filter(
-    (c) => !selected.includes(c.id) && c.name.includes(query.replace(/^#/, '')),
+    (c) => !selected.includes(c.id) && c.name.toLowerCase().includes(q.toLowerCase()),
   )
 
   const select = (cat: Category) => {
@@ -70,13 +71,13 @@ export function TagInput({ selected, onChange }: Props) {
       <input
         ref={inputRef}
         value={query}
-        onChange={(e) => { setQuery(e.target.value); setOpen(true) }}
-        onFocus={() => setOpen(true)}
+        onChange={(e) => { setQuery(e.target.value); if (e.target.value.startsWith('#')) setOpen(true) }}
+        onFocus={() => { if (query.startsWith('#')) setOpen(true) }}
         placeholder={selected.length === 0 ? '# 輸入標籤名稱...' : ''}
         className="w-full text-xs tracking-wider text-gray-500 bg-transparent border-b border-gray-200 pb-1 focus:outline-none focus:border-gray-400 transition-colors placeholder-gray-200"
       />
       <AnimatePresence>
-        {open && filtered.length > 0 && (
+        {open && query.startsWith('#') && filtered.length > 0 && (
           <m.div
             initial={{ opacity: 0, y: -4 }}
             animate={{ opacity: 1, y: 0 }}
