@@ -5,7 +5,7 @@ export interface Dream {
   date: string
   description: string
   title?: string
-  category?: string
+  tags: string[]
   edit_log?: string
   created_at: string
   updated_at: string
@@ -19,6 +19,6 @@ export interface CreateDreamInput {
 
 export interface UpdateDreamInput {
   title?: string
-  category?: string
+  tags?: string[]
   description?: string
 }
