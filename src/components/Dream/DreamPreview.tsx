@@ -15,6 +15,7 @@ export function DreamPreview({ dream }: Props) {
     >
       <p className="text-xs text-gray-400 tracking-wider mb-2">
         {dream.date}
+        {dream.visibility === 'public' && <span className="ml-2">· 公開</span>}
       </p>
       <h3 className="text-sm text-gray-600 font-medium group-hover:text-gray-800 transition-colors">
         {dream.title || '無標題'}
