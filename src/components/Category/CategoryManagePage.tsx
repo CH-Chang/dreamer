@@ -25,22 +25,29 @@ export function CategoryManagePage() {
 
   useEffect(() => {
     query<{ tags: string }>('SELECT tags FROM dreams').then((rows) => {
-      const map: Record<string, number> = {}
-      for (const row of rows) {
-        if (!row.tags) continue
-        try {
-          const ids: string[] = JSON.parse(row.tags)
-          for (const id of ids) map[id] = (map[id] || 0) + 1
-        } catch { /* ignore malformed tags */ }
+      try {
+        const map: Record<string, number> = {}
+        for (const row of rows) {
+          if (!row.tags) continue
+          try {
+            const ids: string[] = JSON.parse(row.tags)
+            for (const id of ids) map[id] = (map[id] || 0) + 1
+          } catch { /* ignore malformed tags */ }
+        }
+        setUsageMap(map)
+      } catch (e) {
+        console.error(e)
+        setUsageMap({})
       }
-      setUsageMap(map)
     })
   }, [])
 
   const handleAdd = async () => {
     if (!name.trim()) return
-    await createCategory(name.trim(), color, icon)
-    setName('')
+    try {
+      await createCategory(name.trim(), color, icon)
+      setName('')
+    } catch (e) { console.error(e) }
   }
 
   const startEdit = (cat: { id: string; name: string; color: string; icon: string }) => {
@@ -52,8 +59,10 @@ export function CategoryManagePage() {
 
   const handleUpdate = async () => {
     if (!editingId) return
-    await updateCategory(editingId, { name: editName, color: editColor, icon: editIcon })
-    setEditingId(null)
+    try {
+      await updateCategory(editingId, { name: editName, color: editColor, icon: editIcon })
+      setEditingId(null)
+    } catch (e) { console.error(e) }
   }
 
   const confirmDelete = (id: string) => {
@@ -63,8 +72,10 @@ export function CategoryManagePage() {
 
   const handleDelete = async () => {
     if (!deleteConfirm) return
-    await deleteCategory(deleteConfirm)
-    setDeleteConfirm(null)
+    try {
+      await deleteCategory(deleteConfirm)
+      setDeleteConfirm(null)
+    } catch (e) { console.error(e) }
   }
 
   return (
