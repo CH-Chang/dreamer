@@ -145,7 +145,7 @@ function getHeadersForSheet(name: string): string[] {
     categories: ['id', 'name', 'color', 'icon', 'email', 'sort_order', 'created_at'],
     dreams: [
       'id', 'email', 'date', 'description',
-      'title', 'category', 'edit_log', 'created_at', 'updated_at',
+      'title', 'tags', 'edit_log', 'created_at', 'updated_at',
     ],
     videos: [
       'id', 'dream_id', 'email', 'status', 'video_url', 'created_at', 'updated_at',

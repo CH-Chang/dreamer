@@ -36,18 +36,19 @@ export class DreamRepository implements IDreamRepository {
       email: input.email,
       date: input.date,
       description: input.description,
+      tags: [],
       edit_log: '',
       created_at: now,
       updated_at: now,
     }
     await appendSheetRow('dreams', [[
       dream.id, dream.email, dream.date, dream.description,
-      dream.title || '', dream.category || '', dream.edit_log || '',
+      dream.title || '', JSON.stringify(dream.tags), dream.edit_log || '',
       dream.created_at, dream.updated_at,
     ]])
     await query(
-      `INSERT INTO dreams (id, email, date, description, title, category, edit_log, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-      [dream.id, dream.email, dream.date, dream.description, dream.title || '', dream.category || '', dream.edit_log || '', dream.created_at, dream.updated_at],
+      `INSERT INTO dreams (id, email, date, description, title, tags, edit_log, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      [dream.id, dream.email, dream.date, dream.description, dream.title || '', JSON.stringify(dream.tags), dream.edit_log || '', dream.created_at, dream.updated_at],
     )
     return dream
   }
@@ -74,11 +75,15 @@ export class DreamRepository implements IDreamRepository {
         newValues[ci] = data.title
       }
     }
-    if (data.category !== undefined) {
-      const ci = colIndex('category')
-      if (ci !== -1 && newValues[ci] !== data.category) {
-        changes.category = { from: newValues[ci] || '', to: data.category }
-        newValues[ci] = data.category
+    if (data.tags !== undefined) {
+      const ci = colIndex('tags')
+      if (ci !== -1) {
+        const oldTags = newValues[ci] || '[]'
+        const newTags = JSON.stringify(data.tags)
+        if (oldTags !== newTags) {
+          changes.tags = { from: oldTags, to: newTags }
+          newValues[ci] = newTags
+        }
       }
     }
     if (data.description !== undefined) {
@@ -106,7 +111,7 @@ export class DreamRepository implements IDreamRepository {
     const updateFields: string[] = ["updated_at = ?"]
     const updateValues: unknown[] = [now]
     if (data.title !== undefined) { updateFields.push("title = ?"); updateValues.push(data.title) }
-    if (data.category !== undefined) { updateFields.push("category = ?"); updateValues.push(data.category) }
+    if (data.tags !== undefined) { updateFields.push("tags = ?"); updateValues.push(JSON.stringify(data.tags)) }
     if (data.description !== undefined) { updateFields.push("description = ?"); updateValues.push(data.description) }
     updateValues.push(id)
     if (updateFields.length > 1) {
@@ -119,7 +124,7 @@ export class DreamRepository implements IDreamRepository {
       date: newValues[colIndex('date')] || '',
       description: newValues[colIndex('description')] || '',
       title: newValues[colIndex('title')] || undefined,
-      category: newValues[colIndex('category')] || undefined,
+      tags: JSON.parse(newValues[colIndex('tags')] || '[]'),
       edit_log: newValues[colIndex('edit_log')] || undefined,
       created_at: newValues[colIndex('created_at')] || '',
       updated_at: newValues[colIndex('updated_at')] || '',
