@@ -5,6 +5,7 @@ import { CalendarPage } from './components/Calendar/CalendarPage'
 import { DreamDetailPage } from './components/Dream/DreamDetailPage'
 import { CategoryManagePage } from './components/Category/CategoryManagePage'
 import { SettingsPage } from './components/Settings/SettingsPage'
+import { SearchPage } from './components/Search/SearchPage'
 
 export default function App() {
   return (
@@ -15,6 +16,7 @@ export default function App() {
         <Route path="/calendar" element={<CalendarPage />} />
         <Route path="/dream/:id" element={<DreamDetailPage />} />
         <Route path="/categories" element={<CategoryManagePage />} />
+        <Route path="/search" element={<SearchPage />} />
       </Route>
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
