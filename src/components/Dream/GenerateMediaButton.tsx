@@ -65,33 +65,41 @@ export function GenerateMediaButton({ dreamId, description, onCreated }: Props) 
     if (!user || loading) return
     setOpen(false)
     setLoading('video')
+    const repo = getVideoRepository()
+    let video!: Awaited<ReturnType<typeof repo.create>>
     try {
-      const repo = getVideoRepository()
-      const video = await repo.create({ dream_id: dreamId, email: user.email })
+      video = await repo.create({ dream_id: dreamId, email: user.email })
       await repo.updateStatus(video.id, 'generating')
       onCreated()
       const { name } = await veoApiClient.generateVideo({ prompt: `Dream-like cinematic scene: ${description}`, aspectRatio: '16:9', resolution: '720p' })
       const pollResult = await pollVideoOperation(name, async (status) => { await repo.updateStatus(video.id, status); onCreated() }, dreamId, useSettingsStore.getState().settings.driveFolderName)
       await repo.updateStatus(video.id, pollResult.videoUrl ? 'done' : 'failed', pollResult.videoUrl)
       onCreated()
-    } catch (err) { console.error('Failed to generate video:', err) }
-    finally { setLoading(null) }
+    } catch (err) {
+      console.error('Failed to generate video:', err)
+      try { await repo.updateStatus(video.id, 'failed') } catch {}
+      onCreated()
+    } finally { setLoading(null) }
   }
 
   const handleGenerateComic = async () => {
     if (!user || loading) return
     setOpen(false)
     setLoading('comic')
+    const repo = getComicRepository()
+    let comic!: Awaited<ReturnType<typeof repo.create>>
     try {
-      const repo = getComicRepository()
-      const comic = await repo.create({ dream_id: dreamId, email: user.email })
+      comic = await repo.create({ dream_id: dreamId, email: user.email })
       await repo.updateStatus(comic.id, 'generating')
       onCreated()
       const imageUrl = await generateComic(dreamId, description)
       await repo.updateStatus(comic.id, 'done', imageUrl)
       onCreated()
-    } catch (err) { console.error('Failed to generate comic:', err) }
-    finally { setLoading(null) }
+    } catch (err) {
+      console.error('Failed to generate comic:', err)
+      try { await repo.updateStatus(comic.id, 'failed') } catch {}
+      onCreated()
+    } finally { setLoading(null) }
   }
 
   return (

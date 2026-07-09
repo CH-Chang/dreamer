@@ -10,7 +10,10 @@ export function ComicViewer({ imageUrl }: Props) {
   const [error, setError] = useState(false)
 
   useEffect(() => {
-    if (!imageUrl.startsWith('drive://')) return
+    if (!imageUrl.startsWith('drive://')) {
+      setObjectUrl(imageUrl)
+      return
+    }
 
     const fileId = imageUrl.replace('drive://', '')
     const token = useAuthStore.getState().token

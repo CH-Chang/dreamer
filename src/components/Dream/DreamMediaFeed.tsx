@@ -20,26 +20,34 @@ interface Props {
 
 export function DreamMediaFeed({ dreamId, title, description }: Props) {
   const [items, setItems] = useState<MediaItem[]>([])
+  const [loading, setLoading] = useState(true)
 
   const loadMedia = useCallback(async () => {
-    const videoRepo = getVideoRepository()
-    const comicRepo = getComicRepository()
-    const [videos, comics] = await Promise.all([
-      videoRepo.findAllByDreamId(dreamId),
-      comicRepo.findAllByDreamId(dreamId),
-    ])
-    const merged: MediaItem[] = [
-      ...videos.map((v) => ({ type: 'video' as const, data: v })),
-      ...comics.map((c) => ({ type: 'comic' as const, data: c })),
-    ].sort((a, b) => new Date(b.data.created_at).getTime() - new Date(a.data.created_at).getTime())
-    setItems(merged)
+    setLoading(true)
+    try {
+      const videoRepo = getVideoRepository()
+      const comicRepo = getComicRepository()
+      const [videos, comics] = await Promise.all([
+        videoRepo.findAllByDreamId(dreamId),
+        comicRepo.findAllByDreamId(dreamId),
+      ])
+      const merged: MediaItem[] = [
+        ...videos.map((v) => ({ type: 'video' as const, data: v })),
+        ...comics.map((c) => ({ type: 'comic' as const, data: c })),
+      ].sort((a, b) => new Date(b.data.created_at).getTime() - new Date(a.data.created_at).getTime())
+      setItems(merged)
+    } finally {
+      setLoading(false)
+    }
   }, [dreamId])
 
   useEffect(() => { loadMedia() }, [loadMedia])
 
   return (
     <div>
-      {items.length > 0 ? (
+      {loading ? (
+        <p className="text-xs text-gray-300 tracking-wider">載入中...</p>
+      ) : items.length > 0 ? (
         <div className="space-y-6">
           {items.map((item, i) => (
             <div key={item.data.id}>
