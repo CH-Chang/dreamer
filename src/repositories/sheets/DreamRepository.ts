@@ -37,7 +37,7 @@ export class DreamRepository implements IDreamRepository {
       date: input.date,
       description: input.description,
       tags: [],
-      visibility: 'private',
+      visibility: input.visibility ?? 'private',
       edit_log: '',
       created_at: now,
       updated_at: now,
