@@ -4,7 +4,7 @@ import { motion as m } from 'framer-motion'
 import { useDreamStore } from '../../stores/dreamStore'
 import { getDreamRepository } from '../../repositories/factory'
 import { DreamContent } from './DreamContent'
-import { VideoSection } from '../Video/VideoSection'
+import { DreamMediaFeed } from './DreamMediaFeed'
 import type { Dream } from '../../types/dream'
 
 export function DreamDetailPage() {
@@ -67,7 +67,7 @@ export function DreamDetailPage() {
       </div>
       <DreamContent dream={dream} />
       <div className="mt-8 pt-8 border-t border-gray-200">
-        <VideoSection dreamId={dream.id} title={dream.title} description={dream.description} />
+        <DreamMediaFeed dreamId={dream.id} title={dream.title} description={dream.description} />
       </div>
     </m.div>
   )
