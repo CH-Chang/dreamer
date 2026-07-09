@@ -37,18 +37,20 @@ export class DreamRepository implements IDreamRepository {
       date: input.date,
       description: input.description,
       tags: [],
+      visibility: input.visibility ?? 'private',
       edit_log: '',
       created_at: now,
       updated_at: now,
     }
     await appendSheetRow('dreams', [[
       dream.id, dream.email, dream.date, dream.description,
-      dream.title || '', JSON.stringify(dream.tags), dream.edit_log || '',
+      dream.title || '', JSON.stringify(dream.tags), dream.visibility,
+      dream.edit_log || '',
       dream.created_at, dream.updated_at,
     ]])
     await query(
-      `INSERT INTO dreams (id, email, date, description, title, tags, edit_log, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-      [dream.id, dream.email, dream.date, dream.description, dream.title || '', JSON.stringify(dream.tags), dream.edit_log || '', dream.created_at, dream.updated_at],
+      `INSERT INTO dreams (id, email, date, description, title, tags, visibility, edit_log, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      [dream.id, dream.email, dream.date, dream.description, dream.title || '', JSON.stringify(dream.tags), dream.visibility, dream.edit_log || '', dream.created_at, dream.updated_at],
     )
     return dream
   }
@@ -86,6 +88,13 @@ export class DreamRepository implements IDreamRepository {
         }
       }
     }
+    if (data.visibility !== undefined) {
+      const ci = colIndex('visibility')
+      if (ci !== -1 && newValues[ci] !== data.visibility) {
+        changes.visibility = { from: newValues[ci] || '', to: data.visibility }
+        newValues[ci] = data.visibility
+      }
+    }
     if (data.description !== undefined) {
       const ci = colIndex('description')
       if (ci !== -1 && newValues[ci] !== data.description) {
@@ -112,6 +121,7 @@ export class DreamRepository implements IDreamRepository {
     const updateValues: unknown[] = [now]
     if (data.title !== undefined) { updateFields.push("title = ?"); updateValues.push(data.title) }
     if (data.tags !== undefined) { updateFields.push("tags = ?"); updateValues.push(JSON.stringify(data.tags)) }
+    if (data.visibility !== undefined) { updateFields.push("visibility = ?"); updateValues.push(data.visibility) }
     if (data.description !== undefined) { updateFields.push("description = ?"); updateValues.push(data.description) }
     updateValues.push(id)
     if (updateFields.length > 1) {
@@ -125,6 +135,7 @@ export class DreamRepository implements IDreamRepository {
       description: newValues[colIndex('description')] || '',
       title: newValues[colIndex('title')] || undefined,
       tags: JSON.parse(newValues[colIndex('tags')] || '[]'),
+      visibility: (newValues[colIndex('visibility')] || 'private') as 'public' | 'private',
       edit_log: newValues[colIndex('edit_log')] || undefined,
       created_at: newValues[colIndex('created_at')] || '',
       updated_at: newValues[colIndex('updated_at')] || '',

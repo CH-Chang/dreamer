@@ -66,6 +66,12 @@ export function Header() {
         >
           設定
         </Link>
+        <Link
+          to="/about"
+          className="hover:text-gray-600 transition-colors"
+        >
+          關於
+        </Link>
       </div>
     </header>
   )

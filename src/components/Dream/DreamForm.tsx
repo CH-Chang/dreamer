@@ -3,6 +3,7 @@ import { motion as m } from 'framer-motion'
 import { useAuthStore } from '../../stores/authStore'
 import { useDreamStore } from '../../stores/dreamStore'
 import { getDreamRepository } from '../../repositories/factory'
+import { Switch } from '../ui/Switch'
 
 interface Props {
   date: string
@@ -11,6 +12,7 @@ interface Props {
 export function DreamForm({ date }: Props) {
   const [description, setDescription] = useState('')
   const [saving, setSaving] = useState(false)
+  const [visibility, setVisibility] = useState<'public' | 'private'>('private')
   const { user } = useAuthStore()
   const { addDream } = useDreamStore()
 
@@ -23,6 +25,7 @@ export function DreamForm({ date }: Props) {
         email: user.email,
         date,
         description: description.trim(),
+        visibility,
       })
       addDream(dream)
       setDescription('')
@@ -52,7 +55,8 @@ export function DreamForm({ date }: Props) {
         rows={4}
         className="w-full resize-none bg-transparent border-b border-gray-200 text-sm text-gray-600 placeholder-gray-200 focus:outline-none focus:border-gray-400 transition-colors pb-3"
       />
-      <div className="flex justify-end mt-3">
+      <div className="flex items-center justify-between mt-3">
+        <Switch checked={visibility === 'public'} onChange={(v) => setVisibility(v ? 'public' : 'private')} />
         <m.button
           whileTap={{ scale: 0.97 }}
           onClick={handleSave}

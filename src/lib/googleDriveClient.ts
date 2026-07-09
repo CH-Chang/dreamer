@@ -76,3 +76,12 @@ export async function uploadVideo(
   const data: { id: string } = await res.json()
   return data.id
 }
+
+export async function uploadImage(
+  base64: string,
+  mimeType: string,
+  fileName: string,
+  folderName: string,
+): Promise<string> {
+  return uploadVideo(base64, mimeType, fileName, folderName)
+}
