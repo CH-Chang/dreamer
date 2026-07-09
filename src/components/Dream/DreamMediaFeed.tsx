@@ -45,6 +45,10 @@ export function DreamMediaFeed({ dreamId, title, description }: Props) {
 
   return (
     <div>
+      <div className="flex items-center justify-between mb-4">
+        <h2 className="text-xs tracking-wider text-gray-400">媒體</h2>
+        <GenerateMediaButton dreamId={dreamId} description={description} onCreated={loadMedia} />
+      </div>
       {loading ? (
         <p className="text-xs text-gray-300 tracking-wider">載入中...</p>
       ) : items.length > 0 ? (
@@ -82,11 +86,8 @@ export function DreamMediaFeed({ dreamId, title, description }: Props) {
           ))}
         </div>
       ) : (
-        <p className="text-xs text-gray-300 tracking-wider mb-3">尚未產生內容</p>
+        <p className="text-xs text-gray-300 tracking-wider">尚未產生內容</p>
       )}
-      <div className="mt-4">
-        <GenerateMediaButton dreamId={dreamId} description={description} onCreated={loadMedia} />
-      </div>
     </div>
   )
 }

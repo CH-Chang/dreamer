@@ -150,6 +150,9 @@ function getHeadersForSheet(name: string): string[] {
     videos: [
       'id', 'dream_id', 'email', 'status', 'video_url', 'created_at', 'updated_at',
     ],
+    comics: [
+      'id', 'dream_id', 'email', 'status', 'image_url', 'created_at', 'updated_at',
+    ],
   }
   return schema[name] || []
 }

@@ -99,7 +99,10 @@ export function DreamContent({ dream }: Props) {
     <div>
       <div className="flex items-start justify-between gap-4">
         <div className="flex-1">
-          <p className="text-xs text-gray-400 tracking-wider mb-3">{dream.date}</p>
+          <p className="text-xs text-gray-400 tracking-wider mb-3">
+            {dream.date}
+            <span className="ml-2">· {dream.visibility === 'public' ? '公開' : '私有'}</span>
+          </p>
           <h1 className="text-xl font-serif tracking-widest text-gray-700">
             {dream.title || '無標題'}
           </h1>

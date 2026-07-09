@@ -6,6 +6,7 @@ import { DreamDetailPage } from './components/Dream/DreamDetailPage'
 import { CategoryManagePage } from './components/Category/CategoryManagePage'
 import { SettingsPage } from './components/Settings/SettingsPage'
 import { SearchPage } from './components/Search/SearchPage'
+import { AboutPage } from './components/About/AboutPage'
 
 export default function App() {
   return (
@@ -17,6 +18,7 @@ export default function App() {
         <Route path="/dream/:id" element={<DreamDetailPage />} />
         <Route path="/categories" element={<CategoryManagePage />} />
         <Route path="/search" element={<SearchPage />} />
+        <Route path="/about" element={<AboutPage />} />
       </Route>
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
