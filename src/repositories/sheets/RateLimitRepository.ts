@@ -92,6 +92,11 @@ export class RateLimitRepository implements IRateLimitRepository {
   }
 
   async delete(id: string): Promise<void> {
+    const rows = await fetchSheetAsRows('rate_limits')
+    if (rows.length < 2) return
+    const rowIdx = rows.findIndex((r, i) => i > 0 && r[0]?.trim() === id)
+    if (rowIdx === -1) return
+    await updateSheetRow('rate_limits', rowIdx + 1, rows[rowIdx].map(() => ''))
     await query('DELETE FROM rate_limits WHERE id = ?', [id])
   }
 }

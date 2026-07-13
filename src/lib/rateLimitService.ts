@@ -7,9 +7,6 @@ export class RateLimitError extends Error {
   type: RateLimitType
 
   constructor(type: RateLimitType, remaining: { daily: number; monthly: number }) {
-    const parts: string[] = []
-    if (remaining.daily <= 0) parts.push(`今日`)
-    if (remaining.monthly <= 0) parts.push(`本月`)
     super(`已達上限`)
     this.name = 'RateLimitError'
     this.remaining = remaining
@@ -66,19 +63,9 @@ class RateLimitService {
   }
 
   async checkAndThrow(email: string, type: RateLimitType): Promise<void> {
-    const [usage, limit] = await Promise.all([
-      this.getUsage(email, type),
-      this.getLimit(email, type),
-    ])
-    const remaining = {
-      daily: Math.max(0, limit.daily - usage.daily),
-      monthly: Math.max(0, limit.monthly - usage.monthly),
-    }
+    const remaining = await this.getRemaining(email, type)
     if (remaining.daily <= 0 || remaining.monthly <= 0) {
-      throw new RateLimitError(type, {
-        daily: remaining.daily,
-        monthly: remaining.monthly,
-      })
+      throw new RateLimitError(type, remaining)
     }
   }
 

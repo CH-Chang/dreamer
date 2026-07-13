@@ -6,6 +6,7 @@ import { useAuthStore } from '../../stores/authStore'
 import { ConnectionTest } from './ConnectionTest'
 import { MessageBox } from '../ui/MessageBox'
 import { getRateLimitRepository } from '../../repositories/factory'
+import { rateLimitService } from '../../lib/rateLimitService'
 import type { RateLimit } from '../../types/rateLimit'
 
 const stagger = {
@@ -25,7 +26,7 @@ const slideUp = {
 
 export function SettingsPage() {
   const { settings, setSettings, loadSettings } = useSettingsStore()
-  const { isAuthenticated, logout } = useAuthStore()
+  const { user, isAuthenticated, logout } = useAuthStore()
   const navigate = useNavigate()
   const [draft, setDraft] = useState(settings)
   const [saved, setSaved] = useState(false)
@@ -39,6 +40,7 @@ export function SettingsPage() {
   const [newType, setNewType] = useState<'video' | 'comic'>('video')
   const [newDaily, setNewDaily] = useState('')
   const [newMonthly, setNewMonthly] = useState('')
+  const [myQuota, setMyQuota] = useState<Record<string, { daily_used: number; daily_limit: number; monthly_used: number; monthly_limit: number }> | null>(null)
 
   useEffect(() => {
     loadSettings()
@@ -54,6 +56,22 @@ export function SettingsPage() {
   }, [])
 
   useEffect(() => { loadRateLimits() }, [loadRateLimits])
+
+  const loadMyQuota = useCallback(async () => {
+    if (!user) return
+    const [videoUsage, comicUsage, videoLimit, comicLimit] = await Promise.all([
+      rateLimitService.getUsage(user.email, 'video'),
+      rateLimitService.getUsage(user.email, 'comic'),
+      rateLimitService.getLimit(user.email, 'video'),
+      rateLimitService.getLimit(user.email, 'comic'),
+    ])
+    setMyQuota({
+      video: { daily_used: videoUsage.daily, daily_limit: videoLimit.daily, monthly_used: videoUsage.monthly, monthly_limit: videoLimit.monthly },
+      comic: { daily_used: comicUsage.daily, daily_limit: comicLimit.daily, monthly_used: comicUsage.monthly, monthly_limit: comicLimit.monthly },
+    })
+  }, [user])
+
+  useEffect(() => { loadMyQuota() }, [loadMyQuota])
 
   const doSave = () => {
     setSettings(draft)
@@ -185,6 +203,13 @@ export function SettingsPage() {
           </m.div>
 
           <m.div variants={slideUp}>
+            {myQuota && (
+              <div className="mb-6 p-4 bg-gray-50 rounded">
+                <p className="text-xs tracking-wider text-gray-400 mb-2">我的配額使用</p>
+                <p className="text-xs text-gray-500 mb-1">影片：今日 {myQuota.video.daily_used}/{myQuota.video.daily_limit} · 本月 {myQuota.video.monthly_used}/{myQuota.video.monthly_limit}</p>
+                <p className="text-xs text-gray-500">漫畫：今日 {myQuota.comic.daily_used}/{myQuota.comic.daily_limit} · 本月 {myQuota.comic.monthly_used}/{myQuota.comic.monthly_limit}</p>
+              </div>
+            )}
             <h2 className="text-sm tracking-wider text-gray-500 mb-4">配額管理</h2>
             {rateLimits.filter(r => r.scope === 'system').map(r => (
               <div key={r.id} className="mb-6 p-4 bg-gray-50 rounded">
@@ -198,10 +223,15 @@ export function SettingsPage() {
                     <input type="number" value={editMonthly} onChange={e => setEditMonthly(e.target.value)}
                       className="w-20 px-2 py-1 text-xs border border-gray-200 rounded" />
                     <button onClick={async () => {
+                      if (!editDaily || !editMonthly) return
                       const repo = getRateLimitRepository()
-                      await repo.update(r.id, { daily_limit: Number(editDaily), monthly_limit: Number(editMonthly) })
-                      setEditingId(null)
-                      loadRateLimits()
+                      try {
+                        await repo.update(r.id, { daily_limit: Number(editDaily), monthly_limit: Number(editMonthly) })
+                        setEditingId(null)
+                        loadRateLimits()
+                      } catch (err) {
+                        console.error('Failed to update rate limit:', err)
+                      }
                     }} className="px-3 py-1 text-xs bg-gray-800 text-white rounded">更新</button>
                     <button onClick={() => setEditingId(null)} className="px-3 py-1 text-xs text-gray-400">取消</button>
                   </div>
@@ -222,8 +252,12 @@ export function SettingsPage() {
                 <span className="text-xs text-gray-400">每日 {r.daily_limit} · 每月 {r.monthly_limit}</span>
                 <button onClick={async () => {
                   const repo = getRateLimitRepository()
-                  await repo.delete(r.id)
-                  loadRateLimits()
+                  try {
+                    await repo.delete(r.id)
+                    loadRateLimits()
+                  } catch (err) {
+                    console.error('Failed to delete rate limit:', err)
+                  }
                 }} className="text-xs text-red-300 hover:text-red-500">刪除</button>
               </div>
             ))}
@@ -245,9 +279,13 @@ export function SettingsPage() {
                 <button onClick={async () => {
                   if (!newUserEmail || !newDaily || !newMonthly) return
                   const repo = getRateLimitRepository()
-                  await repo.create({ type: newType, scope: newUserEmail, daily_limit: Number(newDaily), monthly_limit: Number(newMonthly) })
-                  setNewUserEmail(''); setNewDaily(''); setNewMonthly('')
-                  loadRateLimits()
+                  try {
+                    await repo.create({ type: newType, scope: newUserEmail, daily_limit: Number(newDaily), monthly_limit: Number(newMonthly) })
+                    setNewUserEmail(''); setNewDaily(''); setNewMonthly('')
+                    loadRateLimits()
+                  } catch (err) {
+                    console.error('Failed to create rate limit:', err)
+                  }
                 }} className="px-3 py-1 text-xs bg-gray-800 text-white rounded">新增</button>
               </div>
             </div>
