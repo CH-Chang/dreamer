@@ -1,10 +1,12 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { motion as m } from 'framer-motion'
 import { useNavigate, Link } from 'react-router-dom'
 import { useSettingsStore } from '../../stores/settingsStore'
 import { useAuthStore } from '../../stores/authStore'
 import { ConnectionTest } from './ConnectionTest'
 import { MessageBox } from '../ui/MessageBox'
+import { getRateLimitRepository } from '../../repositories/factory'
+import type { RateLimit } from '../../types/rateLimit'
 
 const stagger = {
   animate: {
@@ -29,6 +31,14 @@ export function SettingsPage() {
   const [saved, setSaved] = useState(false)
   const [connectionTested, setConnectionTested] = useState(false)
   const [confirmAction, setConfirmAction] = useState<(() => void) | null>(null)
+  const [rateLimits, setRateLimits] = useState<RateLimit[]>([])
+  const [editingId, setEditingId] = useState<string | null>(null)
+  const [editDaily, setEditDaily] = useState('')
+  const [editMonthly, setEditMonthly] = useState('')
+  const [newUserEmail, setNewUserEmail] = useState('')
+  const [newType, setNewType] = useState<'video' | 'comic'>('video')
+  const [newDaily, setNewDaily] = useState('')
+  const [newMonthly, setNewMonthly] = useState('')
 
   useEffect(() => {
     loadSettings()
@@ -37,6 +47,13 @@ export function SettingsPage() {
   useEffect(() => {
     setDraft(settings)
   }, [settings])
+
+  const loadRateLimits = useCallback(async () => {
+    const repo = getRateLimitRepository()
+    setRateLimits(await repo.findAll())
+  }, [])
+
+  useEffect(() => { loadRateLimits() }, [loadRateLimits])
 
   const doSave = () => {
     setSettings(draft)
@@ -165,6 +182,75 @@ export function SettingsPage() {
               className="w-full px-4 py-3 bg-white border border-gray-200 text-sm text-gray-600
                          placeholder-gray-200 focus:outline-none focus:border-gray-400 transition-colors"
             />
+          </m.div>
+
+          <m.div variants={slideUp}>
+            <h2 className="text-sm tracking-wider text-gray-500 mb-4">配額管理</h2>
+            {rateLimits.filter(r => r.scope === 'system').map(r => (
+              <div key={r.id} className="mb-6 p-4 bg-gray-50 rounded">
+                <p className="text-xs tracking-wider text-gray-400 mb-3">{r.type === 'video' ? '影片' : '漫畫'} — 系統預設</p>
+                {editingId === r.id ? (
+                  <div className="flex items-center gap-2">
+                    <label className="text-xs text-gray-400">每日</label>
+                    <input type="number" value={editDaily} onChange={e => setEditDaily(e.target.value)}
+                      className="w-20 px-2 py-1 text-xs border border-gray-200 rounded" />
+                    <label className="text-xs text-gray-400">每月</label>
+                    <input type="number" value={editMonthly} onChange={e => setEditMonthly(e.target.value)}
+                      className="w-20 px-2 py-1 text-xs border border-gray-200 rounded" />
+                    <button onClick={async () => {
+                      const repo = getRateLimitRepository()
+                      await repo.update(r.id, { daily_limit: Number(editDaily), monthly_limit: Number(editMonthly) })
+                      setEditingId(null)
+                      loadRateLimits()
+                    }} className="px-3 py-1 text-xs bg-gray-800 text-white rounded">更新</button>
+                    <button onClick={() => setEditingId(null)} className="px-3 py-1 text-xs text-gray-400">取消</button>
+                  </div>
+                ) : (
+                  <div className="flex items-center gap-3">
+                    <span className="text-xs text-gray-500">每日 {r.daily_limit} · 每月 {r.monthly_limit}</span>
+                    <button onClick={() => { setEditingId(r.id); setEditDaily(String(r.daily_limit)); setEditMonthly(String(r.monthly_limit)) }}
+                      className="text-xs text-gray-400 hover:text-gray-600">編輯</button>
+                  </div>
+                )}
+              </div>
+            ))}
+
+            {rateLimits.filter(r => r.scope !== 'system').map(r => (
+              <div key={r.id} className="mb-3 flex items-center gap-3">
+                <span className="text-xs text-gray-500 w-40 truncate">{r.scope}</span>
+                <span className="text-xs text-gray-400 w-8">{r.type === 'video' ? '影片' : '漫畫'}</span>
+                <span className="text-xs text-gray-400">每日 {r.daily_limit} · 每月 {r.monthly_limit}</span>
+                <button onClick={async () => {
+                  const repo = getRateLimitRepository()
+                  await repo.delete(r.id)
+                  loadRateLimits()
+                }} className="text-xs text-red-300 hover:text-red-500">刪除</button>
+              </div>
+            ))}
+
+            <div className="mt-4 pt-4 border-t border-gray-200">
+              <p className="text-xs text-gray-400 mb-2">新增使用者覆寫</p>
+              <div className="flex items-center gap-2 flex-wrap">
+                <input type="email" placeholder="user@email.com" value={newUserEmail} onChange={e => setNewUserEmail(e.target.value)}
+                  className="px-2 py-1 text-xs border border-gray-200 rounded w-44" />
+                <select value={newType} onChange={e => setNewType(e.target.value as 'video' | 'comic')}
+                  className="px-2 py-1 text-xs border border-gray-200 rounded">
+                  <option value="video">影片</option>
+                  <option value="comic">漫畫</option>
+                </select>
+                <input type="number" placeholder="每日" value={newDaily} onChange={e => setNewDaily(e.target.value)}
+                  className="px-2 py-1 text-xs border border-gray-200 rounded w-16" />
+                <input type="number" placeholder="每月" value={newMonthly} onChange={e => setNewMonthly(e.target.value)}
+                  className="px-2 py-1 text-xs border border-gray-200 rounded w-16" />
+                <button onClick={async () => {
+                  if (!newUserEmail || !newDaily || !newMonthly) return
+                  const repo = getRateLimitRepository()
+                  await repo.create({ type: newType, scope: newUserEmail, daily_limit: Number(newDaily), monthly_limit: Number(newMonthly) })
+                  setNewUserEmail(''); setNewDaily(''); setNewMonthly('')
+                  loadRateLimits()
+                }} className="px-3 py-1 text-xs bg-gray-800 text-white rounded">新增</button>
+              </div>
+            </div>
           </m.div>
 
           <m.div variants={slideUp}>
