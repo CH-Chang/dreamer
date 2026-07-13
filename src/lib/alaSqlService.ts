@@ -1,4 +1,5 @@
 import alasql from 'alasql'
+import { rateLimitService } from './rateLimitService'
 import {
   fetchSheetAsRows,
   parseRowsToObjects,
@@ -36,6 +37,11 @@ export async function initDatabase(force = false): Promise<void> {
     }
   }
   dbInited = true
+  try {
+    await rateLimitService.initDefaults()
+  } catch {
+    // Non-critical
+  }
 }
 
 export async function query<T>(sql: string, params?: unknown[]): Promise<T[]> {
