@@ -153,6 +153,9 @@ function getHeadersForSheet(name: string): string[] {
     comics: [
       'id', 'dream_id', 'email', 'status', 'image_url', 'created_at', 'updated_at',
     ],
+    rate_limits: [
+      'id', 'type', 'scope', 'daily_limit', 'monthly_limit', 'created_at', 'updated_at',
+    ],
   }
   return schema[name] || []
 }
