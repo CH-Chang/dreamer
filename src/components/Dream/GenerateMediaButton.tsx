@@ -169,7 +169,7 @@ export function GenerateMediaButton({ dreamId, description, onCreated }: Props) 
       <m.button
         whileTap={{ scale: 0.97 }}
         onClick={() => setOpen(!open)}
-        disabled={!!loading || (videoRemaining !== null && videoRemaining.daily <= 0 && comicRemaining !== null && comicRemaining.daily <= 0)}
+        disabled={!!loading || (videoRemaining !== null && (videoRemaining.daily <= 0 || videoRemaining.monthly <= 0) && comicRemaining !== null && (comicRemaining.daily <= 0 || comicRemaining.monthly <= 0))}
         className="px-6 py-2 bg-gray-800 text-white text-xs tracking-[0.2em] hover:bg-gray-700 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
       >
         {loading === 'video' ? '影片生成中...' : loading === 'comic' ? '漫畫生成中...' : '生成'}
