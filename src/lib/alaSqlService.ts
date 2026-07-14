@@ -5,6 +5,20 @@ import {
   ensureSheetsExist,
 } from './googleSheetsClient'
 
+alasql.fn.STRFTIME = ((fmt: string, date: string): string => {
+  const d = date === 'now' ? new Date() : new Date(date)
+  if (isNaN(d.getTime())) return ''
+  const map: Record<string, string> = {
+    '%Y': String(d.getFullYear()),
+    '%m': String(d.getMonth() + 1).padStart(2, '0'),
+    '%d': String(d.getDate()).padStart(2, '0'),
+  }
+  let result = fmt
+  for (const [k, v] of Object.entries(map)) result = result.replace(k, v)
+  return result
+}) as any
+alasql.fn.strftime = alasql.fn.STRFTIME
+
 let dbInited = false
 
 const SHEET_NAMES = ['users', 'dreams', 'videos', 'categories', 'comics', 'rate_limits'] as const
