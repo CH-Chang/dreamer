@@ -18,7 +18,7 @@ class RateLimitService {
   async getUsage(email: string, type: RateLimitType): Promise<{ daily: number; monthly: number }> {
     const table = type === 'video' ? 'videos' : 'comics'
     const dailyResult = await query<{ cnt: number }>(
-      `SELECT COUNT(*) as cnt FROM ${table} WHERE email = ? AND status != 'failed' AND date(created_at) = date('now')`,
+      `SELECT COUNT(*) as cnt FROM ${table} WHERE email = ? AND status != 'failed' AND strftime('%Y-%m-%d', created_at) = strftime('%Y-%m-%d', 'now')`,
       [email],
     )
     const monthlyResult = await query<{ cnt: number }>(

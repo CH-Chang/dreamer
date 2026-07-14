@@ -6,7 +6,7 @@ import {
 } from './googleSheetsClient'
 
 alasql.fn.STRFTIME = ((fmt: string, date: string): string => {
-  const d = date === 'now' ? new Date() : new Date(date)
+  const d = date === 'now' || date === "'now'" ? new Date() : new Date(date)
   if (isNaN(d.getTime())) return ''
   const map: Record<string, string> = {
     '%Y': String(d.getFullYear()),

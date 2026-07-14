@@ -38,7 +38,7 @@ describe('rateLimitService', () => {
       expect(mockQuery).toHaveBeenCalledTimes(2)
       expect(mockQuery).toHaveBeenNthCalledWith(
         1,
-        expect.stringContaining("status != 'failed' AND date(created_at) = date('now')"),
+        expect.stringContaining("status != 'failed' AND strftime('%Y-%m-%d', created_at) = strftime('%Y-%m-%d', 'now')"),
         ['a@b.com'],
       )
     })

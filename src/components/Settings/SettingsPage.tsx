@@ -229,6 +229,7 @@ export function SettingsPage() {
                         await repo.update(r.id, { daily_limit: Number(editDaily), monthly_limit: Number(editMonthly) })
                         setEditingId(null)
                         loadRateLimits()
+                        loadMyQuota()
                       } catch (err) {
                         console.error('Failed to update rate limit:', err)
                       }
@@ -255,6 +256,7 @@ export function SettingsPage() {
                   try {
                     await repo.delete(r.id)
                     loadRateLimits()
+                    loadMyQuota()
                   } catch (err) {
                     console.error('Failed to delete rate limit:', err)
                   }
@@ -283,6 +285,7 @@ export function SettingsPage() {
                     await repo.create({ type: newType, scope: newUserEmail, daily_limit: Number(newDaily), monthly_limit: Number(newMonthly) })
                     setNewUserEmail(''); setNewDaily(''); setNewMonthly('')
                     loadRateLimits()
+                    loadMyQuota()
                   } catch (err) {
                     console.error('Failed to create rate limit:', err)
                   }
