@@ -14,9 +14,13 @@ export function FeedItem({ item, isActive }: Props) {
   const [videoObjectUrl, setVideoObjectUrl] = useState<string | null>(null)
   const [videoLoading, setVideoLoading] = useState(true)
   const [comicObjectUrl, setComicObjectUrl] = useState<string | null>(null)
+  const [error, setError] = useState(false)
   const navigate = useNavigate()
 
   useEffect(() => {
+    let cancelled = false
+    let currentObjectUrl: string | null = null
+
     if (item.type === 'video') {
       if (!item.mediaUrl.startsWith('drive://')) {
         setVideoObjectUrl(item.mediaUrl)
@@ -24,8 +28,14 @@ export function FeedItem({ item, isActive }: Props) {
         return
       }
       getVideoBlob(item.mediaUrl)
-        .then(blob => { setVideoObjectUrl(URL.createObjectURL(blob)); setVideoLoading(false) })
-        .catch(console.error)
+        .then(blob => {
+          if (!cancelled) {
+            currentObjectUrl = URL.createObjectURL(blob)
+            setVideoObjectUrl(currentObjectUrl)
+            setVideoLoading(false)
+          }
+        })
+        .catch(() => setError(true))
     } else {
       if (!item.mediaUrl.startsWith('drive://')) {
         setComicObjectUrl(item.mediaUrl)
@@ -37,9 +47,14 @@ export function FeedItem({ item, isActive }: Props) {
       fetch(`https://www.googleapis.com/drive/v3/files/${fileId}?alt=media`, {
         headers: { Authorization: `Bearer ${token}` },
       })
-        .then(res => res.blob())
-        .then(blob => setComicObjectUrl(URL.createObjectURL(blob)))
-        .catch(console.error)
+        .then(res => { if (!res.ok) throw new Error(`Drive fetch failed: ${res.status}`); return res.blob() })
+        .then(blob => { if (!cancelled) { currentObjectUrl = URL.createObjectURL(blob); setComicObjectUrl(currentObjectUrl) } })
+        .catch(() => setError(true))
+    }
+
+    return () => {
+      cancelled = true
+      if (currentObjectUrl) URL.revokeObjectURL(currentObjectUrl)
     }
   }, [item])
 
@@ -56,7 +71,11 @@ export function FeedItem({ item, isActive }: Props) {
 
   return (
     <div className="relative w-full h-full bg-black flex items-center justify-center overflow-hidden">
-      {item.type === 'video' ? (
+      {error ? (
+        <div className="relative w-full h-full bg-black flex items-center justify-center">
+          <p className="text-white/40 text-xs tracking-widest">載入失敗</p>
+        </div>
+      ) : item.type === 'video' ? (
         videoLoading ? (
           <span className="text-white/40 text-xs tracking-widest">載入中...</span>
         ) : (

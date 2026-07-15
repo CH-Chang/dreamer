@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import { motion as m, AnimatePresence } from 'framer-motion'
 import { FeedService, type FeedItem as FeedItemType } from '../../lib/feedService'
 import { FeedItem } from './FeedItem'
@@ -9,8 +9,10 @@ export function FeedPage() {
   const [items, setItems] = useState<FeedItemType[]>([])
   const [cursor, setCursor] = useState<string | undefined>()
   const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
   const [index, setIndex] = useState(0)
   const [direction, setDirection] = useState<1 | -1>(1)
+  const loadingRef = useRef(false)
   const service = new FeedService()
 
   const loadPage = useCallback(async (c?: string) => {
@@ -23,8 +25,8 @@ export function FeedPage() {
         setItems(page.items)
       }
       setCursor(page.nextCursor)
-    } catch {
-      // ignore
+    } catch (err) {
+      setError(err instanceof Error ? err.message : '載入失敗')
     } finally {
       setLoading(false)
     }
@@ -41,13 +43,24 @@ export function FeedPage() {
       if (index < items.length - 1) {
         setDirection(1)
         setIndex(i => i + 1)
-      } else if (cursor) {
-        loadPage(cursor)
+      } else if (cursor && index >= items.length - 2) {
+        if (!loadingRef.current) {
+          loadingRef.current = true
+          loadPage(cursor).finally(() => { loadingRef.current = false })
+        }
       }
     }
   }
 
   const currentItem = items[index]
+
+  if (error) {
+    return (
+      <div className="h-screen w-screen bg-black flex items-center justify-center">
+        <p className="text-white/40 text-xs tracking-widest">{error}</p>
+      </div>
+    )
+  }
 
   if (items.length === 0 && !loading) {
     return (

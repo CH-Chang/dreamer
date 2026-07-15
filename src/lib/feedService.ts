@@ -53,22 +53,25 @@ export class FeedService {
       }
 
       const authorInfo = { name: author?.name ?? dream.email, avatar_url: author?.avatar_url }
+      const dreamInfo = { id: dream.id, title: dream.title, description: dream.description, created_at: dream.created_at, email: dream.email }
 
       for (const v of doneVideos) {
+        if (!v.video_url) continue
         feedItems.push({
           id: `video-${v.id}`,
           type: 'video',
-          mediaUrl: v.video_url!,
-          dream: { id: dream.id, title: dream.title, description: dream.description, created_at: dream.created_at, email: dream.email },
+          mediaUrl: v.video_url,
+          dream: dreamInfo,
           author: authorInfo,
         })
       }
       for (const c of doneComics) {
+        if (!c.image_url) continue
         feedItems.push({
           id: `comic-${c.id}`,
           type: 'comic',
-          mediaUrl: c.image_url!,
-          dream: { id: dream.id, title: dream.title, description: dream.description, created_at: dream.created_at, email: dream.email },
+          mediaUrl: c.image_url,
+          dream: dreamInfo,
           author: authorInfo,
         })
       }
