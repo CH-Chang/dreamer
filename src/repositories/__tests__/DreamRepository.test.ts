@@ -92,20 +92,20 @@ describe('DreamRepository', () => {
     )
   })
 
-  it('finds public dreams with cursor pagination', async () => {
+  it('finds public first page and returns cursor when results fill the page', async () => {
     const dreams = [
       { id: '1', email: 'a@b.com', date: '2026-07-15', description: 'd1', title: '', tags: [], visibility: 'public', edit_log: '', created_at: '2026-07-15T10:00:00Z', updated_at: '' },
       { id: '2', email: 'b@c.com', date: '2026-07-14', description: 'd2', title: '', tags: [], visibility: 'public', edit_log: '', created_at: '2026-07-14T10:00:00Z', updated_at: '' },
     ]
     mockQuery.mockResolvedValue(dreams)
 
-    const result = await repo.findPublicPage(undefined, 10)
+    const result = await repo.findPublicPage(undefined, 2)
 
     expect(result.items).toEqual(dreams)
     expect(result.nextCursor).toBe('2026-07-14T10:00:00Z')
     expect(mockQuery).toHaveBeenCalledWith(
       expect.stringContaining('visibility = \'public\''),
-      [10],
+      [2],
     )
   })
 

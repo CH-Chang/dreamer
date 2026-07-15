@@ -43,7 +43,7 @@ export class DreamRepository implements IDreamRepository {
     }
 
     const items = await query<Dream>(sql, params)
-    const nextCursor = items.length > 0 ? items[items.length - 1].created_at : undefined
+    const nextCursor = items.length === limit ? items[items.length - 1].created_at : undefined
     return { items, nextCursor }
   }
 
