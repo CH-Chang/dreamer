@@ -67,7 +67,7 @@ export function FeedItem({ item, isActive }: Props) {
       el.pause()
       el.currentTime = 0
     }
-  }, [isActive])
+  }, [isActive, videoLoading])
 
   return (
     <div className="relative w-full h-full bg-black flex items-center justify-center overflow-hidden">
@@ -86,6 +86,7 @@ export function FeedItem({ item, isActive }: Props) {
             playsInline
             loop
             muted
+            autoPlay
           />
         )
       ) : (
