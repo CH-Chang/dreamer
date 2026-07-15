@@ -15,17 +15,19 @@ export function useAuth() {
     const userInfo: { email: string; name: string; picture?: string } =
       await userInfoRes.json()
 
-    useAuthStore.getState().setSession({ email: userInfo.email, name: userInfo.name, avatar_url: userInfo.picture ?? '', created_at: '' }, accessToken)
+    useAuthStore.getState().setSession({ email: userInfo.email, name: userInfo.name, avatar_url: userInfo.picture ?? '', role: 'user', created_at: '' }, accessToken)
 
     await initDatabase(true)
 
     const repo = getUserRepository()
     let existingUser = await repo.findByEmail(userInfo.email)
     if (!existingUser) {
+      const count = await repo.findCount()
       existingUser = await repo.create({
         email: userInfo.email,
         name: userInfo.name,
         avatar_url: userInfo.picture,
+        role: count === 0 ? 'admin' : 'user',
       })
     }
     useAuthStore.getState().setSession(existingUser, accessToken)

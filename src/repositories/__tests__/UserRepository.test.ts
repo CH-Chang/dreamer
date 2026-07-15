@@ -51,13 +51,14 @@ describe('UserRepository', () => {
       email: 'new@example.com',
       name: 'New User',
       avatar_url: 'https://example.com/avatar.png',
+      role: 'user',
     })
 
     expect(result.email).toBe('new@example.com')
     expect(result.name).toBe('New User')
     expect(result.created_at).toBeDefined()
     expect(mockAppend).toHaveBeenCalledWith('users', [
-      ['new@example.com', 'New User', 'https://example.com/avatar.png', expect.any(String)],
+      ['new@example.com', 'New User', 'https://example.com/avatar.png', 'user', expect.any(String)],
     ])
   })
 })

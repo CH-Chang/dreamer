@@ -18,6 +18,7 @@ describe('authStore', () => {
     const user: User = {
       email: 'test@example.com',
       name: 'Test User',
+      role: 'user',
       created_at: '2026-01-01T00:00:00Z',
     }
     useAuthStore.getState().setSession(user, 'test-token')
@@ -31,6 +32,7 @@ describe('authStore', () => {
     const user: User = {
       email: 'test@example.com',
       name: 'Test User',
+      role: 'user',
       created_at: '2026-01-01T00:00:00Z',
     }
     useAuthStore.getState().setSession(user, 'test-token')

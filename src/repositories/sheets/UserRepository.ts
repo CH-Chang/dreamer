@@ -9,11 +9,16 @@ export class UserRepository implements IUserRepository {
     return users[0] || null
   }
 
+  async findCount(): Promise<number> {
+    const result = await query<{ count: number }>('SELECT COUNT(*) as count FROM users')
+    return result[0]?.count ?? 0
+  }
+
   async create(user: Omit<User, 'created_at'>): Promise<User> {
     const now = new Date().toISOString()
     const newUser: User = { ...user, created_at: now }
     await appendSheetRow('users', [[
-      newUser.email, newUser.name, newUser.avatar_url || '', newUser.created_at,
+      newUser.email, newUser.name, newUser.avatar_url || '', newUser.role, newUser.created_at,
     ]])
     return newUser
   }
