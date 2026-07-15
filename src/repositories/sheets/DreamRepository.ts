@@ -29,6 +29,24 @@ export class DreamRepository implements IDreamRepository {
     )
   }
 
+  async findPublicPage(cursor?: string, limit = 10): Promise<{ items: Dream[]; nextCursor?: string }> {
+    const subquery = `(id IN (SELECT dream_id FROM videos WHERE status = 'done') OR id IN (SELECT dream_id FROM comics WHERE status = 'done'))`
+    let sql: string
+    let params: unknown[]
+
+    if (cursor) {
+      sql = `SELECT * FROM dreams WHERE visibility = 'public' AND created_at < ? AND ${subquery} ORDER BY created_at DESC LIMIT ?`
+      params = [cursor, limit]
+    } else {
+      sql = `SELECT * FROM dreams WHERE visibility = 'public' AND ${subquery} ORDER BY created_at DESC LIMIT ?`
+      params = [limit]
+    }
+
+    const items = await query<Dream>(sql, params)
+    const nextCursor = items.length > 0 ? items[items.length - 1].created_at : undefined
+    return { items, nextCursor }
+  }
+
   async create(input: CreateDreamInput): Promise<Dream> {
     const now = new Date().toISOString()
     const dream: Dream = {

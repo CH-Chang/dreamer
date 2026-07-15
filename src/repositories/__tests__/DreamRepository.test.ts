@@ -91,4 +91,43 @@ describe('DreamRepository', () => {
       'Dream not found',
     )
   })
+
+  it('finds public dreams with cursor pagination', async () => {
+    const dreams = [
+      { id: '1', email: 'a@b.com', date: '2026-07-15', description: 'd1', title: '', tags: [], visibility: 'public', edit_log: '', created_at: '2026-07-15T10:00:00Z', updated_at: '' },
+      { id: '2', email: 'b@c.com', date: '2026-07-14', description: 'd2', title: '', tags: [], visibility: 'public', edit_log: '', created_at: '2026-07-14T10:00:00Z', updated_at: '' },
+    ]
+    mockQuery.mockResolvedValue(dreams)
+
+    const result = await repo.findPublicPage(undefined, 10)
+
+    expect(result.items).toEqual(dreams)
+    expect(result.nextCursor).toBe('2026-07-14T10:00:00Z')
+    expect(mockQuery).toHaveBeenCalledWith(
+      expect.stringContaining('visibility = \'public\''),
+      [10],
+    )
+  })
+
+  it('finds public dreams with cursor', async () => {
+    const dreams = [
+      { id: '3', email: 'c@d.com', date: '2026-07-10', description: 'd3', title: '', tags: [], visibility: 'public', edit_log: '', created_at: '2026-07-10T10:00:00Z', updated_at: '' },
+    ]
+    mockQuery.mockResolvedValue(dreams)
+
+    const result = await repo.findPublicPage('2026-07-14T10:00:00Z', 10)
+
+    expect(result.items).toEqual(dreams)
+    expect(mockQuery).toHaveBeenCalledWith(
+      expect.stringContaining('created_at < ?'),
+      ['2026-07-14T10:00:00Z', 10],
+    )
+  })
+
+  it('returns empty page when no results', async () => {
+    mockQuery.mockResolvedValue([])
+    const result = await repo.findPublicPage(undefined, 10)
+    expect(result.items).toEqual([])
+    expect(result.nextCursor).toBeUndefined()
+  })
 })
