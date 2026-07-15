@@ -55,6 +55,12 @@ export function Header() {
           </div>
         )}
         <Link
+          to="/feed"
+          className="hover:text-gray-600 transition-colors"
+        >
+          Feed
+        </Link>
+        <Link
           to="/categories"
           className="hover:text-gray-600 transition-colors"
         >
