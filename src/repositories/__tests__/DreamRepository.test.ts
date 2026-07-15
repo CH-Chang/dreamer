@@ -105,7 +105,7 @@ describe('DreamRepository', () => {
     expect(result.nextCursor).toBe('2026-07-14T10:00:00Z')
     expect(mockQuery).toHaveBeenCalledWith(
       expect.stringContaining('visibility = \'public\''),
-      [2],
+      [],
     )
   })
 
@@ -120,7 +120,7 @@ describe('DreamRepository', () => {
     expect(result.items).toEqual(dreams)
     expect(mockQuery).toHaveBeenCalledWith(
       expect.stringContaining('created_at < ?'),
-      ['2026-07-14T10:00:00Z', 10],
+      ['2026-07-14T10:00:00Z'],
     )
   })
 

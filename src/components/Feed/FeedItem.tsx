@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { motion as m, AnimatePresence } from 'framer-motion'
 import type { FeedItem as FeedItemType } from '../../lib/feedService'
 import { getVideoBlob } from '../../lib/videoBlobCache'
 import { useAuthStore } from '../../stores/authStore'
@@ -16,6 +17,7 @@ export function FeedItem({ item, isActive }: Props) {
   const [comicObjectUrl, setComicObjectUrl] = useState<string | null>(null)
   const [error, setError] = useState(false)
   const navigate = useNavigate()
+  const [expanded, setExpanded] = useState(false)
 
   useEffect(() => {
     let cancelled = false
@@ -97,27 +99,56 @@ export function FeedItem({ item, isActive }: Props) {
         )
       )}
 
-      <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/70 to-transparent px-6 pb-8 pt-16">
-        <div className="flex items-center gap-2 mb-2">
-          {item.author.avatar_url && (
-            <img src={item.author.avatar_url} alt="" className="w-7 h-7 rounded-full ring-1 ring-white/30" />
-          )}
-          <span className="text-white/80 text-xs tracking-wider">{item.author.name}</span>
-        </div>
-        {item.dream.title && (
-          <h3 className="text-white/90 text-sm font-medium mb-1">{item.dream.title}</h3>
+      <AnimatePresence>
+        {expanded && (
+          <m.div
+            key="backdrop"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.25, ease: 'easeOut' }}
+            className="absolute inset-0 z-10 bg-black/75"
+          />
         )}
-        <p className="text-white/60 text-xs leading-relaxed line-clamp-2 mb-1">
-          {item.dream.description}
-        </p>
-        <span className="text-white/40 text-[10px] tracking-wider">{new Date(item.dream.created_at).toLocaleDateString('zh-TW')}</span>
-        <button
-          onClick={() => navigate(`/dream/${item.dream.id}`)}
-          className="block mt-2 text-white/50 hover:text-white/80 text-[10px] tracking-wider transition-colors"
-        >
-          more &rarr;
-        </button>
-      </div>
+      </AnimatePresence>
+
+      <m.div
+        layout
+        transition={{ type: 'spring', stiffness: 400, damping: 35 }}
+        className={`absolute bottom-0 left-0 right-0 z-20 flex justify-center ${expanded ? 'bg-black/75 px-6 pb-8 pt-4' : 'bg-gradient-to-t from-black/70 to-transparent px-6 pb-8 pt-16'}`}
+      >
+        <div className="w-full max-w-md">
+          <div className="flex items-center gap-2 mb-2">
+            {item.author.avatar_url && (
+              <img src={item.author.avatar_url} alt="" className="w-7 h-7 rounded-full ring-1 ring-white/30" />
+            )}
+            <span className="text-white/80 text-xs tracking-wider">{item.author.name}</span>
+          </div>
+          {item.dream.title && (
+            <h3 className="text-white/90 text-sm font-medium mb-1">{item.dream.title}</h3>
+          )}
+          <p className={`text-white/60 text-xs leading-relaxed mb-1 ${expanded ? '' : 'line-clamp-2'}`}>
+            {item.dream.description}
+          </p>
+          <span className="text-white/40 text-[10px] tracking-wider">{new Date(item.dream.created_at).toLocaleDateString('zh-TW')}</span>
+          <div className="flex items-center gap-3 mt-2">
+            {item.dream.description && item.dream.description.length > 80 && (
+              <button
+                onClick={() => setExpanded(e => !e)}
+                className="text-white/50 hover:text-white/80 text-[10px] tracking-wider transition-colors"
+              >
+                {expanded ? '收起 ↑' : '展開 ↓'}
+              </button>
+            )}
+            <button
+              onClick={() => navigate(`/dream/${item.dream.id}`)}
+              className="text-white/50 hover:text-white/80 text-[10px] tracking-wider transition-colors"
+            >
+              more &rarr;
+            </button>
+          </div>
+        </div>
+      </m.div>
 
       <button
         onClick={() => navigate(-1)}

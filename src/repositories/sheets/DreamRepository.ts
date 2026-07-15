@@ -35,11 +35,11 @@ export class DreamRepository implements IDreamRepository {
     let params: unknown[]
 
     if (cursor) {
-      sql = `SELECT * FROM dreams WHERE visibility = 'public' AND created_at < ? AND ${subquery} ORDER BY created_at DESC LIMIT ?`
-      params = [cursor, limit]
+      sql = `SELECT * FROM dreams WHERE visibility = 'public' AND created_at < ? AND ${subquery} ORDER BY created_at DESC LIMIT ${limit}`
+      params = [cursor]
     } else {
-      sql = `SELECT * FROM dreams WHERE visibility = 'public' AND ${subquery} ORDER BY created_at DESC LIMIT ?`
-      params = [limit]
+      sql = `SELECT * FROM dreams WHERE visibility = 'public' AND ${subquery} ORDER BY created_at DESC LIMIT ${limit}`
+      params = []
     }
 
     const items = await query<Dream>(sql, params)

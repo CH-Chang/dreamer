@@ -5,8 +5,6 @@ import { FeedService, type FeedItem as FeedItemType } from '../../lib/feedServic
 import { FeedItem } from './FeedItem'
 
 const SWIPE_THRESHOLD = 80
-const WHEEL_THRESHOLD = 50
-
 export function FeedPage() {
   const [items, setItems] = useState<FeedItemType[]>([])
   const [cursor, setCursor] = useState<string | undefined>()
@@ -15,7 +13,7 @@ export function FeedPage() {
   const [index, setIndex] = useState(0)
   const [direction, setDirection] = useState<1 | -1>(1)
   const loadingRef = useRef(false)
-  const wheelAccum = useRef(0)
+  const wheelTimer = useRef(0)
   const service = useRef(new FeedService()).current
   const indexRef = useRef(index)
   const itemsRef = useRef(items)
@@ -43,6 +41,11 @@ export function FeedPage() {
 
   useEffect(() => { loadPage() }, [loadPage])
 
+  useEffect(() => {
+    document.body.style.overflow = 'hidden'
+    return () => { document.body.style.overflow = '' }
+  }, [])
+
   const goNext = useCallback(() => {
     const idx = indexRef.current
     if (idx < itemsRef.current.length - 1) {
@@ -69,14 +72,23 @@ export function FeedPage() {
     else goNext()
   }
 
-  const handleWheel = (e: React.WheelEvent) => {
-    wheelAccum.current += e.deltaY
-    if (Math.abs(wheelAccum.current) >= WHEEL_THRESHOLD) {
-      if (wheelAccum.current > 0) goNext()
+  const containerRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    const el = containerRef.current
+    if (!el) return
+    const handler = (e: WheelEvent) => {
+      e.preventDefault()
+      if (e.deltaY === 0) return
+      const now = Date.now()
+      if (now - wheelTimer.current < 600) return
+      wheelTimer.current = now
+      if (e.deltaY > 0) goNext()
       else goPrev()
-      wheelAccum.current = 0
     }
-  }
+    el.addEventListener('wheel', handler, { passive: false })
+    return () => el.removeEventListener('wheel', handler)
+  }, [goNext, goPrev])
 
   useEffect(() => {
     const idx = indexRef.current
@@ -108,7 +120,7 @@ export function FeedPage() {
   }
 
   return (
-    <div className="h-screen w-screen bg-black overflow-hidden" onWheel={handleWheel}>
+    <div ref={containerRef} className="h-screen w-screen bg-black overflow-hidden">
       <AnimatePresence initial={false} custom={direction} mode="popLayout">
         {currentItem && (
           <m.div
