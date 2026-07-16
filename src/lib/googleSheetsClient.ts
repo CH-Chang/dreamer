@@ -156,6 +156,7 @@ function getHeadersForSheet(name: string): string[] {
     rate_limits: [
       'id', 'type', 'scope', 'daily_limit', 'monthly_limit', 'created_at', 'updated_at',
     ],
+    comments: ['id', 'dream_id', 'target_type', 'target_id', 'email', 'content', 'parent_id', 'mentions', 'created_at', 'updated_at'],
   }
   return schema[name] || []
 }

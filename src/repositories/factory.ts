@@ -4,12 +4,14 @@ import type { IVideoRepository } from './interfaces/IVideoRepository'
 import type { ICategoryRepository } from './interfaces/ICategoryRepository'
 import type { IComicRepository } from './interfaces/IComicRepository'
 import type { IRateLimitRepository } from './interfaces/IRateLimitRepository'
+import type { ICommentRepository } from './interfaces/ICommentRepository'
 import { UserRepository } from './sheets/UserRepository'
 import { DreamRepository } from './sheets/DreamRepository'
 import { VideoRepository } from './sheets/VideoRepository'
 import { CategoryRepository } from './sheets/CategoryRepository'
 import { ComicRepository } from './sheets/ComicRepository'
 import { RateLimitRepository } from './sheets/RateLimitRepository'
+import { CommentRepository } from './sheets/CommentRepository'
 
 let userRepo: IUserRepository
 let dreamRepo: IDreamRepository
@@ -17,6 +19,7 @@ let videoRepo: IVideoRepository
 let categoryRepo: ICategoryRepository
 let comicRepo: IComicRepository
 let rateLimitRepo: IRateLimitRepository
+let commentRepo: ICommentRepository
 
 export function getUserRepository(): IUserRepository {
   if (!userRepo) userRepo = new UserRepository()
@@ -46,4 +49,9 @@ export function getComicRepository(): IComicRepository {
 export function getRateLimitRepository(): IRateLimitRepository {
   if (!rateLimitRepo) rateLimitRepo = new RateLimitRepository()
   return rateLimitRepo
+}
+
+export function getCommentRepository(): ICommentRepository {
+  if (!commentRepo) commentRepo = new CommentRepository()
+  return commentRepo
 }

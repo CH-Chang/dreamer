@@ -21,7 +21,7 @@ alasql.fn.strftime = alasql.fn.STRFTIME
 
 let dbInited = false
 
-const SHEET_NAMES = ['users', 'dreams', 'videos', 'categories', 'comics', 'rate_limits'] as const
+const SHEET_NAMES = ['users', 'dreams', 'videos', 'categories', 'comics', 'rate_limits', 'comments'] as const
 
 export async function initDatabase(force = false): Promise<void> {
   if (dbInited && !force) return
