@@ -38,3 +38,8 @@ Task 3: complete (commits 06ded4c..6844fd6, review clean)
 Task 4: complete (commits 6844fd6..2dc32d6, review clean)
 Task 5: complete (commits 2dc32d6..4542a0b, review clean)
 All tasks complete (fixes committed: c4db700, 942dedd, 693168d) — 92 tests passing, build clean
+Task 1: complete (commits e85d2de..fb9d3fe, review clean)
+Task 2: complete (commits fb9d3fe..d299faf, review clean after fix)
+Task 3: complete (commits d299faf..1b7b5f1, review clean)
+Final review fixes: commit e7d4196 (merged mode shows all comments, reply form in separate mode)
+All tasks complete + review fixes
