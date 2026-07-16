@@ -61,6 +61,9 @@ export function CommentSection({ dreamId, dreamEmail }: Props) {
   const dreamComments = comments.filter(c => c.target_type === 'dream' && c.target_id === dreamId)
   const mediaComments = (type: string, id: string) =>
     comments.filter(c => c.target_type === type && c.target_id === id)
+  const sortedComments = [...comments].sort((a, b) => a.created_at.localeCompare(b.created_at))
+
+  const replyComment = replyTo ? comments.find(c => c.id === replyTo) : null
 
   return (
     <div className="mt-8">
@@ -97,7 +100,7 @@ export function CommentSection({ dreamId, dreamEmail }: Props) {
           />
           <div className="mt-3">
             <CommentList
-              comments={dreamComments}
+              comments={sortedComments}
               participants={participants}
               currentEmail={user?.email ?? ''}
               onReply={setReplyTo}
@@ -108,8 +111,8 @@ export function CommentSection({ dreamId, dreamEmail }: Props) {
             <div className="ml-6 mt-2">
               <CommentForm
                 dreamId={dreamId}
-                targetType="dream"
-                targetId={dreamId}
+                targetType={replyComment?.target_type ?? 'dream'}
+                targetId={replyComment?.target_id ?? dreamId}
                 parentId={replyTo}
                 participants={participants}
                 currentEmail={user?.email ?? ''}
@@ -122,36 +125,24 @@ export function CommentSection({ dreamId, dreamEmail }: Props) {
         </div>
       ) : (
         <div className="space-y-6">
-          <div>
-            <h4 className="text-white/50 text-[10px] tracking-widest mb-2">夢境留言</h4>
-            <CommentForm
-              dreamId={dreamId}
-              targetType="dream"
-              targetId={dreamId}
-              participants={participants}
-              currentEmail={user?.email ?? ''}
-              onCommentCreated={fetchComments}
-              placeholder="留言..."
-            />
-            <div className="mt-2">
-              <CommentList
-                comments={dreamComments}
-                participants={participants}
-                currentEmail={user?.email ?? ''}
-                onReply={setReplyTo}
-                onDelete={handleDelete}
-              />
-            </div>
-          </div>
-          {mediaItems.map(m => (
-            <div key={`${m.type}-${m.id}`}>
-              <h4 className="text-white/50 text-[10px] tracking-widest mb-2">
-                {m.type === 'video' ? '影片' : '漫畫'}留言
-              </h4>
+          {(mediaItems.length > 0
+            ? [
+                { label: '夢境留言', targetType: 'dream' as const, targetId: dreamId, list: dreamComments },
+                ...mediaItems.map(m => ({
+                  label: m.type === 'video' ? '影片留言' : '漫畫留言',
+                  targetType: m.type as 'dream' | 'video' | 'comic',
+                  targetId: m.id,
+                  list: mediaComments(m.type, m.id),
+                })),
+              ]
+            : [{ label: '夢境留言', targetType: 'dream' as const, targetId: dreamId, list: dreamComments }]
+          ).map(section => (
+            <div key={`${section.targetType}-${section.targetId}`}>
+              <h4 className="text-white/50 text-[10px] tracking-widest mb-2">{section.label}</h4>
               <CommentForm
                 dreamId={dreamId}
-                targetType={m.type}
-                targetId={m.id}
+                targetType={section.targetType}
+                targetId={section.targetId}
                 participants={participants}
                 currentEmail={user?.email ?? ''}
                 onCommentCreated={fetchComments}
@@ -159,13 +150,28 @@ export function CommentSection({ dreamId, dreamEmail }: Props) {
               />
               <div className="mt-2">
                 <CommentList
-                  comments={mediaComments(m.type, m.id)}
+                  comments={section.list}
                   participants={participants}
                   currentEmail={user?.email ?? ''}
                   onReply={setReplyTo}
                   onDelete={handleDelete}
                 />
               </div>
+              {replyTo && replyComment?.target_type === section.targetType && replyComment?.target_id === section.targetId && (
+                <div className="ml-6 mt-2">
+                  <CommentForm
+                    dreamId={dreamId}
+                    targetType={section.targetType}
+                    targetId={section.targetId}
+                    parentId={replyTo}
+                    participants={participants}
+                    currentEmail={user?.email ?? ''}
+                    onCommentCreated={() => { setReplyTo(null); fetchComments() }}
+                    onCancel={() => setReplyTo(null)}
+                    placeholder="回覆..."
+                  />
+                </div>
+              )}
             </div>
           ))}
         </div>
