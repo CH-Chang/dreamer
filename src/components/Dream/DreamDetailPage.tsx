@@ -5,6 +5,7 @@ import { useDreamStore } from '../../stores/dreamStore'
 import { getDreamRepository } from '../../repositories/factory'
 import { DreamContent } from './DreamContent'
 import { DreamMediaFeed } from './DreamMediaFeed'
+import { CommentSection } from '../Comment/CommentSection'
 import type { Dream } from '../../types/dream'
 
 export function DreamDetailPage() {
@@ -69,6 +70,7 @@ export function DreamDetailPage() {
       <div className="mt-8 pt-8 border-t border-gray-200">
         <DreamMediaFeed dreamId={dream.id} title={dream.title} description={dream.description} />
       </div>
+      <CommentSection dreamId={dream.id} dreamEmail={dream.email} />
     </m.div>
   )
 }
