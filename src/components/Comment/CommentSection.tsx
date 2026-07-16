@@ -68,18 +68,18 @@ export function CommentSection({ dreamId, dreamEmail }: Props) {
   return (
     <div className="mt-8">
       <div className="flex items-center justify-between mb-4">
-        <h3 className="text-white/70 text-xs tracking-widest">留言</h3>
+        <h3 className="text-gray-700 text-xs tracking-widest">留言</h3>
         {mediaItems.length > 0 && (
-          <div className="flex gap-1 bg-white/5 rounded p-0.5">
+          <div className="flex gap-1 bg-gray-100 rounded p-0.5">
             <button
               onClick={() => setViewMode('merged')}
-              className={`text-[10px] px-2 py-0.5 rounded tracking-wider transition-colors ${viewMode === 'merged' ? 'bg-white/10 text-white/80' : 'text-white/40 hover:text-white/60'}`}
+              className={`text-[10px] px-2 py-0.5 rounded tracking-wider transition-colors ${viewMode === 'merged' ? 'bg-white text-gray-800 shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
             >
               全部留言
             </button>
             <button
               onClick={() => setViewMode('separate')}
-              className={`text-[10px] px-2 py-0.5 rounded tracking-wider transition-colors ${viewMode === 'separate' ? 'bg-white/10 text-white/80' : 'text-white/40 hover:text-white/60'}`}
+              className={`text-[10px] px-2 py-0.5 rounded tracking-wider transition-colors ${viewMode === 'separate' ? 'bg-white text-gray-800 shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
             >
               按媒體分類
             </button>
@@ -138,7 +138,7 @@ export function CommentSection({ dreamId, dreamEmail }: Props) {
             : [{ label: '夢境留言', targetType: 'dream' as const, targetId: dreamId, list: dreamComments }]
           ).map(section => (
             <div key={`${section.targetType}-${section.targetId}`}>
-              <h4 className="text-white/50 text-[10px] tracking-widest mb-2">{section.label}</h4>
+              <h4 className="text-gray-500 text-[10px] tracking-widest mb-2">{section.label}</h4>
               <CommentForm
                 dreamId={dreamId}
                 targetType={section.targetType}

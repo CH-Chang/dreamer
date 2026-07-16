@@ -115,19 +115,19 @@ export function CommentForm({ dreamId, targetType, targetId, parentId, participa
           onChange={e => setText(e.target.value)}
           onKeyDown={handleKeyDown}
           placeholder={placeholder ?? '輸入留言...'}
-          className="flex-1 bg-white/5 border border-white/10 rounded px-3 py-2 text-white/80 text-xs resize-none h-20 focus:outline-none focus:border-white/20"
+          className="flex-1 bg-gray-50 border border-gray-200 rounded px-3 py-2 text-gray-800 text-xs resize-none h-20 focus:outline-none focus:border-gray-400"
           rows={2}
         />
         <div className="flex flex-col gap-1">
           <button
             onClick={handleSubmit}
             disabled={!text.trim() || submitting}
-            className="bg-white/10 hover:bg-white/20 disabled:opacity-30 text-white/70 text-xs px-3 py-1 rounded transition-colors"
+            className="bg-gray-100 hover:bg-gray-200 disabled:opacity-30 text-gray-700 text-xs px-3 py-1 rounded transition-colors"
           >
             送出
           </button>
           {onCancel && (
-            <button onClick={onCancel} className="text-white/40 hover:text-white/60 text-[10px]">
+            <button onClick={onCancel} className="text-gray-400 hover:text-gray-600 text-[10px]">
               取消
             </button>
           )}
@@ -135,12 +135,12 @@ export function CommentForm({ dreamId, targetType, targetId, parentId, participa
       </div>
 
       {mentionOpen && filtered.length > 0 && (
-        <div className="absolute bottom-full left-0 mb-1 bg-gray-900 border border-white/10 rounded overflow-hidden shadow-lg z-30 max-h-32 overflow-y-auto">
+        <div className="absolute bottom-full left-0 mb-1 bg-white border border-gray-200 rounded overflow-hidden shadow-lg z-30 max-h-32 overflow-y-auto">
           {filtered.map((p, i) => (
             <button
               key={p.email}
               onClick={() => insertMention(p)}
-              className={`block w-full text-left px-3 py-1.5 text-xs text-white/70 hover:bg-white/5 transition-colors ${i === mentionIdx ? 'bg-white/10' : ''}`}
+              className={`block w-full text-left px-3 py-1.5 text-xs text-gray-700 hover:bg-gray-50 transition-colors ${i === mentionIdx ? 'bg-gray-100' : ''}`}
             >
               {p.avatar_url && <img src={p.avatar_url} className="w-4 h-4 rounded-full inline mr-1.5" />}
               {p.name}

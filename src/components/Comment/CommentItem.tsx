@@ -38,20 +38,20 @@ export function CommentItem({ comment, participants, currentEmail, onReply, onDe
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 mb-0.5">
             {comment.email ? (
-              <span className="text-white/60 text-[10px] tracking-wider">
+              <span className="text-gray-600 text-[10px] tracking-wider">
                 {participants.find(p => p.email === comment.email)?.name ?? comment.email}
               </span>
             ) : (
-              <span className="text-white/30 text-[10px]">[已刪除]</span>
+              <span className="text-gray-300 text-[10px]">[已刪除]</span>
             )}
-            <span className="text-white/20 text-[9px]">
+            <span className="text-gray-300 text-[9px]">
               {new Date(comment.created_at).toLocaleDateString('zh-TW')}
             </span>
           </div>
           {isDeleted ? (
-            <p className="text-white/30 text-xs italic">[已刪除]</p>
+            <p className="text-gray-300 text-xs italic">[已刪除]</p>
           ) : (
-            <p className="text-white/80 text-xs leading-relaxed break-words">
+            <p className="text-gray-800 text-xs leading-relaxed break-words">
               {renderContent(comment.content, participants)}
             </p>
           )}
@@ -61,7 +61,7 @@ export function CommentItem({ comment, participants, currentEmail, onReply, onDe
       {!isDeleted && !comment.parent_id && (
         <button
           onClick={() => onReply(comment.id)}
-          className="ml-7 mt-1 text-white/30 hover:text-white/60 text-[10px] tracking-wider transition-colors"
+          className="ml-7 mt-1 text-gray-400 hover:text-gray-600 text-[10px] tracking-wider transition-colors"
         >
           回覆
         </button>
@@ -70,7 +70,7 @@ export function CommentItem({ comment, participants, currentEmail, onReply, onDe
       {!isDeleted && comment.email === currentEmail && (
         <button
           onClick={() => onDelete(comment.id)}
-          className="ml-2 mt-1 text-white/20 hover:text-red-400 text-[10px] transition-colors"
+          className="ml-2 mt-1 text-gray-400 hover:text-red-400 text-[10px] transition-colors"
         >
           刪除
         </button>

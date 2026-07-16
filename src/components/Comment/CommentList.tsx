@@ -22,7 +22,7 @@ export function CommentList({ comments, participants, currentEmail, onReply, onD
   }
 
   if (comments.length === 0) {
-    return <p className="text-white/30 text-[10px] tracking-wider py-4">尚無留言</p>
+    return <p className="text-gray-400 text-[10px] tracking-wider py-4">尚無留言</p>
   }
 
   return (
@@ -37,7 +37,7 @@ export function CommentList({ comments, participants, currentEmail, onReply, onD
             onDelete={onDelete}
           />
           {(repliesByParent.get(root.id) ?? []).map(reply => (
-            <div key={reply.id} className="ml-6 pl-3 border-l border-white/5">
+            <div key={reply.id} className="ml-6 pl-3 border-l border-gray-100">
               <CommentItem
                 comment={reply}
                 participants={participants}
