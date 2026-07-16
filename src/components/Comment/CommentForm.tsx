@@ -86,6 +86,9 @@ export function CommentForm({ dreamId, targetType, targetId, parentId, participa
     if (!trimmed || submitting) return
     setSubmitting(true)
     try {
+      const mentions = participants
+        .filter(p => new RegExp(`@${p.name.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}(?:\\s|$)`).test(trimmed))
+        .map(p => p.email)
       const input: CreateCommentInput = {
         dream_id: dreamId,
         target_type: targetType,
@@ -93,6 +96,7 @@ export function CommentForm({ dreamId, targetType, targetId, parentId, participa
         email: currentEmail,
         content: trimmed,
         parent_id: parentId,
+        mentions: mentions.length > 0 ? mentions : undefined,
       }
       await getCommentRepository().create(input)
       setText('')

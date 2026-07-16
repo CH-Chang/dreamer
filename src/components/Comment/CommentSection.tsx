@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react'
 import type { Comment } from '../../types/comment'
-import { getCommentRepository, getVideoRepository, getComicRepository } from '../../repositories/factory'
+import { getCommentRepository, getVideoRepository, getComicRepository, getUserRepository } from '../../repositories/factory'
 import { useAuthStore } from '../../stores/authStore'
 import { CommentList } from './CommentList'
 import { CommentForm } from './CommentForm'
@@ -25,9 +25,13 @@ export function CommentSection({ dreamId, dreamEmail }: Props) {
     const emails = new Set<string>()
     result.forEach(c => { if (c.email) emails.add(c.email) })
     if (dreamEmail) emails.add(dreamEmail)
-    const participantList: Participant[] = [...emails].map(e => ({
-      email: e,
-      name: e.split('@')[0],
+    const users = await Promise.all(
+      [...emails].map(e => getUserRepository().findByEmail(e).catch(() => null)),
+    )
+    const participantList: Participant[] = users.filter(Boolean).map(u => ({
+      email: u!.email,
+      name: u!.name,
+      avatar_url: u!.avatar_url,
     }))
     setParticipants(participantList)
   }, [dreamId, dreamEmail])

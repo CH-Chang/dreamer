@@ -23,7 +23,7 @@ export class CommentRepository implements ICommentRepository {
       email: input.email,
       content: input.content,
       parent_id: input.parent_id ?? null,
-      mentions: [],
+      mentions: input.mentions ?? [],
       created_at: now,
       updated_at: now,
     }

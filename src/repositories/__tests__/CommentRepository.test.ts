@@ -84,6 +84,26 @@ describe('CommentRepository', () => {
     expect(result.mentions).toEqual([])
   })
 
+  it('create stores mentions when provided', async () => {
+    mockAppendSheetRow.mockResolvedValue(undefined)
+    mockQuery.mockResolvedValue([])
+
+    const result = await repo.create({
+      dream_id: 'dream-1',
+      target_type: 'dream',
+      target_id: 'dream-1',
+      email: 'a@test.com',
+      content: '@Bob check this',
+      mentions: ['bob@test.com'],
+    })
+
+    expect(result.mentions).toEqual(['bob@test.com'])
+    expect(mockQuery).toHaveBeenCalledWith(
+      expect.stringContaining('INSERT'),
+      expect.arrayContaining([JSON.stringify(['bob@test.com'])]),
+    )
+  })
+
   it('update modifies content', async () => {
     const existing = [{
       id: 'c1', dream_id: 'd1', target_type: 'dream', target_id: 'd1',

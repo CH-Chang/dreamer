@@ -18,4 +18,5 @@ export interface CreateCommentInput {
   email: string
   content: string
   parent_id?: string
+  mentions?: string[]
 }
