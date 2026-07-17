@@ -114,10 +114,7 @@ export function DreamMediaFeed({ dreamId, title, description }: Props) {
         <p className="text-xs text-gray-300 tracking-wider">載入中...</p>
       ) : doneItems.length > 0 ? (<>
         <div className="relative">
-          <div
-            className="overflow-hidden rounded-lg bg-black aspect-square flex items-center justify-center relative cursor-pointer"
-            onClick={() => setFullscreen(true)}
-          >
+          <div className="overflow-hidden rounded-lg bg-black aspect-square flex items-center justify-center relative">
             <AnimatePresence initial={false} custom={direction} mode="popLayout">
               <m.div
                 key={current.data.id}
@@ -144,6 +141,19 @@ export function DreamMediaFeed({ dreamId, title, description }: Props) {
                 )}
               </m.div>
             </AnimatePresence>
+
+            <button
+              onClick={() => setFullscreen(true)}
+              className="absolute top-2 right-2 w-6 h-6 rounded-full bg-black/40 hover:bg-black/60 text-white/80 hover:text-white flex items-center justify-center text-xs transition-colors z-10"
+              title="放大檢視"
+            >
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <polyline points="15 3 21 3 21 9"/>
+                <polyline points="9 21 3 21 3 15"/>
+                <line x1="21" y1="3" x2="14" y2="10"/>
+                <line x1="3" y1="21" x2="10" y2="14"/>
+              </svg>
+            </button>
           </div>
 
           {doneItems.length > 1 && (
