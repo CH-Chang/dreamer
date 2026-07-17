@@ -21,7 +21,9 @@ const AVATAR_FOLDER = '夢貘 Avatars'
 function resizeImage(file: File, maxSize: number): Promise<string> {
   return new Promise((resolve, reject) => {
     const img = new Image()
+    const blobUrl = URL.createObjectURL(file)
     img.onload = () => {
+      URL.revokeObjectURL(blobUrl)
       const canvas = document.createElement('canvas')
       let { width, height } = img
       if (width > height) {
@@ -36,8 +38,11 @@ function resizeImage(file: File, maxSize: number): Promise<string> {
       ctx.drawImage(img, 0, 0, width, height)
       resolve(canvas.toDataURL('image/jpeg', 0.85).split(',')[1])
     }
-    img.onerror = () => reject(new Error('Failed to load image'))
-    img.src = URL.createObjectURL(file)
+    img.onerror = () => {
+      URL.revokeObjectURL(blobUrl)
+      reject(new Error('Failed to load image'))
+    }
+    img.src = blobUrl
   })
 }
 
@@ -69,8 +74,8 @@ export function ProfilePage() {
     })
   }, [user])
 
-  useEffect(() => { loadDreams() }, [loadDreams])
-  useEffect(() => { loadQuota() }, [loadQuota])
+  useEffect(() => { loadDreams().catch(console.error) }, [loadDreams])
+  useEffect(() => { loadQuota().catch(console.error) }, [loadQuota])
 
   const now = new Date()
   const thisMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`
@@ -99,6 +104,7 @@ export function ProfilePage() {
       setSession({ ...user, avatar_url: driveUrl }, token)
     } catch (err) {
       console.error('Failed to upload avatar:', err)
+      alert('上傳照片失敗，請稍後再試')
     } finally {
       setUploading(false)
     }
