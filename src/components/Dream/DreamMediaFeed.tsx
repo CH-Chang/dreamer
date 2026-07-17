@@ -1,12 +1,13 @@
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import { motion as m, AnimatePresence } from 'framer-motion'
 import type { PanInfo } from 'framer-motion'
-import { getVideoRepository } from '../../repositories/factory'
-import { getComicRepository } from '../../repositories/factory'
+import { getVideoRepository, getComicRepository } from '../../repositories/factory'
 import { VideoStatusBadge } from '../Video/VideoStatusBadge'
 import { VideoPlayer } from '../Video/VideoPlayer'
 import { ComicViewer } from '../Comic/ComicViewer'
 import { GenerateMediaButton } from './GenerateMediaButton'
+import { getVideoBlob } from '../../lib/videoBlobCache'
+import { useAuthStore } from '../../stores/authStore'
 import type { Video } from '../../types/video'
 import type { Comic } from '../../types/comic'
 
@@ -28,6 +29,41 @@ export function DreamMediaFeed({ dreamId, title, description }: Props) {
   const [index, setIndex] = useState(0)
   const [direction, setDirection] = useState<1 | -1>(1)
   const [fullscreen, setFullscreen] = useState(false)
+  const [mediaSrcMap, setMediaSrcMap] = useState<Record<string, string>>({})
+  const fetchingRef = useRef<Set<string>>(new Set())
+
+  const preloadMedia = useCallback(async (item: MediaItem) => {
+    const id = item.data.id
+    if (mediaSrcMap[id] || fetchingRef.current.has(id)) return
+    fetchingRef.current.add(id)
+    try {
+      let src: string
+      if (item.type === 'video') {
+        if (!item.data.video_url?.startsWith('drive://')) {
+          src = item.data.video_url!
+        } else {
+          const blob = await getVideoBlob(item.data.video_url)
+          src = URL.createObjectURL(blob)
+        }
+      } else {
+        if (!item.data.image_url?.startsWith('drive://')) {
+          src = item.data.image_url!
+        } else {
+          const token = useAuthStore.getState().token
+          const res = await fetch(`https://www.googleapis.com/drive/v3/files/${item.data.image_url.replace('drive://', '')}?alt=media`, {
+            headers: { Authorization: `Bearer ${token}` },
+          })
+          const blob = await res.blob()
+          src = URL.createObjectURL(blob)
+        }
+      }
+      setMediaSrcMap(prev => ({ ...prev, [id]: src }))
+    } catch {
+      // ignore
+    } finally {
+      fetchingRef.current.delete(id)
+    }
+  }, [mediaSrcMap])
 
   const loadMedia = useCallback(async () => {
     setLoading(true)
@@ -50,7 +86,13 @@ export function DreamMediaFeed({ dreamId, title, description }: Props) {
 
   useEffect(() => { loadMedia() }, [loadMedia])
 
-  const goNext = () => { if (index < items.length - 1) { setDirection(1); setIndex(i => i + 1) } }
+  const doneItems = items.filter(i => i.type === 'video' ? i.data.status === 'done' && i.data.video_url : i.data.status === 'done' && i.data.image_url)
+
+  useEffect(() => {
+    doneItems.forEach(preloadMedia)
+  }, [doneItems, preloadMedia])
+
+  const goNext = () => { if (index < doneItems.length - 1) { setDirection(1); setIndex(i => i + 1) } }
   const goPrev = () => { if (index > 0) { setDirection(-1); setIndex(i => i - 1) } }
 
   const handleDragEnd = (_: any, info: PanInfo) => {
@@ -59,7 +101,6 @@ export function DreamMediaFeed({ dreamId, title, description }: Props) {
     else goNext()
   }
 
-  const doneItems = items.filter(i => i.type === 'video' ? i.data.status === 'done' && i.data.video_url : i.data.status === 'done' && i.data.image_url)
   const current = doneItems[index]
 
   return (
@@ -207,11 +248,30 @@ export function DreamMediaFeed({ dreamId, title, description }: Props) {
                       }}
                       className="w-full h-full flex items-center justify-center"
                     >
-                      <div onContextMenu={(e) => e.preventDefault()} className="w-full h-full">
+                      <div onContextMenu={(e) => e.preventDefault()} className="w-full h-full flex items-center justify-center">
                         {current.type === 'video' ? (
-                          <VideoPlayer url={current.data.video_url!} dreamId={dreamId} title={title} description={description} />
+                          mediaSrcMap[current.data.id] ? (
+                            <video
+                              src={mediaSrcMap[current.data.id]}
+                              className="w-full max-h-[85vh] object-contain"
+                              playsInline
+                              loop
+                              autoPlay
+                              onContextMenu={(e) => e.preventDefault()}
+                            />
+                          ) : (
+                            <VideoPlayer url={current.data.video_url!} dreamId={dreamId} title={title} description={description} />
+                          )
                         ) : (
-                          <ComicViewer imageUrl={current.data.image_url!} />
+                          mediaSrcMap[current.data.id] ? (
+                            <img
+                              src={mediaSrcMap[current.data.id]}
+                              className="w-full max-h-[85vh] object-contain"
+                              onContextMenu={(e) => e.preventDefault()}
+                            />
+                          ) : (
+                            <ComicViewer imageUrl={current.data.image_url!} />
+                          )
                         )}
                       </div>
                     </m.div>
