@@ -135,18 +135,7 @@ export function DreamMediaFeed({ dreamId, title, description }: Props) {
                 className="absolute inset-0 flex items-center justify-center"
               >
                 {current.type === 'video' ? (
-                  mediaSrcMap[current.data.id] ? (
-                    <video
-                      src={mediaSrcMap[current.data.id]}
-                      className="w-full h-full object-cover"
-                      playsInline
-                      loop
-                      muted
-                      autoPlay
-                    />
-                  ) : (
-                    <VideoPlayer url={current.data.video_url!} dreamId={dreamId} title={title} description={description} />
-                  )
+                  <VideoPlayer url={current.data.video_url!} dreamId={dreamId} title={title} description={description} preloadedSrc={mediaSrcMap[current.data.id]} />
                 ) : (
                   mediaSrcMap[current.data.id] ? (
                     <img src={mediaSrcMap[current.data.id]} className="w-full h-full object-contain" />

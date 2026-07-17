@@ -7,14 +7,17 @@ interface Props {
   dreamId?: string
   description?: string
   title?: string
+  preloadedSrc?: string
 }
 
-export function VideoPlayer({ url, dreamId, description, title }: Props) {
-  const [objectUrl, setObjectUrl] = useState<string | null>(null)
-  const [loading, setLoading] = useState(true)
+export function VideoPlayer({ url, dreamId, description, title, preloadedSrc }: Props) {
+  const [objectUrl, setObjectUrl] = useState<string | null>(preloadedSrc ?? null)
+  const [loading, setLoading] = useState(!preloadedSrc)
   const [progress, setProgress] = useState(0)
 
   useEffect(() => {
+    if (preloadedSrc) return
+
     if (!url.startsWith('drive://')) {
       setObjectUrl(url)
       setLoading(false)
@@ -35,7 +38,7 @@ export function VideoPlayer({ url, dreamId, description, title }: Props) {
       .catch(console.error)
 
     return () => { cancelled = true }
-  }, [url])
+  }, [url, preloadedSrc])
 
   if (loading) {
     const pct = Math.round(progress * 100)
