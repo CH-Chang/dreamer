@@ -143,73 +143,81 @@ export function DreamMediaFeed({ dreamId, title, description }: Props) {
         <AnimatePresence>
           {fullscreen && (
             <m.div
-              key="fullscreen-overlay"
+              key="dialog-backdrop"
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               transition={{ duration: 0.2 }}
-              className="fixed inset-0 z-50 bg-black flex items-center justify-center"
+              className="fixed inset-0 z-50 bg-black/60 flex items-center justify-center p-4"
               onClick={() => setFullscreen(false)}
             >
-              <button
-                onClick={() => setFullscreen(false)}
-                className="absolute top-6 right-6 text-white/60 hover:text-white text-xl leading-none z-10"
-              >
-                &times;
-              </button>
-
-              {doneItems.length > 1 && index > 0 && (
-                <button
-                  onClick={(e) => { e.stopPropagation(); goPrev() }}
-                  className="absolute left-4 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-white/10 hover:bg-white/20 text-white flex items-center justify-center text-xl transition-colors z-10"
-                >
-                  &lsaquo;
-                </button>
-              )}
-              {doneItems.length > 1 && index < doneItems.length - 1 && (
-                <button
-                  onClick={(e) => { e.stopPropagation(); goNext() }}
-                  className="absolute right-4 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-white/10 hover:bg-white/20 text-white flex items-center justify-center text-xl transition-colors z-10"
-                >
-                  &rsaquo;
-                </button>
-              )}
-
-              <div
-                className="w-full h-full flex items-center justify-center p-4"
+              <m.div
+                initial={{ opacity: 0, scale: 0.92 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0, scale: 0.92 }}
+                transition={{ duration: 0.2, ease: 'easeOut' }}
+                className="relative bg-black rounded-xl overflow-hidden w-full max-w-2xl max-h-[85vh] shadow-2xl"
                 onClick={(e) => e.stopPropagation()}
               >
-                <AnimatePresence initial={false} custom={direction} mode="popLayout">
-                  <m.div
-                    key={current.data.id}
-                    custom={direction}
-                    variants={{
-                      enter: (d: number) => ({ x: d * 300, opacity: 0 }),
-                      center: { x: 0, opacity: 1 },
-                      exit: (d: number) => ({ x: d * -300, opacity: 0 }),
-                    }}
-                    initial="enter"
-                    animate="center"
-                    exit="exit"
-                    transition={{ type: 'spring', stiffness: 300, damping: 30, mass: 0.5 }}
-                    drag="x"
-                    dragConstraints={{ left: 0, right: 0 }}
-                    dragElastic={0.2}
-                    onDragEnd={(_: any, info: PanInfo) => {
-                      if (Math.abs(info.offset.x) < SWIPE_THRESHOLD) return
-                      if (info.offset.x > 0) goPrev()
-                      else goNext()
-                    }}
-                    className="max-w-full max-h-full flex items-center justify-center"
+                <button
+                  onClick={() => setFullscreen(false)}
+                  className="absolute top-3 right-3 w-7 h-7 rounded-full bg-black/50 text-white/80 hover:text-white flex items-center justify-center text-lg leading-none z-10"
+                >
+                  &times;
+                </button>
+
+                {doneItems.length > 1 && index > 0 && (
+                  <button
+                    onClick={(e) => { e.stopPropagation(); goPrev() }}
+                    className="absolute left-2 top-1/2 -translate-y-1/2 w-8 h-8 rounded-full bg-black/40 hover:bg-black/60 text-white flex items-center justify-center text-lg transition-colors z-10"
                   >
-                    {current.type === 'video' ? (
-                      <video src={current.data.video_url!} className="max-w-full max-h-full object-contain" controls playsInline autoPlay loop />
-                    ) : (
-                      <img src={current.data.image_url!} className="max-w-full max-h-full object-contain" />
-                    )}
-                  </m.div>
-                </AnimatePresence>
-              </div>
+                    &lsaquo;
+                  </button>
+                )}
+                {doneItems.length > 1 && index < doneItems.length - 1 && (
+                  <button
+                    onClick={(e) => { e.stopPropagation(); goNext() }}
+                    className="absolute right-2 top-1/2 -translate-y-1/2 w-8 h-8 rounded-full bg-black/40 hover:bg-black/60 text-white flex items-center justify-center text-lg transition-colors z-10"
+                  >
+                    &rsaquo;
+                  </button>
+                )}
+
+                <div className="w-full max-h-[85vh] flex items-center justify-center">
+                  <AnimatePresence initial={false} custom={direction} mode="popLayout">
+                    <m.div
+                      key={current.data.id}
+                      custom={direction}
+                      variants={{
+                        enter: (d: number) => ({ x: d * 300, opacity: 0 }),
+                        center: { x: 0, opacity: 1 },
+                        exit: (d: number) => ({ x: d * -300, opacity: 0 }),
+                      }}
+                      initial="enter"
+                      animate="center"
+                      exit="exit"
+                      transition={{ type: 'spring', stiffness: 300, damping: 30, mass: 0.5 }}
+                      drag="x"
+                      dragConstraints={{ left: 0, right: 0 }}
+                      dragElastic={0.2}
+                      onDragEnd={(_: any, info: PanInfo) => {
+                        if (Math.abs(info.offset.x) < SWIPE_THRESHOLD) return
+                        if (info.offset.x > 0) goPrev()
+                        else goNext()
+                      }}
+                      className="w-full h-full flex items-center justify-center"
+                    >
+                      <div onContextMenu={(e) => e.preventDefault()} className="w-full h-full">
+                        {current.type === 'video' ? (
+                          <VideoPlayer url={current.data.video_url!} dreamId={dreamId} title={title} description={description} />
+                        ) : (
+                          <ComicViewer imageUrl={current.data.image_url!} />
+                        )}
+                      </div>
+                    </m.div>
+                  </AnimatePresence>
+                </div>
+              </m.div>
             </m.div>
           )}
         </AnimatePresence>
