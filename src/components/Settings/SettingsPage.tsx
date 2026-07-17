@@ -6,7 +6,6 @@ import { useAuthStore } from '../../stores/authStore'
 import { ConnectionTest } from './ConnectionTest'
 import { MessageBox } from '../ui/MessageBox'
 import { getRateLimitRepository } from '../../repositories/factory'
-import { rateLimitService } from '../../lib/rateLimitService'
 import type { RateLimit } from '../../types/rateLimit'
 
 const stagger = {
@@ -49,7 +48,6 @@ export function SettingsPage() {
   const [newType, setNewType] = useState<'video' | 'comic'>('video')
   const [newDaily, setNewDaily] = useState('')
   const [newMonthly, setNewMonthly] = useState('')
-  const [myQuota, setMyQuota] = useState<Record<string, { daily_used: number; daily_limit: number; monthly_used: number; monthly_limit: number }> | null>(null)
   const [quotaLoading, setQuotaLoading] = useState<string | null>(null)
 
   useEffect(() => {
@@ -66,22 +64,6 @@ export function SettingsPage() {
   }, [])
 
   useEffect(() => { if (user?.role === 'admin') loadRateLimits() }, [loadRateLimits, user?.role])
-
-  const loadMyQuota = useCallback(async () => {
-    if (!user) return
-    const [videoUsage, comicUsage, videoLimit, comicLimit] = await Promise.all([
-      rateLimitService.getUsage(user.email, 'video'),
-      rateLimitService.getUsage(user.email, 'comic'),
-      rateLimitService.getLimit(user.email, 'video'),
-      rateLimitService.getLimit(user.email, 'comic'),
-    ])
-    setMyQuota({
-      video: { daily_used: videoUsage.daily, daily_limit: videoLimit.daily, monthly_used: videoUsage.monthly, monthly_limit: videoLimit.monthly },
-      comic: { daily_used: comicUsage.daily, daily_limit: comicLimit.daily, monthly_used: comicUsage.monthly, monthly_limit: comicLimit.monthly },
-    })
-  }, [user])
-
-  useEffect(() => { loadMyQuota() }, [loadMyQuota])
 
   const doSave = () => {
     setSettings(draft)
@@ -249,13 +231,6 @@ export function SettingsPage() {
             <m.h2 variants={slideUp} className="text-sm tracking-wider text-gray-500">配額</m.h2>
 
             <m.div variants={slideUp}>
-              {myQuota && (
-                <div className="mb-6 p-4 bg-gray-50 rounded">
-                  <p className="text-xs tracking-wider text-gray-400 mb-2">我的配額使用</p>
-                  <p className="text-xs text-gray-500 mb-1">影片：今日 {myQuota.video.daily_used}/{myQuota.video.daily_limit} · 本月 {myQuota.video.monthly_used}/{myQuota.video.monthly_limit}</p>
-                  <p className="text-xs text-gray-500">漫畫：今日 {myQuota.comic.daily_used}/{myQuota.comic.daily_limit} · 本月 {myQuota.comic.monthly_used}/{myQuota.comic.monthly_limit}</p>
-                </div>
-              )}
               {user?.role === 'admin' && (
                 <>
                   <h2 className="text-sm tracking-wider text-gray-500 mb-4">配額管理</h2>
@@ -278,7 +253,6 @@ export function SettingsPage() {
                               await repo.update(r.id, { daily_limit: Number(editDaily), monthly_limit: Number(editMonthly) })
                               setEditingId(null)
                               loadRateLimits()
-                              loadMyQuota()
                             } catch (err) {
                               console.error('Failed to update rate limit:', err)
                             } finally {
@@ -312,7 +286,6 @@ export function SettingsPage() {
                         try {
                           await repo.delete(r.id)
                           loadRateLimits()
-                          loadMyQuota()
                         } catch (err) {
                           console.error('Failed to delete rate limit:', err)
                         } finally {
@@ -347,7 +320,6 @@ export function SettingsPage() {
                           await repo.create({ type: newType, scope: newUserEmail, daily_limit: Number(newDaily), monthly_limit: Number(newMonthly) })
                           setNewUserEmail(''); setNewDaily(''); setNewMonthly('')
                           loadRateLimits()
-                          loadMyQuota()
                         } catch (err) {
                           console.error('Failed to create rate limit:', err)
                         } finally {
