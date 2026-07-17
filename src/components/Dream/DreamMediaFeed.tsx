@@ -27,6 +27,7 @@ export function DreamMediaFeed({ dreamId, title, description }: Props) {
   const [loading, setLoading] = useState(true)
   const [index, setIndex] = useState(0)
   const [direction, setDirection] = useState<1 | -1>(1)
+  const [fullscreen, setFullscreen] = useState(false)
 
   const loadMedia = useCallback(async () => {
     setLoading(true)
@@ -70,9 +71,12 @@ export function DreamMediaFeed({ dreamId, title, description }: Props) {
 
       {loading ? (
         <p className="text-xs text-gray-300 tracking-wider">載入中...</p>
-      ) : doneItems.length > 0 ? (
+      ) : doneItems.length > 0 ? (<>
         <div className="relative">
-          <div className="overflow-hidden rounded-lg bg-black aspect-square flex items-center justify-center relative">
+          <div
+            className="overflow-hidden rounded-lg bg-black aspect-square flex items-center justify-center relative cursor-pointer"
+            onClick={() => setFullscreen(true)}
+          >
             <AnimatePresence initial={false} custom={direction} mode="popLayout">
               <m.div
                 key={current.data.id}
@@ -135,7 +139,81 @@ export function DreamMediaFeed({ dreamId, title, description }: Props) {
             )}
           </div>
         </div>
-      ) : items.length > 0 ? (
+
+        <AnimatePresence>
+          {fullscreen && (
+            <m.div
+              key="fullscreen-overlay"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.2 }}
+              className="fixed inset-0 z-50 bg-black flex items-center justify-center"
+              onClick={() => setFullscreen(false)}
+            >
+              <button
+                onClick={() => setFullscreen(false)}
+                className="absolute top-6 right-6 text-white/60 hover:text-white text-xl leading-none z-10"
+              >
+                &times;
+              </button>
+
+              {doneItems.length > 1 && index > 0 && (
+                <button
+                  onClick={(e) => { e.stopPropagation(); goPrev() }}
+                  className="absolute left-4 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-white/10 hover:bg-white/20 text-white flex items-center justify-center text-xl transition-colors z-10"
+                >
+                  &lsaquo;
+                </button>
+              )}
+              {doneItems.length > 1 && index < doneItems.length - 1 && (
+                <button
+                  onClick={(e) => { e.stopPropagation(); goNext() }}
+                  className="absolute right-4 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-white/10 hover:bg-white/20 text-white flex items-center justify-center text-xl transition-colors z-10"
+                >
+                  &rsaquo;
+                </button>
+              )}
+
+              <div
+                className="w-full h-full flex items-center justify-center p-4"
+                onClick={(e) => e.stopPropagation()}
+              >
+                <AnimatePresence initial={false} custom={direction} mode="popLayout">
+                  <m.div
+                    key={current.data.id}
+                    custom={direction}
+                    variants={{
+                      enter: (d: number) => ({ x: d * 300, opacity: 0 }),
+                      center: { x: 0, opacity: 1 },
+                      exit: (d: number) => ({ x: d * -300, opacity: 0 }),
+                    }}
+                    initial="enter"
+                    animate="center"
+                    exit="exit"
+                    transition={{ type: 'spring', stiffness: 300, damping: 30, mass: 0.5 }}
+                    drag="x"
+                    dragConstraints={{ left: 0, right: 0 }}
+                    dragElastic={0.2}
+                    onDragEnd={(_: any, info: PanInfo) => {
+                      if (Math.abs(info.offset.x) < SWIPE_THRESHOLD) return
+                      if (info.offset.x > 0) goPrev()
+                      else goNext()
+                    }}
+                    className="max-w-full max-h-full flex items-center justify-center"
+                  >
+                    {current.type === 'video' ? (
+                      <video src={current.data.video_url!} className="max-w-full max-h-full object-contain" controls playsInline autoPlay loop />
+                    ) : (
+                      <img src={current.data.image_url!} className="max-w-full max-h-full object-contain" />
+                    )}
+                  </m.div>
+                </AnimatePresence>
+              </div>
+            </m.div>
+          )}
+        </AnimatePresence>
+      </>) : items.length > 0 ? (
         <div className="space-y-4">
           {items.map((item, i) => (
             <div key={item.data.id}>
