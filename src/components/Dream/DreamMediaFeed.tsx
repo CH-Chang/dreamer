@@ -135,9 +135,24 @@ export function DreamMediaFeed({ dreamId, title, description }: Props) {
                 className="absolute inset-0 flex items-center justify-center"
               >
                 {current.type === 'video' ? (
-                  <VideoPlayer url={current.data.video_url!} dreamId={dreamId} title={title} description={description} />
+                  mediaSrcMap[current.data.id] ? (
+                    <video
+                      src={mediaSrcMap[current.data.id]}
+                      className="w-full h-full object-cover"
+                      playsInline
+                      loop
+                      muted
+                      autoPlay
+                    />
+                  ) : (
+                    <VideoPlayer url={current.data.video_url!} dreamId={dreamId} title={title} description={description} />
+                  )
                 ) : (
-                  <ComicViewer imageUrl={current.data.image_url!} />
+                  mediaSrcMap[current.data.id] ? (
+                    <img src={mediaSrcMap[current.data.id]} className="w-full h-full object-contain" />
+                  ) : (
+                    <ComicViewer imageUrl={current.data.image_url!} />
+                  )
                 )}
               </m.div>
             </AnimatePresence>
