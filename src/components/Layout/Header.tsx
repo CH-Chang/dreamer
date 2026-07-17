@@ -38,14 +38,16 @@ export function Header() {
       <div className="flex justify-end items-center gap-8 text-xs tracking-widest text-gray-400">
         {user && (
           <div className="flex items-center gap-3">
-            {user.avatar_url && (
-              <img
-                src={user.avatar_url}
-                alt=""
-                className="w-5 h-5 rounded-full"
-              />
-            )}
-            <span className="text-gray-400">{user.name}</span>
+            <Link to="/profile" className="flex items-center gap-3 hover:opacity-70 transition-opacity">
+              {user.avatar_url && (
+                <img
+                  src={user.avatar_url}
+                  alt=""
+                  className="w-5 h-5 rounded-full"
+                />
+              )}
+              <span className="text-gray-400">{user.name}</span>
+            </Link>
             <button
               onClick={logout}
               className="hover:text-gray-600 transition-colors"

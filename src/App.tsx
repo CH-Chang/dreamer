@@ -8,6 +8,7 @@ import { SettingsPage } from './components/Settings/SettingsPage'
 import { SearchPage } from './components/Search/SearchPage'
 import { AboutPage } from './components/About/AboutPage'
 import { FeedPage } from './components/Feed/FeedPage'
+import { ProfilePage } from './components/Profile/ProfilePage'
 
 export default function App() {
   return (
@@ -20,6 +21,7 @@ export default function App() {
         <Route path="/categories" element={<CategoryManagePage />} />
         <Route path="/search" element={<SearchPage />} />
         <Route path="/about" element={<AboutPage />} />
+        <Route path="/profile" element={<ProfilePage />} />
       </Route>
       <Route path="/feed" element={<FeedPage />} />
       <Route path="*" element={<Navigate to="/" replace />} />
