@@ -13,6 +13,13 @@ export class DreamRepository implements IDreamRepository {
     return dreams[0] || null
   }
 
+  async findAllByEmail(email: string): Promise<Dream[]> {
+    return query<Dream>(
+      'SELECT * FROM dreams WHERE email = ? ORDER BY created_at DESC',
+      [email],
+    )
+  }
+
   async findByDate(email: string, date: string): Promise<Dream | null> {
     const dreams = await query<Dream>(
       'SELECT * FROM dreams WHERE email = ? AND date = ?',
