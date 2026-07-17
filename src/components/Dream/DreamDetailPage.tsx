@@ -67,10 +67,12 @@ export function DreamDetailPage() {
         <DreamShareButtons description={dream.description} url={appUrl} />
       </div>
       <DreamContent dream={dream} />
-      <div className="mt-8 pt-8 border-t border-gray-200">
+      <div className="mt-6">
         <DreamMediaFeed dreamId={dream.id} title={dream.title} description={dream.description} />
       </div>
-      <CommentSection dreamId={dream.id} dreamEmail={dream.email} />
+      <div className="mt-4">
+        <CommentSection dreamId={dream.id} dreamEmail={dream.email} />
+      </div>
     </m.div>
   )
 }

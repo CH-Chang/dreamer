@@ -1,4 +1,6 @@
 import { useState, useEffect, useCallback } from 'react'
+import { motion as m, AnimatePresence } from 'framer-motion'
+import type { PanInfo } from 'framer-motion'
 import { getVideoRepository } from '../../repositories/factory'
 import { getComicRepository } from '../../repositories/factory'
 import { VideoStatusBadge } from '../Video/VideoStatusBadge'
@@ -18,9 +20,13 @@ interface Props {
   description: string
 }
 
+const SWIPE_THRESHOLD = 60
+
 export function DreamMediaFeed({ dreamId, title, description }: Props) {
   const [items, setItems] = useState<MediaItem[]>([])
   const [loading, setLoading] = useState(true)
+  const [index, setIndex] = useState(0)
+  const [direction, setDirection] = useState<1 | -1>(1)
 
   const loadMedia = useCallback(async () => {
     setLoading(true)
@@ -43,16 +49,94 @@ export function DreamMediaFeed({ dreamId, title, description }: Props) {
 
   useEffect(() => { loadMedia() }, [loadMedia])
 
+  const goNext = () => { if (index < items.length - 1) { setDirection(1); setIndex(i => i + 1) } }
+  const goPrev = () => { if (index > 0) { setDirection(-1); setIndex(i => i - 1) } }
+
+  const handleDragEnd = (_: any, info: PanInfo) => {
+    if (Math.abs(info.offset.x) < SWIPE_THRESHOLD) return
+    if (info.offset.x > 0) goPrev()
+    else goNext()
+  }
+
+  const doneItems = items.filter(i => i.type === 'video' ? i.data.status === 'done' && i.data.video_url : i.data.status === 'done' && i.data.image_url)
+  const current = doneItems[index]
+
   return (
     <div>
       <div className="flex items-center justify-between mb-4">
         <h2 className="text-xs tracking-wider text-gray-400">媒體</h2>
         <GenerateMediaButton dreamId={dreamId} description={description} onCreated={loadMedia} />
       </div>
+
       {loading ? (
         <p className="text-xs text-gray-300 tracking-wider">載入中...</p>
+      ) : doneItems.length > 0 ? (
+        <div className="relative">
+          <div className="overflow-hidden rounded-lg bg-black aspect-square flex items-center justify-center relative">
+            <AnimatePresence initial={false} custom={direction} mode="popLayout">
+              <m.div
+                key={current.data.id}
+                custom={direction}
+                variants={{
+                  enter: (d: number) => ({ x: d * 200, opacity: 0 }),
+                  center: { x: 0, opacity: 1 },
+                  exit: (d: number) => ({ x: d * -200, opacity: 0 }),
+                }}
+                initial="enter"
+                animate="center"
+                exit="exit"
+                transition={{ type: 'spring', stiffness: 300, damping: 30, mass: 0.5 }}
+                drag="x"
+                dragConstraints={{ left: 0, right: 0 }}
+                dragElastic={0.2}
+                onDragEnd={handleDragEnd}
+                className="absolute inset-0 flex items-center justify-center"
+              >
+                {current.type === 'video' ? (
+                  <VideoPlayer url={current.data.video_url!} dreamId={dreamId} title={title} description={description} />
+                ) : (
+                  <ComicViewer imageUrl={current.data.image_url!} />
+                )}
+              </m.div>
+            </AnimatePresence>
+          </div>
+
+          {doneItems.length > 1 && (
+            <>
+              {index > 0 && (
+                <button onClick={goPrev} className="absolute left-2 top-1/2 -translate-y-1/2 w-7 h-7 rounded-full bg-white/80 hover:bg-white text-gray-800 flex items-center justify-center text-sm shadow transition-colors">&lsaquo;</button>
+              )}
+              {index < doneItems.length - 1 && (
+                <button onClick={goNext} className="absolute right-2 top-1/2 -translate-y-1/2 w-7 h-7 rounded-full bg-white/80 hover:bg-white text-gray-800 flex items-center justify-center text-sm shadow transition-colors">&rsaquo;</button>
+              )}
+              <div className="flex justify-center gap-1.5 mt-3">
+                {doneItems.map((_, i) => (
+                  <button
+                    key={i}
+                    onClick={() => { setDirection(i > index ? 1 : -1); setIndex(i) }}
+                    className={`w-1.5 h-1.5 rounded-full transition-all ${i === index ? 'bg-gray-600 w-3' : 'bg-gray-300'}`}
+                  />
+                ))}
+              </div>
+            </>
+          )}
+
+          <div className="flex items-center gap-2 mt-3">
+            <span className="text-[10px] text-gray-300 tracking-wider">
+              生成 #{items.length - items.indexOf(current)}
+            </span>
+            {current.type === 'video' ? (
+              <>
+                <span className="text-[10px] text-gray-300 tracking-wider">· 影片</span>
+                <VideoStatusBadge status={current.data.status} />
+              </>
+            ) : (
+              <span className="text-[10px] text-gray-300 tracking-wider">· 漫畫</span>
+            )}
+          </div>
+        </div>
       ) : items.length > 0 ? (
-        <div className="space-y-6">
+        <div className="space-y-4">
           {items.map((item, i) => (
             <div key={item.data.id}>
               <div className="flex items-center gap-2 mb-2">
@@ -65,23 +149,11 @@ export function DreamMediaFeed({ dreamId, title, description }: Props) {
                     <VideoStatusBadge status={item.data.status} />
                   </>
                 ) : (
-                  <>
-                    <span className="text-[10px] text-gray-300 tracking-wider">· 漫畫</span>
-                    <span className="text-[10px] tracking-wider text-gray-400">
-                      {item.data.status === 'pending' && '待生成'}
-                      {item.data.status === 'generating' && '生成中...'}
-                      {item.data.status === 'done' && '已完成'}
-                      {item.data.status === 'failed' && '失敗'}
-                    </span>
-                  </>
+                  <span className="text-[10px] tracking-wider text-gray-400">
+                    {item.type === 'comic' && (item.data.status === 'pending' ? '待生成' : item.data.status === 'generating' ? '生成中...' : item.data.status === 'failed' ? '失敗' : '已完成')}
+                  </span>
                 )}
               </div>
-              {item.type === 'video' && item.data.status === 'done' && item.data.video_url && (
-                <VideoPlayer url={item.data.video_url} dreamId={dreamId} title={title} description={description} />
-              )}
-              {item.type === 'comic' && item.data.status === 'done' && item.data.image_url && (
-                <ComicViewer imageUrl={item.data.image_url} />
-              )}
             </div>
           ))}
         </div>
