@@ -5,6 +5,7 @@ import { useAuthStore } from '../../stores/authStore'
 import { getDreamRepository, getUserRepository } from '../../repositories/factory'
 import { rateLimitService } from '../../lib/rateLimitService'
 import { uploadImage } from '../../lib/googleDriveClient'
+import { useDriveImage } from '../../lib/useDriveImage'
 import type { Dream } from '../../types/dream'
 
 const slideUp = {
@@ -52,6 +53,7 @@ export function ProfilePage() {
   const [myQuota, setMyQuota] = useState<Record<string, { daily_used: number; daily_limit: number; monthly_used: number; monthly_limit: number }> | null>(null)
   const [uploading, setUploading] = useState(false)
   const inputRef = useRef<HTMLInputElement>(null)
+  const avatarSrc = useDriveImage(user?.avatar_url)
 
   const loadDreams = useCallback(async () => {
     if (!user) return
@@ -106,6 +108,7 @@ export function ProfilePage() {
       console.error('Failed to upload avatar:', err)
       alert('上傳照片失敗，請稍後再試')
     } finally {
+      e.target.value = ''
       setUploading(false)
     }
   }
@@ -133,8 +136,8 @@ export function ProfilePage() {
               onClick={handlePhotoClick}
               className="w-20 h-20 rounded-full bg-gray-100 overflow-hidden cursor-pointer hover:opacity-80 transition-opacity flex items-center justify-center"
             >
-              {user.avatar_url ? (
-                <img src={user.avatar_url} alt="" className="w-full h-full object-cover" />
+              {avatarSrc ? (
+                <img src={avatarSrc} alt="" className="w-full h-full object-cover" />
               ) : (
                 <span className="text-2xl text-gray-300">{user.name?.[0] || '?'}</span>
               )}

@@ -2,11 +2,13 @@ import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Link } from 'react-router-dom'
 import { useAuthStore } from '../../stores/authStore'
+import { useDriveImage } from '../../lib/useDriveImage'
 
 export function Header() {
   const { user, logout } = useAuthStore()
   const navigate = useNavigate()
   const [searchValue, setSearchValue] = useState('')
+  const avatarSrc = useDriveImage(user?.avatar_url)
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === 'Enter' && !e.nativeEvent.isComposing && searchValue.trim()) {
@@ -39,9 +41,9 @@ export function Header() {
         {user && (
           <div className="flex items-center gap-3">
             <Link to="/profile" className="flex items-center gap-3 hover:opacity-70 transition-opacity">
-              {user.avatar_url && (
+              {avatarSrc && (
                 <img
-                  src={user.avatar_url}
+                  src={avatarSrc}
                   alt=""
                   className="w-5 h-5 rounded-full"
                 />
