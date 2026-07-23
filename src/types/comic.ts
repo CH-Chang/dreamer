@@ -6,6 +6,7 @@ export interface Comic {
   email: string
   status: ComicStatus
   image_url?: string
+  with_character: boolean
   created_at: string
   updated_at?: string
 }

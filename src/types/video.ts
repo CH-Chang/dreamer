@@ -6,6 +6,7 @@ export interface Video {
   email: string
   status: VideoStatus
   video_url?: string
+  with_character: boolean
   created_at: string
   updated_at?: string
 }
