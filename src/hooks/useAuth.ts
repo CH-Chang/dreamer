@@ -31,6 +31,37 @@ export function useAuth() {
       })
     }
     useAuthStore.getState().setSession(existingUser, accessToken)
+
+    const state = useAuthStore.getState()
+    if (existingUser.avatar_url && !state.avatarBase64) {
+      const avatarUrl = existingUser.avatar_url
+      const fetchAndCache = async (url: string, token: string) => {
+        try {
+          const res = await fetch(url, avatarUrl.startsWith('drive://')
+            ? { headers: { Authorization: `Bearer ${token}` } }
+            : {})
+          const blob = await res.blob()
+          const reader = new FileReader()
+          reader.onloadend = () => {
+            const result = reader.result as string
+            const base64 = result.split(',')[1]
+            if (base64) {
+              useAuthStore.getState().setAvatarBase64(base64)
+            }
+          }
+          reader.readAsDataURL(blob)
+        } catch (err) {
+          console.warn('Failed to prefetch avatar cache:', err)
+        }
+      }
+      if (avatarUrl.startsWith('drive://')) {
+        const fileId = avatarUrl.replace('drive://', '')
+        fetchAndCache(`https://www.googleapis.com/drive/v3/files/${fileId}?alt=media`, accessToken)
+      } else if (avatarUrl.startsWith('http')) {
+        fetchAndCache(avatarUrl, accessToken)
+      }
+    }
+
     navigate('/calendar')
   }
 
