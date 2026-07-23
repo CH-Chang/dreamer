@@ -47,7 +47,7 @@ describe('VideoRepository', () => {
     expect(result).toBeNull()
   })
 
-  it('creates a new video record', async () => {
+  it('creates a new video record without character', async () => {
     mockAppend.mockResolvedValue(undefined)
 
     const result = await repo.create({ dream_id: 'd1', email: 'a@b.com' })
@@ -55,12 +55,20 @@ describe('VideoRepository', () => {
     expect(result.email).toBe('a@b.com')
     expect(result.status).toBe('pending')
     expect(result.id).toBeDefined()
+    expect(result.with_character).toBe(false)
     expect(mockAppend).toHaveBeenCalledTimes(1)
   })
 
+  it('creates a new video record with character', async () => {
+    mockAppend.mockResolvedValue(undefined)
+
+    const result = await repo.create({ dream_id: 'd1', email: 'a@b.com', with_character: true })
+    expect(result.with_character).toBe(true)
+  })
+
   it('updates video status and persists to sheets', async () => {
-    const headers = ['id', 'dream_id', 'email', 'status', 'video_url', 'created_at', 'updated_at']
-    const existingRow = ['v1', 'd1', 'a@b.com', 'pending', '', '2026-01-01T00:00:00Z', '']
+    const headers = ['id', 'dream_id', 'email', 'status', 'video_url', 'with_character', 'created_at', 'updated_at']
+    const existingRow = ['v1', 'd1', 'a@b.com', 'pending', '', 'FALSE', '2026-01-01T00:00:00Z', '']
     mockFetchRows.mockResolvedValue([headers, existingRow])
     mockUpdateSheet.mockResolvedValue(undefined)
 
