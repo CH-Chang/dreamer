@@ -26,7 +26,7 @@ describe('veoApiClient', () => {
     })
     expect(result).toEqual(mockResponse)
     expect(globalThis.fetch).toHaveBeenCalledWith(
-      'https://aiplatform.googleapis.com/v1/projects/test-project/locations/us-central1/publishers/google/models/veo-3.1-lite-generate-001:predictLongRunning',
+      'https://aiplatform.googleapis.com/v1/projects/test-project/locations/us-central1/publishers/google/models/veo-3.1-fast-generate-001:predictLongRunning',
       expect.objectContaining({
         headers: expect.objectContaining({
           'Authorization': 'Bearer test-oauth-token',
@@ -71,7 +71,7 @@ describe('veoApiClient', () => {
     const result = await veoApiClient.getOperation('operations/123')
     expect(result).toEqual(mockResponse)
     expect(globalThis.fetch).toHaveBeenCalledWith(
-      'https://us-central1-aiplatform.googleapis.com/v1/projects/test-project/locations/us-central1/publishers/google/models/veo-3.1-lite-generate-001:fetchPredictOperation',
+      'https://us-central1-aiplatform.googleapis.com/v1/projects/test-project/locations/us-central1/publishers/google/models/veo-3.1-fast-generate-001:fetchPredictOperation',
       expect.objectContaining({
         method: 'POST',
         headers: expect.objectContaining({
