@@ -12,21 +12,23 @@ export class ComicRepository implements IComicRepository {
     )
   }
 
-  async create(input: { dream_id: string; email: string }): Promise<Comic> {
+  async create(input: { dream_id: string; email: string; with_character?: boolean }): Promise<Comic> {
     const now = new Date().toISOString()
+    const withCharacter = input.with_character ?? false
     const comic: Comic = {
       id: generateId(),
       dream_id: input.dream_id,
       email: input.email,
       status: 'pending',
+      with_character: withCharacter,
       created_at: now,
     }
     await appendSheetRow('comics', [[
-      comic.id, comic.dream_id, comic.email, comic.status, '', comic.created_at, '',
+      comic.id, comic.dream_id, comic.email, comic.status, '', withCharacter ? 'TRUE' : 'FALSE', comic.created_at, '',
     ]])
     await query(
-      'INSERT INTO comics (id, dream_id, email, status, image_url, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?)',
-      [comic.id, comic.dream_id, comic.email, comic.status, '', comic.created_at, ''],
+      'INSERT INTO comics (id, dream_id, email, status, image_url, with_character, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
+      [comic.id, comic.dream_id, comic.email, comic.status, '', withCharacter, comic.created_at, ''],
     )
     return comic
   }
@@ -65,6 +67,7 @@ export class ComicRepository implements IComicRepository {
       email: newValues[colIndex('email')] || '',
       status: (newValues[colIndex('status')] as ComicStatus) || 'pending',
       image_url: newValues[colIndex('image_url')] || undefined,
+      with_character: newValues[colIndex('with_character')] === 'TRUE',
       created_at: newValues[colIndex('created_at')] || '',
       updated_at: newValues[colIndex('updated_at')] || undefined,
     }
