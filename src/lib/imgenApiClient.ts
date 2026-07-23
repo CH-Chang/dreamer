@@ -21,14 +21,30 @@ interface GeminiResponse {
   }>
 }
 
-class ImagenApiClient {
-  private model = 'gemini-3.1-flash-lite-image'
+interface ReferenceImage {
+  bytesBase64Encoded: string
+  mimeType: string
+}
 
-  async generateImage(prompt: string): Promise<{ bytesBase64Encoded: string; mimeType: string }> {
+class ImagenApiClient {
+  private model = 'gemini-3.1-flash-image'
+
+  async generateImage(prompt: string, referenceImage?: ReferenceImage): Promise<{ bytesBase64Encoded: string; mimeType: string }> {
     const token = useAuthStore.getState().token
     if (!token) throw new Error('Not authenticated')
     const { gcpProjectId } = useSettingsStore.getState().settings
     if (!gcpProjectId) throw new Error('GCP Project ID not configured')
+
+    const parts: GeminiImagePart[] = [{ text: prompt }]
+
+    if (referenceImage) {
+      parts.push({
+        inlineData: {
+          mimeType: referenceImage.mimeType,
+          data: referenceImage.bytesBase64Encoded,
+        },
+      })
+    }
 
     const res = await fetch(
       `https://aiplatform.googleapis.com/v1/projects/${gcpProjectId}/locations/global/publishers/google/models/${this.model}:generateContent`,
@@ -41,7 +57,7 @@ class ImagenApiClient {
         body: JSON.stringify({
           contents: {
             role: 'user',
-            parts: { text: prompt },
+            parts,
           },
           generation_config: {
             response_modalities: ['TEXT', 'IMAGE'],
