@@ -148,10 +148,10 @@ function getHeadersForSheet(name: string): string[] {
       'title', 'tags', 'edit_log', 'created_at', 'updated_at',
     ],
     videos: [
-      'id', 'dream_id', 'email', 'status', 'video_url', 'created_at', 'updated_at',
+      'id', 'dream_id', 'email', 'status', 'video_url', 'with_character', 'created_at', 'updated_at',
     ],
     comics: [
-      'id', 'dream_id', 'email', 'status', 'image_url', 'created_at', 'updated_at',
+      'id', 'dream_id', 'email', 'status', 'image_url', 'with_character', 'created_at', 'updated_at',
     ],
     rate_limits: [
       'id', 'type', 'scope', 'daily_limit', 'monthly_limit', 'created_at', 'updated_at',
