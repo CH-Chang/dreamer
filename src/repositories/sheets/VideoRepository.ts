@@ -17,21 +17,23 @@ export class VideoRepository implements IVideoRepository {
     )
   }
 
-  async create(input: { dream_id: string; email: string }): Promise<Video> {
+  async create(input: { dream_id: string; email: string; with_character?: boolean }): Promise<Video> {
     const now = new Date().toISOString()
+    const withCharacter = input.with_character ?? false
     const video: Video = {
       id: generateId(),
       dream_id: input.dream_id,
       email: input.email,
       status: 'pending',
+      with_character: withCharacter,
       created_at: now,
     }
     await appendSheetRow('videos', [[
-      video.id, video.dream_id, video.email, video.status, '', video.created_at, '',
+      video.id, video.dream_id, video.email, video.status, '', withCharacter ? 'TRUE' : 'FALSE', video.created_at, '',
     ]])
     await query(
-      `INSERT INTO videos (id, dream_id, email, status, video_url, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?)`,
-      [video.id, video.dream_id, video.email, video.status, '', video.created_at, ''],
+      `INSERT INTO videos (id, dream_id, email, status, video_url, with_character, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+      [video.id, video.dream_id, video.email, video.status, '', withCharacter, video.created_at, ''],
     )
     return video
   }
@@ -77,6 +79,7 @@ export class VideoRepository implements IVideoRepository {
       email: newValues[colIndex('email')] || '',
       status: (newValues[colIndex('status')] as VideoStatus) || 'pending',
       video_url: newValues[colIndex('video_url')] || undefined,
+      with_character: newValues[colIndex('with_character')] === 'TRUE',
       created_at: newValues[colIndex('created_at')] || '',
       updated_at: newValues[colIndex('updated_at')] || undefined,
     }
