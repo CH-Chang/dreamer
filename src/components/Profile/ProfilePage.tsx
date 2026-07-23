@@ -48,7 +48,7 @@ function resizeImage(file: File, maxSize: number): Promise<string> {
 }
 
 export function ProfilePage() {
-  const { user, setSession, token } = useAuthStore()
+  const { user, setSession, setAvatarBase64, token } = useAuthStore()
   const [dreams, setDreams] = useState<Dream[]>([])
   const [myQuota, setMyQuota] = useState<Record<string, { daily_used: number; daily_limit: number; monthly_used: number; monthly_limit: number }> | null>(null)
   const [uploading, setUploading] = useState(false)
@@ -103,7 +103,8 @@ export function ProfilePage() {
       const driveUrl = `drive://${fileId}`
       const repo = getUserRepository()
       await repo.update(user.email, { avatar_url: driveUrl })
-      setSession({ ...user, avatar_url: driveUrl }, token)
+      setSession({ ...user, avatar_url: driveUrl }, token, base64)
+      setAvatarBase64(base64)
     } catch (err) {
       console.error('Failed to upload avatar:', err)
       alert('上傳照片失敗，請稍後再試')
