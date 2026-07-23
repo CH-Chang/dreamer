@@ -24,14 +24,20 @@ interface VeoOperationResponse {
   error?: { message: string }
 }
 
+interface ReferenceImage {
+  bytesBase64Encoded: string
+  mimeType: string
+}
+
 interface GenerateVideoOptions {
   prompt: string
   aspectRatio?: string
   resolution?: string
+  referenceImage?: ReferenceImage
 }
 
 class VeoApiClient {
-  private model = 'veo-3.1-lite-generate-001'
+  private model = 'veo-3.1-fast-generate-001'
 
   async generateVideo(options: GenerateVideoOptions): Promise<VeoGenerateResponse> {
     const token = useAuthStore.getState().token
@@ -44,6 +50,19 @@ class VeoApiClient {
     if (options.aspectRatio) parameters.aspectRatio = options.aspectRatio
     if (options.resolution) parameters.resolution = options.resolution
 
+    const instance: Record<string, unknown> = { prompt: options.prompt }
+
+    if (options.referenceImage) {
+      instance.referenceImages = [{
+        referenceType: 'asset',
+        image: {
+          bytesBase64Encoded: options.referenceImage.bytesBase64Encoded,
+          mimeType: options.referenceImage.mimeType,
+        },
+      }]
+      parameters.personGeneration = 'allow'
+    }
+
     const res = await fetch(
       `https://aiplatform.googleapis.com/v1/projects/${gcpProjectId}/locations/${gcpLocation}/publishers/google/models/${this.model}:predictLongRunning`,
       {
@@ -53,7 +72,7 @@ class VeoApiClient {
           'Authorization': `Bearer ${token}`,
         },
         body: JSON.stringify({
-          instances: [{ prompt: options.prompt }],
+          instances: [instance],
           parameters,
         }),
       },
