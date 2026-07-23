@@ -42,11 +42,11 @@ describe('FeedService', () => {
     }
     const video: Video = {
       id: 'vid-1', dream_id: 'dream-1', email: 'a@b.com',
-      status: 'done', video_url: 'drive://file123', created_at: '', updated_at: '',
+      status: 'done', video_url: 'drive://file123', with_character: false, created_at: '', updated_at: '',
     }
     const comic: Comic = {
       id: 'comic-1', dream_id: 'dream-1', email: 'a@b.com',
-      status: 'done', image_url: 'drive://file456', created_at: '', updated_at: '',
+      status: 'done', image_url: 'drive://file456', with_character: false, created_at: '', updated_at: '',
     }
 
     mockRepo.findPublicPage.mockResolvedValue({ items: [dream], nextCursor: undefined })

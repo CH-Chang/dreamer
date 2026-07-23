@@ -72,11 +72,11 @@ class ImagenApiClient {
     }
 
     const data: GeminiResponse = await res.json()
-    const parts = data.candidates?.[0]?.content?.parts || []
+    const responseParts = data.candidates?.[0]?.content?.parts || []
     let bytesBase64Encoded = ''
     let mimeType = ''
 
-    for (const p of parts) {
+    for (const p of responseParts) {
       if (p.inlineData) {
         bytesBase64Encoded = p.inlineData.data
         mimeType = p.inlineData.mimeType
