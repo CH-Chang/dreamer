@@ -41,9 +41,9 @@ async function pollVideoOperation(
   throw new Error('Video generation timed out')
 }
 
-async function generateComic(dreamId: string, description: string): Promise<string> {
+async function generateComic(dreamId: string, description: string, referenceImage?: { bytesBase64Encoded: string; mimeType: string }): Promise<string> {
   const { driveFolderName } = useSettingsStore.getState().settings
-  const result = await imagenApiClient.generateImage(`夢境漫畫風格: ${description}`)
+  const result = await imagenApiClient.generateImage(`夢境漫畫風格: ${description}`, referenceImage)
   const fileId = await uploadImage(result.bytesBase64Encoded, result.mimeType, `comic-${dreamId}-${Date.now()}.png`, driveFolderName)
   return `drive://${fileId}`
 }
@@ -53,7 +53,8 @@ export function GenerateMediaButton({ dreamId, description, onCreated }: Props) 
   const [loading, setLoading] = useState<'video' | 'comic' | null>(null)
   const [videoRemaining, setVideoRemaining] = useState<{ daily: number; monthly: number } | null>(null)
   const [comicRemaining, setComicRemaining] = useState<{ daily: number; monthly: number } | null>(null)
-  const { user } = useAuthStore()
+  const [withCharacter, setWithCharacter] = useState(false)
+  const { user, avatarBase64 } = useAuthStore()
   const ref = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
@@ -88,7 +89,7 @@ export function GenerateMediaButton({ dreamId, description, onCreated }: Props) 
     const repo = getVideoRepository()
     let video!: Awaited<ReturnType<typeof repo.create>>
     try {
-      video = await repo.create({ dream_id: dreamId, email: user.email })
+      video = await repo.create({ dream_id: dreamId, email: user.email, with_character: withCharacter })
       await repo.updateStatus(video.id, 'generating')
       onCreated()
       const [v1, c1] = await Promise.all([
@@ -97,7 +98,15 @@ export function GenerateMediaButton({ dreamId, description, onCreated }: Props) 
       ])
       setVideoRemaining(v1)
       setComicRemaining(c1)
-      const { name } = await veoApiClient.generateVideo({ prompt: `Dream-like cinematic scene: ${description}`, aspectRatio: '16:9', resolution: '720p' })
+      const veoOptions: Parameters<typeof veoApiClient.generateVideo>[0] = {
+        prompt: `Dream-like cinematic scene: ${description}`,
+        aspectRatio: '16:9',
+        resolution: '720p',
+      }
+      if (withCharacter && avatarBase64) {
+        veoOptions.referenceImage = { bytesBase64Encoded: avatarBase64, mimeType: 'image/jpeg' }
+      }
+      const { name } = await veoApiClient.generateVideo(veoOptions)
       const pollResult = await pollVideoOperation(name, async (status) => { await repo.updateStatus(video.id, status); onCreated() }, dreamId, useSettingsStore.getState().settings.driveFolderName)
       await repo.updateStatus(video.id, pollResult.videoUrl ? 'done' : 'failed', pollResult.videoUrl)
       onCreated()
@@ -133,7 +142,7 @@ export function GenerateMediaButton({ dreamId, description, onCreated }: Props) 
     const repo = getComicRepository()
     let comic!: Awaited<ReturnType<typeof repo.create>>
     try {
-      comic = await repo.create({ dream_id: dreamId, email: user.email })
+      comic = await repo.create({ dream_id: dreamId, email: user.email, with_character: withCharacter })
       await repo.updateStatus(comic.id, 'generating')
       onCreated()
       const [v1, c1] = await Promise.all([
@@ -142,7 +151,10 @@ export function GenerateMediaButton({ dreamId, description, onCreated }: Props) 
       ])
       setVideoRemaining(v1)
       setComicRemaining(c1)
-      const imageUrl = await generateComic(dreamId, description)
+      const refImage = withCharacter && avatarBase64
+        ? { bytesBase64Encoded: avatarBase64, mimeType: 'image/jpeg' }
+        : undefined
+      const imageUrl = await generateComic(dreamId, description, refImage)
       await repo.updateStatus(comic.id, 'done', imageUrl)
       onCreated()
       const [v2, c2] = await Promise.all([
@@ -198,6 +210,26 @@ export function GenerateMediaButton({ dreamId, description, onCreated }: Props) 
               ? '生成漫畫 · 本月已達上限'
               : '生成漫畫'}
           </button>
+          <div className="border-t border-gray-100" />
+          <div className="relative group">
+            <label
+              className={`flex items-center justify-between px-4 py-2 text-xs tracking-wider text-gray-400 select-none ${!user?.avatar_url ? 'opacity-40' : 'cursor-pointer hover:bg-gray-50'}`}
+            >
+              <span>帶入主角形象 ～2</span>
+              <input
+                type="checkbox"
+                checked={withCharacter}
+                onChange={(e) => setWithCharacter(e.target.checked)}
+                disabled={!user?.avatar_url}
+                className="accent-gray-800"
+              />
+            </label>
+            {!user?.avatar_url && (
+              <div className="absolute left-1/2 -translate-x-1/2 bottom-full mb-1 px-2 py-1 bg-gray-800 text-white text-[10px] rounded whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
+                上傳大頭照即可使用主角形象
+              </div>
+            )}
+          </div>
         </div>
       )}
     </div>
