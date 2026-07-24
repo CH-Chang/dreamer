@@ -88,8 +88,8 @@ describe('DreamRepository', () => {
   })
 
   it('updates a dream and persists to sheets', async () => {
-    const headers = ['id', 'email', 'date', 'description', 'title', 'tags', 'title_candidates', 'edit_log', 'created_at', 'updated_at']
-    const existingRow = ['1', 'a@b.com', '2026-07-05', 'original', 'original title', '[]', '[]', '', '2026-01-01T00:00:00Z', '2026-01-01T00:00:00Z']
+    const headers = ['id', 'email', 'date', 'description', 'title', 'tags', 'visibility', 'title_candidates', 'edit_log', 'created_at', 'updated_at']
+    const existingRow = ['1', 'a@b.com', '2026-07-05', 'original', 'original title', '[]', 'private', '[]', '', '2026-01-01T00:00:00Z', '2026-01-01T00:00:00Z']
     mockFetchRows.mockResolvedValue([headers, existingRow])
     mockUpdateSheet.mockResolvedValue(undefined)
 
@@ -102,8 +102,8 @@ describe('DreamRepository', () => {
   })
 
   it('updates title_candidates', async () => {
-    const headers = ['id', 'email', 'date', 'description', 'title', 'tags', 'title_candidates', 'edit_log', 'created_at', 'updated_at']
-    const existingRow = ['1', 'a@b.com', '2026-07-05', 'dream desc', '', '[]', '[]', '', '2026-01-01T00:00:00Z', '2026-01-01T00:00:00Z']
+    const headers = ['id', 'email', 'date', 'description', 'title', 'tags', 'visibility', 'title_candidates', 'edit_log', 'created_at', 'updated_at']
+    const existingRow = ['1', 'a@b.com', '2026-07-05', 'dream desc', '', '[]', 'private', '[]', '', '2026-01-01T00:00:00Z', '2026-01-01T00:00:00Z']
     mockFetchRows.mockResolvedValue([headers, existingRow])
     mockUpdateSheet.mockResolvedValue(undefined)
 

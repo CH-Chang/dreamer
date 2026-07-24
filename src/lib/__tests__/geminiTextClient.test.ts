@@ -43,7 +43,7 @@ describe('geminiTextClient', () => {
 
   it('throws when not authenticated', async () => {
     const authMock = await import('../../stores/authStore')
-    vi.mocked(authMock.useAuthStore.getState).mockReturnValueOnce({ token: null })
+    vi.mocked(authMock.useAuthStore.getState).mockReturnValueOnce({ token: null } as any)
 
     const { geminiTextClient } = await import('../geminiTextClient')
     await expect(geminiTextClient.generate('test')).rejects.toThrow('Not authenticated')

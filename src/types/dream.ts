@@ -22,6 +22,7 @@ export interface CreateDreamInput {
 
 export interface UpdateDreamInput {
   title?: string
+  title_candidates?: string[]
   tags?: string[]
   visibility?: 'public' | 'private'
   description?: string

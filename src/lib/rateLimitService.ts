@@ -62,9 +62,9 @@ class RateLimitService {
     }
   }
 
-  async checkAndThrow(email: string, type: RateLimitType): Promise<void> {
+  async checkAndThrow(email: string, type: RateLimitType, cost: number = 1): Promise<void> {
     const remaining = await this.getRemaining(email, type)
-    if (remaining.daily <= 0 || remaining.monthly <= 0) {
+    if (remaining.daily < cost || remaining.monthly < cost) {
       throw new RateLimitError(type, remaining)
     }
   }

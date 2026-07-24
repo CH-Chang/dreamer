@@ -79,7 +79,7 @@ export function GenerateMediaButton({ dreamId, description, onCreated }: Props) 
   const handleGenerateVideo = async () => {
     if (!user || loading) return
     try {
-      await rateLimitService.checkAndThrow(user.email, 'video')
+      await rateLimitService.checkAndThrow(user.email, 'video', withCharacter ? 2 : 1)
     } catch (err) {
       if (err instanceof RateLimitError) return
       throw err
@@ -132,7 +132,7 @@ export function GenerateMediaButton({ dreamId, description, onCreated }: Props) 
   const handleGenerateComic = async () => {
     if (!user || loading) return
     try {
-      await rateLimitService.checkAndThrow(user.email, 'comic')
+      await rateLimitService.checkAndThrow(user.email, 'comic', withCharacter ? 2 : 1)
     } catch (err) {
       if (err instanceof RateLimitError) return
       throw err
@@ -187,26 +187,26 @@ export function GenerateMediaButton({ dreamId, description, onCreated }: Props) 
         {loading === 'video' ? '影片生成中...' : loading === 'comic' ? '漫畫生成中...' : '生成'}
       </m.button>
       {open && (
-        <div className="absolute bottom-full left-0 mb-2 bg-white border border-gray-200 rounded-lg shadow-sm min-w-[140px] overflow-hidden">
+        <div className="absolute bottom-full left-0 mb-2 bg-white border border-gray-200 rounded-lg shadow-sm min-w-[180px] overflow-hidden">
           <button
             onClick={handleGenerateVideo}
-            disabled={loading === 'video' || (videoRemaining !== null && (videoRemaining.daily <= 0 || videoRemaining.monthly <= 0))}
+            disabled={loading === 'video' || (videoRemaining !== null && (videoRemaining.daily < (withCharacter ? 2 : 1) || videoRemaining.monthly < (withCharacter ? 2 : 1)))}
             className="w-full text-left px-4 py-2 text-xs tracking-wider text-gray-500 hover:bg-gray-50 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
           >
-            {videoRemaining !== null && videoRemaining.daily <= 0
+            {videoRemaining !== null && videoRemaining.daily < (withCharacter ? 2 : 1)
               ? '生成影片 · 今日已達上限'
-              : videoRemaining !== null && videoRemaining.monthly <= 0
+              : videoRemaining !== null && videoRemaining.monthly < (withCharacter ? 2 : 1)
               ? '生成影片 · 本月已達上限'
               : '生成影片'}
           </button>
           <button
             onClick={handleGenerateComic}
-            disabled={loading === 'comic' || (comicRemaining !== null && (comicRemaining.daily <= 0 || comicRemaining.monthly <= 0))}
+            disabled={loading === 'comic' || (comicRemaining !== null && (comicRemaining.daily < (withCharacter ? 2 : 1) || comicRemaining.monthly < (withCharacter ? 2 : 1)))}
             className="w-full text-left px-4 py-2 text-xs tracking-wider text-gray-500 hover:bg-gray-50 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
           >
-            {comicRemaining !== null && comicRemaining.daily <= 0
+            {comicRemaining !== null && comicRemaining.daily < (withCharacter ? 2 : 1)
               ? '生成漫畫 · 今日已達上限'
-              : comicRemaining !== null && comicRemaining.monthly <= 0
+              : comicRemaining !== null && comicRemaining.monthly < (withCharacter ? 2 : 1)
               ? '生成漫畫 · 本月已達上限'
               : '生成漫畫'}
           </button>

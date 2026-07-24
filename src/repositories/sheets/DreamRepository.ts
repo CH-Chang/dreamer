@@ -70,7 +70,8 @@ export class DreamRepository implements IDreamRepository {
     }
     await appendSheetRow('dreams', [[
       dream.id, dream.email, dream.date, dream.description,
-      dream.title || '', JSON.stringify(dream.tags), JSON.stringify(dream.title_candidates || []),
+      dream.title || '', JSON.stringify(dream.tags), dream.visibility,
+      JSON.stringify(dream.title_candidates || []),
       dream.edit_log || '',
       dream.created_at, dream.updated_at,
     ]])
