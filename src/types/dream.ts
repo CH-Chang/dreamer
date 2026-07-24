@@ -5,6 +5,7 @@ export interface Dream {
   date: string
   description: string
   title?: string
+  title_candidates?: string[]
   tags: string[]
   visibility: 'public' | 'private'
   edit_log?: string
