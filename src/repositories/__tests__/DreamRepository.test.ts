@@ -71,9 +71,25 @@ describe('DreamRepository', () => {
     expect(mockAppend).toHaveBeenCalledTimes(1)
   })
 
+  it('creates a new dream with title_candidates', async () => {
+    mockAppend.mockResolvedValue(undefined)
+
+    const result = await repo.create({
+      email: 'a@b.com',
+      date: '2026-07-05',
+      description: 'new dream',
+    })
+
+    expect(result.title_candidates).toEqual([])
+    expect(mockAppend).toHaveBeenCalledWith('dreams', expect.any(Array))
+    const appendArg = mockAppend.mock.calls[0][1][0]
+    const candidatesIdx = 6
+    expect(JSON.parse(appendArg[candidatesIdx])).toEqual([])
+  })
+
   it('updates a dream and persists to sheets', async () => {
-    const headers = ['id', 'email', 'date', 'description', 'title', 'category', 'edit_log', 'created_at', 'updated_at']
-    const existingRow = ['1', 'a@b.com', '2026-07-05', 'original', 'original title', '', '', '2026-01-01T00:00:00Z', '2026-01-01T00:00:00Z']
+    const headers = ['id', 'email', 'date', 'description', 'title', 'tags', 'title_candidates', 'edit_log', 'created_at', 'updated_at']
+    const existingRow = ['1', 'a@b.com', '2026-07-05', 'original', 'original title', '[]', '[]', '', '2026-01-01T00:00:00Z', '2026-01-01T00:00:00Z']
     mockFetchRows.mockResolvedValue([headers, existingRow])
     mockUpdateSheet.mockResolvedValue(undefined)
 
@@ -83,6 +99,18 @@ describe('DreamRepository', () => {
     expect(result.updated_at).not.toBe(existingRow[8])
     expect(mockUpdateSheet).toHaveBeenCalledTimes(1)
     expect(mockUpdateSheet).toHaveBeenCalledWith('dreams', 2, expect.arrayContaining(['new title']))
+  })
+
+  it('updates title_candidates', async () => {
+    const headers = ['id', 'email', 'date', 'description', 'title', 'tags', 'title_candidates', 'edit_log', 'created_at', 'updated_at']
+    const existingRow = ['1', 'a@b.com', '2026-07-05', 'dream desc', '', '[]', '[]', '', '2026-01-01T00:00:00Z', '2026-01-01T00:00:00Z']
+    mockFetchRows.mockResolvedValue([headers, existingRow])
+    mockUpdateSheet.mockResolvedValue(undefined)
+
+    const result = await repo.update('1', { title_candidates: ['夢境標題A', '夢境標題B'] })
+
+    expect(result.title_candidates).toEqual(['夢境標題A', '夢境標題B'])
+    expect(mockUpdateSheet).toHaveBeenCalledWith('dreams', 2, expect.arrayContaining([JSON.stringify(['夢境標題A', '夢境標題B'])]))
   })
 
   it('throws when updating non-existent dream', async () => {

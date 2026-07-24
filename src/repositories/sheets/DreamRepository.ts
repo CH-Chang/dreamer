@@ -61,6 +61,7 @@ export class DreamRepository implements IDreamRepository {
       email: input.email,
       date: input.date,
       description: input.description,
+      title_candidates: [],
       tags: [],
       visibility: input.visibility ?? 'private',
       edit_log: '',
@@ -69,13 +70,13 @@ export class DreamRepository implements IDreamRepository {
     }
     await appendSheetRow('dreams', [[
       dream.id, dream.email, dream.date, dream.description,
-      dream.title || '', JSON.stringify(dream.tags), dream.visibility,
+      dream.title || '', JSON.stringify(dream.tags), JSON.stringify(dream.title_candidates || []),
       dream.edit_log || '',
       dream.created_at, dream.updated_at,
     ]])
     await query(
-      `INSERT INTO dreams (id, email, date, description, title, tags, visibility, edit_log, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-      [dream.id, dream.email, dream.date, dream.description, dream.title || '', JSON.stringify(dream.tags), dream.visibility, dream.edit_log || '', dream.created_at, dream.updated_at],
+      `INSERT INTO dreams (id, email, date, description, title, tags, title_candidates, visibility, edit_log, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      [dream.id, dream.email, dream.date, dream.description, dream.title || '', JSON.stringify(dream.tags), JSON.stringify(dream.title_candidates || []), dream.visibility, dream.edit_log || '', dream.created_at, dream.updated_at],
     )
     return dream
   }
@@ -127,6 +128,17 @@ export class DreamRepository implements IDreamRepository {
         newValues[ci] = data.description
       }
     }
+    if (data.title_candidates !== undefined) {
+      const ci = colIndex('title_candidates')
+      if (ci !== -1) {
+        const oldVal = newValues[ci] || '[]'
+        const newVal = JSON.stringify(data.title_candidates)
+        if (oldVal !== newVal) {
+          changes.title_candidates = { from: oldVal, to: newVal }
+          newValues[ci] = newVal
+        }
+      }
+    }
 
     const updatedAtCol = colIndex('updated_at')
     if (updatedAtCol !== -1) newValues[updatedAtCol] = now
@@ -148,6 +160,7 @@ export class DreamRepository implements IDreamRepository {
     if (data.tags !== undefined) { updateFields.push("tags = ?"); updateValues.push(JSON.stringify(data.tags)) }
     if (data.visibility !== undefined) { updateFields.push("visibility = ?"); updateValues.push(data.visibility) }
     if (data.description !== undefined) { updateFields.push("description = ?"); updateValues.push(data.description) }
+    if (data.title_candidates !== undefined) { updateFields.push("title_candidates = ?"); updateValues.push(JSON.stringify(data.title_candidates)) }
     updateValues.push(id)
     if (updateFields.length > 1) {
       await query(`UPDATE dreams SET ${updateFields.join(", ")} WHERE id = ?`, updateValues)
@@ -160,6 +173,13 @@ export class DreamRepository implements IDreamRepository {
       description: newValues[colIndex('description')] || '',
       title: newValues[colIndex('title')] || undefined,
       tags: JSON.parse(newValues[colIndex('tags')] || '[]'),
+      title_candidates: (() => {
+        try {
+          return JSON.parse(newValues[colIndex('title_candidates')] || '[]')
+        } catch {
+          return []
+        }
+      })(),
       visibility: (newValues[colIndex('visibility')] || 'private') as 'public' | 'private',
       edit_log: newValues[colIndex('edit_log')] || undefined,
       created_at: newValues[colIndex('created_at')] || '',
