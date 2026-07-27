@@ -1,4 +1,3 @@
-import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
 import { BrowserRouter } from 'react-router-dom'
 import { GoogleOAuthProvider } from '@react-oauth/google'
@@ -11,17 +10,15 @@ useSettingsStore.getState().loadSettings()
 function Root() {
   const { settings } = useSettingsStore()
   return (
-    <StrictMode>
-      <BrowserRouter basename="/dreamer">
-        {settings.googleClientId ? (
-          <GoogleOAuthProvider clientId={settings.googleClientId}>
-            <App />
-          </GoogleOAuthProvider>
-        ) : (
+    <BrowserRouter basename="/dreamer">
+      {settings.googleClientId ? (
+        <GoogleOAuthProvider clientId={settings.googleClientId}>
           <App />
-        )}
-      </BrowserRouter>
-    </StrictMode>
+        </GoogleOAuthProvider>
+      ) : (
+        <App />
+      )}
+    </BrowserRouter>
   )
 }
 

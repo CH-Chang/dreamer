@@ -13,6 +13,11 @@ vi.mock('../../lib/googleSheetsClient', () => ({
   fetchSheetAsRows: vi.fn(),
 }))
 
+const mockEditLogCreate = vi.fn()
+vi.mock('../factory', () => ({
+  getEditLogRepository: () => ({ create: mockEditLogCreate }),
+}))
+
 const mockQuery = vi.mocked(alaSqlService.query)
 const mockAppend = vi.mocked(sheetsClient.appendSheetRow)
 const mockUpdateSheet = vi.mocked(sheetsClient.updateSheetRow)
@@ -29,7 +34,7 @@ describe('DreamRepository', () => {
     const dream = {
       id: '1', email: 'a@b.com', date: '2026-07-05',
       description: 'nice dream', title: '', category: '',
-      edit_log: '', created_at: '', updated_at: '',
+      created_at: '', updated_at: '',
     }
     mockQuery.mockResolvedValue([dream])
 
@@ -83,27 +88,27 @@ describe('DreamRepository', () => {
     expect(result.title_candidates).toEqual([])
     expect(mockAppend).toHaveBeenCalledWith('dreams', expect.any(Array))
     const appendArg = mockAppend.mock.calls[0][1][0]
-    const candidatesIdx = 6
+    const candidatesIdx = 7
     expect(JSON.parse(appendArg[candidatesIdx])).toEqual([])
   })
 
   it('updates a dream and persists to sheets', async () => {
-    const headers = ['id', 'email', 'date', 'description', 'title', 'tags', 'visibility', 'title_candidates', 'edit_log', 'created_at', 'updated_at']
-    const existingRow = ['1', 'a@b.com', '2026-07-05', 'original', 'original title', '[]', 'private', '[]', '', '2026-01-01T00:00:00Z', '2026-01-01T00:00:00Z']
+    const headers = ['id', 'email', 'date', 'description', 'title', 'tags', 'visibility', 'title_candidates', 'created_at', 'updated_at']
+    const existingRow = ['1', 'a@b.com', '2026-07-05', 'original', 'original title', '[]', 'private', '[]', '2026-01-01T00:00:00Z', '2026-01-01T00:00:00Z']
     mockFetchRows.mockResolvedValue([headers, existingRow])
     mockUpdateSheet.mockResolvedValue(undefined)
 
     const result = await repo.update('1', { title: 'new title' })
 
     expect(result.title).toBe('new title')
-    expect(result.updated_at).not.toBe(existingRow[8])
+    expect(result.updated_at).not.toBe(existingRow[9])
     expect(mockUpdateSheet).toHaveBeenCalledTimes(1)
     expect(mockUpdateSheet).toHaveBeenCalledWith('dreams', 2, expect.arrayContaining(['new title']))
   })
 
   it('updates title_candidates', async () => {
-    const headers = ['id', 'email', 'date', 'description', 'title', 'tags', 'visibility', 'title_candidates', 'edit_log', 'created_at', 'updated_at']
-    const existingRow = ['1', 'a@b.com', '2026-07-05', 'dream desc', '', '[]', 'private', '[]', '', '2026-01-01T00:00:00Z', '2026-01-01T00:00:00Z']
+    const headers = ['id', 'email', 'date', 'description', 'title', 'tags', 'visibility', 'title_candidates', 'created_at', 'updated_at']
+    const existingRow = ['1', 'a@b.com', '2026-07-05', 'dream desc', '', '[]', 'private', '[]', '2026-01-01T00:00:00Z', '2026-01-01T00:00:00Z']
     mockFetchRows.mockResolvedValue([headers, existingRow])
     mockUpdateSheet.mockResolvedValue(undefined)
 
@@ -122,8 +127,8 @@ describe('DreamRepository', () => {
 
   it('finds public first page and returns cursor when results fill the page', async () => {
     const dreams = [
-      { id: '1', email: 'a@b.com', date: '2026-07-15', description: 'd1', title: '', tags: [], visibility: 'public', edit_log: '', created_at: '2026-07-15T10:00:00Z', updated_at: '' },
-      { id: '2', email: 'b@c.com', date: '2026-07-14', description: 'd2', title: '', tags: [], visibility: 'public', edit_log: '', created_at: '2026-07-14T10:00:00Z', updated_at: '' },
+      { id: '1', email: 'a@b.com', date: '2026-07-15', description: 'd1', title: '', tags: [], visibility: 'public', created_at: '2026-07-15T10:00:00Z', updated_at: '' },
+      { id: '2', email: 'b@c.com', date: '2026-07-14', description: 'd2', title: '', tags: [], visibility: 'public', created_at: '2026-07-14T10:00:00Z', updated_at: '' },
     ]
     mockQuery.mockResolvedValue(dreams)
 
@@ -139,7 +144,7 @@ describe('DreamRepository', () => {
 
   it('finds public dreams with cursor', async () => {
     const dreams = [
-      { id: '3', email: 'c@d.com', date: '2026-07-10', description: 'd3', title: '', tags: [], visibility: 'public', edit_log: '', created_at: '2026-07-10T10:00:00Z', updated_at: '' },
+      { id: '3', email: 'c@d.com', date: '2026-07-10', description: 'd3', title: '', tags: [], visibility: 'public', created_at: '2026-07-10T10:00:00Z', updated_at: '' },
     ]
     mockQuery.mockResolvedValue(dreams)
 

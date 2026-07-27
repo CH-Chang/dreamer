@@ -8,7 +8,6 @@ export interface Dream {
   title_candidates?: string[]
   tags: string[]
   visibility: 'public' | 'private'
-  edit_log?: string
   created_at: string
   updated_at: string
 }

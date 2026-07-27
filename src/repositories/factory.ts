@@ -5,6 +5,7 @@ import type { ICategoryRepository } from './interfaces/ICategoryRepository'
 import type { IComicRepository } from './interfaces/IComicRepository'
 import type { IRateLimitRepository } from './interfaces/IRateLimitRepository'
 import type { ICommentRepository } from './interfaces/ICommentRepository'
+import type { IEditLogRepository } from './interfaces/IEditLogRepository'
 import { UserRepository } from './sheets/UserRepository'
 import { DreamRepository } from './sheets/DreamRepository'
 import { VideoRepository } from './sheets/VideoRepository'
@@ -12,6 +13,7 @@ import { CategoryRepository } from './sheets/CategoryRepository'
 import { ComicRepository } from './sheets/ComicRepository'
 import { RateLimitRepository } from './sheets/RateLimitRepository'
 import { CommentRepository } from './sheets/CommentRepository'
+import { EditLogRepository } from './sheets/EditLogRepository'
 
 let userRepo: IUserRepository
 let dreamRepo: IDreamRepository
@@ -20,6 +22,7 @@ let categoryRepo: ICategoryRepository
 let comicRepo: IComicRepository
 let rateLimitRepo: IRateLimitRepository
 let commentRepo: ICommentRepository
+let editLogRepo: IEditLogRepository
 
 export function getUserRepository(): IUserRepository {
   if (!userRepo) userRepo = new UserRepository()
@@ -54,4 +57,9 @@ export function getRateLimitRepository(): IRateLimitRepository {
 export function getCommentRepository(): ICommentRepository {
   if (!commentRepo) commentRepo = new CommentRepository()
   return commentRepo
+}
+
+export function getEditLogRepository(): IEditLogRepository {
+  if (!editLogRepo) editLogRepo = new EditLogRepository()
+  return editLogRepo
 }

@@ -37,7 +37,7 @@ describe('geminiTextClient', () => {
     expect(mockFetch).toHaveBeenCalledTimes(1)
     const callUrl = mockFetch.mock.calls[0][0]
     expect(callUrl).toContain('test-project')
-    expect(callUrl).toContain('gemini-2.0-flash-001')
+    expect(callUrl).toContain('gemini-3.5-flash')
     expect(callUrl).toContain('generateContent')
   })
 

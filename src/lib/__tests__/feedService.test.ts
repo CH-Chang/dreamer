@@ -34,7 +34,7 @@ describe('FeedService', () => {
     const dream: Dream = {
       id: 'dream-1', email: 'a@b.com', date: '2026-07-15',
       description: 'A wonderful dream', title: 'My Dream',
-      tags: [], visibility: 'public', edit_log: '',
+      tags: [], visibility: 'public',
       created_at: '2026-07-15T10:00:00Z', updated_at: '',
     }
     const user: User = {
@@ -76,7 +76,7 @@ describe('FeedService', () => {
     const dream: Dream = {
       id: 'dream-1', email: 'a@b.com', date: '2026-07-15',
       description: 'd', title: '', tags: [], visibility: 'public',
-      edit_log: '', created_at: '2026-07-15T10:00:00Z', updated_at: '',
+      created_at: '2026-07-15T10:00:00Z', updated_at: '',
     }
     mockRepo.findPublicPage.mockResolvedValue({ items: [dream], nextCursor: undefined })
     mockVideoRepo.findAllByDreamId.mockResolvedValue([])

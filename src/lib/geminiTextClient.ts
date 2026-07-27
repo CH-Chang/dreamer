@@ -10,7 +10,7 @@ interface GeminiTextResponse {
 }
 
 class GeminiTextClient {
-  private model = 'gemini-2.0-flash-001'
+  private model = 'gemini-3.5-flash'
 
   async generate(prompt: string, systemPrompt?: string): Promise<string> {
     const token = useAuthStore.getState().token

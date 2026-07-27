@@ -2,22 +2,34 @@ import type { Dream, CreateDreamInput, UpdateDreamInput } from '../../types/drea
 import type { IDreamRepository } from '../interfaces/IDreamRepository'
 import { query } from '../../lib/alaSqlService'
 import { appendSheetRow, updateSheetRow, fetchSheetAsRows } from '../../lib/googleSheetsClient'
+import { getEditLogRepository } from '../factory'
 import { generateId } from '../../utils/idGenerator'
 
 export class DreamRepository implements IDreamRepository {
+  private parseRow = (row: Dream): Dream => ({
+    ...row,
+    tags: typeof row.tags === 'string' ? this.safeParse(row.tags, []) : row.tags,
+    title_candidates: typeof row.title_candidates === 'string' ? this.safeParse(row.title_candidates, []) : row.title_candidates,
+  })
+
+  private safeParse = <T>(val: string, fallback: T): T => {
+    try { return JSON.parse(val) } catch { return fallback }
+  }
+
   async findById(id: string): Promise<Dream | null> {
     const dreams = await query<Dream>(
       'SELECT * FROM dreams WHERE id = ?',
       [id],
     )
-    return dreams[0] || null
+    return dreams[0] ? this.parseRow(dreams[0]) : null
   }
 
   async findAllByEmail(email: string): Promise<Dream[]> {
-    return query<Dream>(
+    const dreams = await query<Dream>(
       'SELECT * FROM dreams WHERE email = ? ORDER BY created_at DESC',
       [email],
     )
+    return dreams.map(this.parseRow)
   }
 
   async findByDate(email: string, date: string): Promise<Dream | null> {
@@ -25,15 +37,16 @@ export class DreamRepository implements IDreamRepository {
       'SELECT * FROM dreams WHERE email = ? AND date = ?',
       [email, date],
     )
-    return dreams[0] || null
+    return dreams[0] ? this.parseRow(dreams[0]) : null
   }
 
   async findByMonth(email: string, year: number, month: number): Promise<Dream[]> {
     const monthStr = `${year}-${String(month + 1).padStart(2, '0')}`
-    return query<Dream>(
+    const dreams = await query<Dream>(
       'SELECT * FROM dreams WHERE email = ? AND date LIKE ?',
       [email, `${monthStr}%`],
     )
+    return dreams.map(this.parseRow)
   }
 
   async findPublicPage(cursor?: string, limit = 10): Promise<{ items: Dream[]; nextCursor?: string }> {
@@ -51,7 +64,7 @@ export class DreamRepository implements IDreamRepository {
 
     const items = await query<Dream>(sql, params)
     const nextCursor = items.length === limit ? items[items.length - 1].created_at : undefined
-    return { items, nextCursor }
+    return { items: items.map(this.parseRow), nextCursor }
   }
 
   async create(input: CreateDreamInput): Promise<Dream> {
@@ -64,7 +77,6 @@ export class DreamRepository implements IDreamRepository {
       title_candidates: [],
       tags: [],
       visibility: input.visibility ?? 'private',
-      edit_log: '',
       created_at: now,
       updated_at: now,
     }
@@ -72,12 +84,11 @@ export class DreamRepository implements IDreamRepository {
       dream.id, dream.email, dream.date, dream.description,
       dream.title || '', JSON.stringify(dream.tags), dream.visibility,
       JSON.stringify(dream.title_candidates || []),
-      dream.edit_log || '',
       dream.created_at, dream.updated_at,
     ]])
     await query(
-      `INSERT INTO dreams (id, email, date, description, title, tags, title_candidates, visibility, edit_log, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-      [dream.id, dream.email, dream.date, dream.description, dream.title || '', JSON.stringify(dream.tags), JSON.stringify(dream.title_candidates || []), dream.visibility, dream.edit_log || '', dream.created_at, dream.updated_at],
+      `INSERT INTO dreams (id, email, date, description, title, tags, title_candidates, visibility, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      [dream.id, dream.email, dream.date, dream.description, dream.title || '', JSON.stringify(dream.tags), JSON.stringify(dream.title_candidates || []), dream.visibility, dream.created_at, dream.updated_at],
     )
     return dream
   }
@@ -144,16 +155,15 @@ export class DreamRepository implements IDreamRepository {
     const updatedAtCol = colIndex('updated_at')
     if (updatedAtCol !== -1) newValues[updatedAtCol] = now
 
+    await updateSheetRow('dreams', rowIdx + 1, newValues)
+
     if (Object.keys(changes).length > 0) {
-      const editLogCol = colIndex('edit_log')
-      if (editLogCol !== -1) {
-        const existingLog = newValues[editLogCol] || ''
-        const entry = JSON.stringify({ edited_at: now, changes })
-        newValues[editLogCol] = existingLog ? existingLog + '\n' + entry : entry
+      try {
+        await getEditLogRepository().create({ dream_id: id, edited_at: now, changes })
+      } catch (err) {
+        console.error('Failed to record edit log:', err)
       }
     }
-
-    await updateSheetRow('dreams', rowIdx + 1, newValues)
 
     const updateFields: string[] = ["updated_at = ?"]
     const updateValues: unknown[] = [now]
@@ -182,7 +192,6 @@ export class DreamRepository implements IDreamRepository {
         }
       })(),
       visibility: (newValues[colIndex('visibility')] || 'private') as 'public' | 'private',
-      edit_log: newValues[colIndex('edit_log')] || undefined,
       created_at: newValues[colIndex('created_at')] || '',
       updated_at: newValues[colIndex('updated_at')] || '',
     }
