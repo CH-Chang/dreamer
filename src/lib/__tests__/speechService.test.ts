@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest'
+import { it, expect, vi, beforeEach } from 'vitest'
 
 class MockRecognition {
   lang = ''
@@ -8,7 +8,7 @@ class MockRecognition {
   start = vi.fn()
   stop = vi.fn()
   abort = vi.fn()
-  onresult: ((event: unknown) => void) | null = null
+  onresult: ((event: any) => void) | null = null
   onerror: ((event: unknown) => void) | null = null
   onend: (() => void) | null = null
 }
@@ -54,8 +54,8 @@ it('calls onResult with final transcripts', async () => {
     ],
     resultIndex: 0,
   }
-  event.results[0].isFinal = true
-  event.results[1].isFinal = true
+  ;(event.results[0] as any).isFinal = true
+  ;(event.results[1] as any).isFinal = true
   mockRecognition.onresult!(event)
 
   expect(onResult).toHaveBeenCalledWith('我做了')
@@ -73,7 +73,7 @@ it('calls onInterim with non-final transcripts', async () => {
     ],
     resultIndex: 0,
   }
-  event.results[0].isFinal = false
+  ;(event.results[0] as any).isFinal = false
   mockRecognition.onresult!(event)
 
   expect(onInterim).toHaveBeenCalledWith('做夢')
@@ -85,7 +85,7 @@ it('calls onError on recognition error', async () => {
   const service = new SpeechService({ onResult: vi.fn(), onError })
   service.start()
 
-  mockRecognition.onerror!({ error: 'not-allowed' })
+  mockRecognition.onerror!({ error: 'not-allowed' } as any)
   expect(onError).toHaveBeenCalledWith('not-allowed')
 })
 

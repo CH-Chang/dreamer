@@ -5,7 +5,7 @@ interface SpeechServiceCallbacks {
 }
 
 export class SpeechService {
-  private recognition: SpeechRecognition | null = null
+  private recognition: any | null = null
   private callbacks: SpeechServiceCallbacks
   private listening = false
 
@@ -28,7 +28,7 @@ export class SpeechService {
     this.recognition.interimResults = true
     this.recognition.maxAlternatives = 1
 
-    this.recognition.onresult = (event: SpeechRecognitionEvent) => {
+    this.recognition.onresult = (event: any) => {
       let finalText = ''
       let interimText = ''
       for (let i = event.resultIndex; i < event.results.length; i++) {
@@ -45,7 +45,7 @@ export class SpeechService {
       }
     }
 
-    this.recognition.onerror = (event) => {
+    this.recognition.onerror = (event: any) => {
       this.callbacks.onError?.(event.error)
     }
 
