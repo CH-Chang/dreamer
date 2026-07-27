@@ -5,6 +5,7 @@ import { useDreamStore } from '../../stores/dreamStore'
 import { getDreamRepository } from '../../repositories/factory'
 import { geminiTextClient } from '../../lib/geminiTextClient'
 import { Switch } from '../ui/Switch'
+import { MicButton } from '../ui/MicButton'
 
 interface Props {
   date: string
@@ -16,6 +17,10 @@ export function DreamForm({ date }: Props) {
   const [visibility, setVisibility] = useState<'public' | 'private'>('private')
   const { user } = useAuthStore()
   const { addDream } = useDreamStore()
+
+  const handleTranscript = (text: string) => {
+    setDescription((prev) => prev + text)
+  }
 
   const handleSave = async () => {
     if (!description.trim() || !user || saving) return
@@ -60,17 +65,20 @@ export function DreamForm({ date }: Props) {
 
   return (
     <div>
-      <p className="text-xs text-gray-400 tracking-wider mb-3">
-        {date}
-      </p>
-      <textarea
-        value={description}
-        onChange={(e) => setDescription(e.target.value)}
-        onKeyDown={handleKeyDown}
-        placeholder="記錄你的夢境..."
-        rows={4}
-        className="w-full resize-none bg-transparent border-b border-gray-200 text-sm text-gray-600 placeholder-gray-200 focus:outline-none focus:border-gray-400 transition-colors pb-3"
-      />
+      <p className="text-xs text-gray-400 tracking-wider mb-3">{date}</p>
+      <div className="relative">
+        <textarea
+          value={description}
+          onChange={(e) => setDescription(e.target.value)}
+          onKeyDown={handleKeyDown}
+          placeholder="記錄你的夢境..."
+          rows={4}
+          className="w-full resize-none bg-transparent border-b border-gray-200 text-sm text-gray-600 placeholder-gray-200 focus:outline-none focus:border-gray-400 transition-colors pb-3 pr-8"
+        />
+        <div className="absolute bottom-3 right-1">
+          <MicButton onTranscript={handleTranscript} disabled={saving} />
+        </div>
+      </div>
       <div className="flex items-center justify-between mt-3">
         <Switch checked={visibility === 'public'} onChange={(v) => setVisibility(v ? 'public' : 'private')} />
         <m.button
