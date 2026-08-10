@@ -1,7 +1,6 @@
 import { useNavigate } from 'react-router-dom'
 import { useAuthStore } from '../stores/authStore'
 import { getUserRepository } from '../repositories/factory'
-import { initDatabase } from '../lib/alaSqlService'
 
 export function useAuth() {
   const { user, isAuthenticated, logout } = useAuthStore()
@@ -16,8 +15,6 @@ export function useAuth() {
       await userInfoRes.json()
 
     useAuthStore.getState().setSession({ email: userInfo.email, name: userInfo.name, avatar_url: userInfo.picture ?? '', role: 'user', created_at: '' }, accessToken)
-
-    await initDatabase(true)
 
     const repo = getUserRepository()
     let existingUser = await repo.findByEmail(userInfo.email)

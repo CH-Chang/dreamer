@@ -1,5 +1,4 @@
 import { useState } from 'react'
-import { fetchSheetAsRows } from '../../lib/googleSheetsClient'
 
 interface Props {
   onTested?: (success: boolean) => void
@@ -14,9 +13,10 @@ export function ConnectionTest({ onTested }: Props) {
   const testConnection = async () => {
     setStatus('testing')
     try {
-      await fetchSheetAsRows('users')
+      const res = await fetch('/api/health')
+      if (!res.ok) throw new Error('API 伺服器連線失敗')
       setStatus('success')
-      setMessage('連線成功')
+      setMessage('API 伺服器連線成功')
       onTested?.(true)
     } catch (err) {
       setStatus('error')

@@ -1,9 +1,4 @@
 import alasql from 'alasql'
-import {
-  fetchSheetAsRows,
-  parseRowsToObjects,
-  ensureSheetsExist,
-} from './googleSheetsClient'
 
 alasql.fn.STRFTIME = ((fmt: string, date: string): string => {
   const d = date === 'now' || date === "'now'" ? new Date() : new Date(date)
@@ -27,27 +22,9 @@ export async function initDatabase(force = false): Promise<void> {
   if (dbInited && !force) return
   dbInited = false
 
-  try {
-    await ensureSheetsExist([...SHEET_NAMES])
-  } catch {
-    // Sheets unavailable — proceed with empty tables
-  }
-
   for (const sheetName of SHEET_NAMES) {
-    try {
-      const rows = await fetchSheetAsRows(sheetName)
-      const objects = parseRowsToObjects(rows)
-      await alasql.promise(`DROP TABLE IF EXISTS ${sheetName}`)
-      if (objects.length > 0) {
-        await alasql.promise(`CREATE TABLE ${sheetName}`)
-        await alasql.promise(`INSERT INTO ${sheetName} SELECT * FROM ?`, [objects])
-      } else {
-        await alasql.promise(`CREATE TABLE ${sheetName} (dummy TEXT)`)
-      }
-    } catch {
-      await alasql.promise(`DROP TABLE IF EXISTS ${sheetName}`)
-      await alasql.promise(`CREATE TABLE ${sheetName} (dummy TEXT)`)
-    }
+    await alasql.promise(`DROP TABLE IF EXISTS ${sheetName}`)
+    await alasql.promise(`CREATE TABLE ${sheetName} (dummy TEXT)`)
   }
   dbInited = true
   try {
@@ -59,7 +36,7 @@ export async function initDatabase(force = false): Promise<void> {
 }
 
 export async function query<T>(sql: string, params?: unknown[]): Promise<T[]> {
-  if (!dbInited) throw new Error('Database not initialized. Call initDatabase() first.')
+  if (!dbInited) await initDatabase()
   return alasql.promise(sql, params)
 }
 
