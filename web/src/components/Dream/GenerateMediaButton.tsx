@@ -1,14 +1,8 @@
 import { useState, useRef, useEffect } from 'react'
 import { motion as m } from 'framer-motion'
 import { useAuthStore } from '../../stores/authStore'
-import { useSettingsStore } from '../../stores/settingsStore'
-import { getVideoRepository } from '../../repositories/factory'
-import { getComicRepository } from '../../repositories/factory'
-import { veoApiClient } from '../../lib/veoApiClient'
-import { imagenApiClient } from '../../lib/imgenApiClient'
-import { uploadVideo, uploadImage } from '../../lib/googleDriveClient'
-import type { VideoStatus } from '../../types/video'
-import { rateLimitService, RateLimitError } from '../../lib/rateLimitService'
+import { getVideoRepository, getComicRepository } from '../../repositories/factory'
+import { rateLimitService } from '../../lib/rateLimitService'
 
 interface Props {
   dreamId: string
@@ -16,45 +10,13 @@ interface Props {
   onCreated: () => void
 }
 
-async function pollVideoOperation(
-  name: string,
-  onUpdate: (status: VideoStatus) => Promise<void>,
-  dreamId: string,
-  folderName: string,
-): Promise<{ videoUrl?: string }> {
-  for (let i = 0; i < 120; i++) {
-    await new Promise((r) => setTimeout(r, 5000))
-    const result = await veoApiClient.getOperation(name)
-    if (result.done) {
-      if (result.error) throw new Error(result.error.message)
-      const videoData = result.response?.videos?.[0]
-      if (videoData?.bytesBase64Encoded) {
-        const fileId = await uploadVideo(videoData.bytesBase64Encoded, videoData.mimeType, `dream-${dreamId}-${Date.now()}.mp4`, folderName)
-        return { videoUrl: `drive://${fileId}` }
-      }
-      const videoUri = result.response?.generateVideoResponse?.generatedSamples?.[0]?.video?.uri
-      if (videoUri) return { videoUrl: videoUri }
-      return {}
-    }
-    await onUpdate('generating')
-  }
-  throw new Error('Video generation timed out')
-}
-
-async function generateComic(dreamId: string, description: string, referenceImage?: { bytesBase64Encoded: string; mimeType: string }): Promise<string> {
-  const { driveFolderName } = useSettingsStore.getState().settings
-  const result = await imagenApiClient.generateImage(`夢境漫畫風格: ${description}`, referenceImage)
-  const fileId = await uploadImage(result.bytesBase64Encoded, result.mimeType, `comic-${dreamId}-${Date.now()}.png`, driveFolderName)
-  return `drive://${fileId}`
-}
-
-export function GenerateMediaButton({ dreamId, description, onCreated }: Props) {
+export function GenerateMediaButton({ dreamId, onCreated }: Props) {
   const [open, setOpen] = useState(false)
   const [loading, setLoading] = useState<'video' | 'comic' | null>(null)
   const [videoRemaining, setVideoRemaining] = useState<{ daily: number; monthly: number } | null>(null)
   const [comicRemaining, setComicRemaining] = useState<{ daily: number; monthly: number } | null>(null)
   const [withCharacter, setWithCharacter] = useState(false)
-  const { user, avatarBase64 } = useAuthStore()
+  const { user } = useAuthStore()
   const ref = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
@@ -78,102 +40,32 @@ export function GenerateMediaButton({ dreamId, description, onCreated }: Props) 
 
   const handleGenerateVideo = async () => {
     if (!user || loading) return
-    try {
-      await rateLimitService.checkAndThrow(user.email, 'video', withCharacter ? 2 : 1)
-    } catch (err) {
-      if (err instanceof RateLimitError) return
-      throw err
-    }
     setOpen(false)
     setLoading('video')
-    const repo = getVideoRepository()
-    let video!: Awaited<ReturnType<typeof repo.create>>
     try {
-      video = await repo.create({ dream_id: dreamId, email: user.email, with_character: withCharacter })
-      await repo.updateStatus(video.id, 'generating')
+      const repo = getVideoRepository()
+      await repo.create({ dream_id: dreamId, email: user.email, with_character: withCharacter })
       onCreated()
-      const [v1, c1] = await Promise.all([
-        rateLimitService.getRemaining(user.email, 'video').catch(() => null),
-        rateLimitService.getRemaining(user.email, 'comic').catch(() => null),
-      ])
-      setVideoRemaining(v1)
-      setComicRemaining(c1)
-      const veoOptions: Parameters<typeof veoApiClient.generateVideo>[0] = {
-        prompt: `Dream-like cinematic scene: ${description}`,
-        aspectRatio: '16:9',
-        resolution: '720p',
-      }
-      if (withCharacter && avatarBase64) {
-        veoOptions.referenceImage = { bytesBase64Encoded: avatarBase64, mimeType: 'image/jpeg' }
-      }
-      const { name } = await veoApiClient.generateVideo(veoOptions)
-      const pollResult = await pollVideoOperation(name, async (status) => { await repo.updateStatus(video.id, status); onCreated() }, dreamId, useSettingsStore.getState().settings.driveFolderName)
-      await repo.updateStatus(video.id, pollResult.videoUrl ? 'done' : 'failed', pollResult.videoUrl)
-      onCreated()
-      const [v2, c2] = await Promise.all([
-        rateLimitService.getRemaining(user.email, 'video').catch(() => null),
-        rateLimitService.getRemaining(user.email, 'comic').catch(() => null),
-      ])
-      setVideoRemaining(v2)
-      setComicRemaining(c2)
     } catch (err) {
       console.error('Failed to generate video:', err)
-      try { await repo.updateStatus(video.id, 'failed') } catch {}
-      onCreated()
-      const [v3, c3] = await Promise.all([
-        rateLimitService.getRemaining(user.email, 'video').catch(() => null),
-        rateLimitService.getRemaining(user.email, 'comic').catch(() => null),
-      ])
-      setVideoRemaining(v3)
-      setComicRemaining(c3)
-    } finally { setLoading(null) }
+    } finally {
+      setLoading(null)
+    }
   }
 
   const handleGenerateComic = async () => {
     if (!user || loading) return
-    try {
-      await rateLimitService.checkAndThrow(user.email, 'comic', withCharacter ? 2 : 1)
-    } catch (err) {
-      if (err instanceof RateLimitError) return
-      throw err
-    }
     setOpen(false)
     setLoading('comic')
-    const repo = getComicRepository()
-    let comic!: Awaited<ReturnType<typeof repo.create>>
     try {
-      comic = await repo.create({ dream_id: dreamId, email: user.email, with_character: withCharacter })
-      await repo.updateStatus(comic.id, 'generating')
+      const repo = getComicRepository()
+      await repo.create({ dream_id: dreamId, email: user.email, with_character: withCharacter })
       onCreated()
-      const [v1, c1] = await Promise.all([
-        rateLimitService.getRemaining(user.email, 'video').catch(() => null),
-        rateLimitService.getRemaining(user.email, 'comic').catch(() => null),
-      ])
-      setVideoRemaining(v1)
-      setComicRemaining(c1)
-      const refImage = withCharacter && avatarBase64
-        ? { bytesBase64Encoded: avatarBase64, mimeType: 'image/jpeg' }
-        : undefined
-      const imageUrl = await generateComic(dreamId, description, refImage)
-      await repo.updateStatus(comic.id, 'done', imageUrl)
-      onCreated()
-      const [v2, c2] = await Promise.all([
-        rateLimitService.getRemaining(user.email, 'video').catch(() => null),
-        rateLimitService.getRemaining(user.email, 'comic').catch(() => null),
-      ])
-      setVideoRemaining(v2)
-      setComicRemaining(c2)
     } catch (err) {
       console.error('Failed to generate comic:', err)
-      try { await repo.updateStatus(comic.id, 'failed') } catch {}
-      onCreated()
-      const [v3, c3] = await Promise.all([
-        rateLimitService.getRemaining(user.email, 'video').catch(() => null),
-        rateLimitService.getRemaining(user.email, 'comic').catch(() => null),
-      ])
-      setVideoRemaining(v3)
-      setComicRemaining(c3)
-    } finally { setLoading(null) }
+    } finally {
+      setLoading(null)
+    }
   }
 
   return (

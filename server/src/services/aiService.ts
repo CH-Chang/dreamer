@@ -1,0 +1,142 @@
+export async function generateTitleSuggestions(description: string): Promise<string[]> {
+  const gcpProjectId = process.env.GCP_PROJECT_ID || 'dreamer-448202'
+  const prompt = `請根據以下夢境內容，產生 3 個簡短、富有詩意或吸引人的夢境標題（繁體中文），每行一個標題，不要有編號或額外說明：\n${description}`
+  const systemPrompt = '你是一個夢境解析與命名大師。請只輸出 3 行標題。'
+
+  const body = {
+    contents: [{ role: 'user', parts: [{ text: prompt }] }],
+    system_instruction: { parts: [{ text: systemPrompt }] },
+  }
+
+  const model = 'gemini-3.5-flash'
+  const res = await fetch(
+    `https://aiplatform.googleapis.com/v1/projects/${gcpProjectId}/locations/us-central1/publishers/google/models/${model}:generateContent`,
+    {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body),
+    },
+  )
+
+  if (!res.ok) {
+    const errorText = await res.text()
+    throw new Error(`Gemini title generation failed: ${errorText}`)
+  }
+
+  const data = (await res.json()) as any
+  const text = data.candidates?.[0]?.content?.parts?.[0]?.text || ''
+  return text
+    .split('\n')
+    .map((line: string) => line.replace(/^[\d\s.、-]+/, '').trim())
+    .filter(Boolean)
+    .slice(0, 3)
+}
+
+export async function generateComicImage(
+  prompt: string,
+  referenceImage?: { bytesBase64Encoded: string; mimeType: string },
+): Promise<{ bytesBase64Encoded: string; mimeType: string }> {
+  const gcpProjectId = process.env.GCP_PROJECT_ID || 'dreamer-448202'
+  const parts: Array<Record<string, unknown>> = [{ text: prompt }]
+
+  if (referenceImage) {
+    parts.push({
+      inlineData: {
+        mimeType: referenceImage.mimeType,
+        data: referenceImage.bytesBase64Encoded,
+      },
+    })
+  }
+
+  const model = 'gemini-3.1-flash-image'
+  const res = await fetch(
+    `https://aiplatform.googleapis.com/v1/projects/${gcpProjectId}/locations/global/publishers/google/models/${model}:generateContent`,
+    {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        contents: { role: 'user', parts },
+        generation_config: { response_modalities: ['TEXT', 'IMAGE'] },
+      }),
+    },
+  )
+
+  if (!res.ok) {
+    const errorText = await res.text()
+    throw new Error(`Imagen API request failed: ${errorText}`)
+  }
+
+  const data = (await res.json()) as any
+  const responseParts = data.candidates?.[0]?.content?.parts || []
+  let bytesBase64Encoded = ''
+  let mimeType = ''
+
+  for (const p of responseParts) {
+    if (p.inlineData) {
+      bytesBase64Encoded = p.inlineData.data
+      mimeType = p.inlineData.mimeType
+      break
+    }
+    if (p.inline_data) {
+      bytesBase64Encoded = p.inline_data.data
+      mimeType = p.inline_data.mime_type
+      break
+    }
+  }
+
+  if (!bytesBase64Encoded) {
+    throw new Error('Imagen returned no image data')
+  }
+
+  return { bytesBase64Encoded, mimeType: mimeType || 'image/png' }
+}
+
+export async function triggerVeoVideo(
+  prompt: string,
+  options: {
+    aspectRatio?: string
+    resolution?: string
+    referenceImage?: { bytesBase64Encoded: string; mimeType: string }
+  } = {},
+): Promise<{ name: string }> {
+  const gcpProjectId = process.env.GCP_PROJECT_ID || 'dreamer-448202'
+  const gcpLocation = process.env.GCP_LOCATION || 'us-central1'
+
+  const parameters: Record<string, string> = {}
+  if (options.aspectRatio) parameters.aspectRatio = options.aspectRatio
+  if (options.resolution) parameters.resolution = options.resolution
+
+  const instance: Record<string, unknown> = { prompt }
+  if (options.referenceImage) {
+    instance.referenceImages = [
+      {
+        referenceType: 'asset',
+        image: {
+          bytesBase64Encoded: options.referenceImage.bytesBase64Encoded,
+          mimeType: options.referenceImage.mimeType,
+        },
+      },
+    ]
+    parameters.personGeneration = 'allow'
+  }
+
+  const model = 'veo-3.1-fast-generate-001'
+  const res = await fetch(
+    `https://aiplatform.googleapis.com/v1/projects/${gcpProjectId}/locations/${gcpLocation}/publishers/google/models/${model}:predictLongRunning`,
+    {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        instances: [instance],
+        parameters,
+      }),
+    },
+  )
+
+  if (!res.ok) {
+    const errorText = await res.text()
+    throw new Error(`Veo API request failed: ${errorText}`)
+  }
+
+  return res.json()
+}

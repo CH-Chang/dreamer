@@ -3,7 +3,6 @@ import { motion as m } from 'framer-motion'
 import { useAuthStore } from '../../stores/authStore'
 import { useDreamStore } from '../../stores/dreamStore'
 import { getDreamRepository } from '../../repositories/factory'
-import { geminiTextClient } from '../../lib/geminiTextClient'
 import { Switch } from '../ui/Switch'
 import { MicButton } from '../ui/MicButton'
 
@@ -33,22 +32,7 @@ export function DreamForm({ date }: Props) {
         description: description.trim(),
         visibility,
       })
-
-      try {
-        const systemPrompt = '你是一個為夢境筆記產生標題的助手。根據以下夢境描述，產生 3 個簡潔、有意境的繁體中文標題（每個不超過 15 字），以換行分隔。只回傳標題，不需要編號。'
-        const result = await geminiTextClient.generate(description.trim(), systemPrompt)
-        const candidates = result.split('\n').map((s) => s.trim()).filter(Boolean).slice(0, 3)
-        if (candidates.length > 0) {
-          const updated = await repo.update(dream.id, { title_candidates: candidates })
-          addDream(updated)
-        } else {
-          addDream(dream)
-        }
-      } catch (err) {
-        console.error('Failed to generate title candidates:', err)
-        addDream(dream)
-      }
-
+      addDream(dream)
       setDescription('')
     } catch (err) {
       console.error('Failed to save dream:', err)

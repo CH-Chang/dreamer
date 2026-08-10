@@ -1,9 +1,23 @@
 import { Hono } from 'hono'
 import { authMiddleware, type AuthEnv } from '../middleware/auth'
 import { getDreamRepository } from '../repositories/factory'
+import { generateTitleSuggestions } from '../services/aiService'
 import type { CreateDreamInput, UpdateDreamInput } from '../../../shared/types/dream'
 
 export const dreamsRoute = new Hono<AuthEnv>()
+
+dreamsRoute.post('/suggest-title', authMiddleware, async (c) => {
+  const { description } = await c.req.json<{ description: string }>()
+  if (!description) {
+    return c.json({ error: 'Description is required' }, 400)
+  }
+  try {
+    const titles = await generateTitleSuggestions(description)
+    return c.json({ titles })
+  } catch (err) {
+    return c.json({ error: (err as Error).message || 'Failed to suggest titles' }, 500)
+  }
+})
 
 dreamsRoute.get('/public', async (c) => {
   const cursor = c.req.query('cursor')
@@ -59,8 +73,20 @@ dreamsRoute.post('/', authMiddleware, async (c) => {
   }
 
   const repo = getDreamRepository()
+
+  let title = body.title
+  if (!title) {
+    try {
+      const suggestions = await generateTitleSuggestions(body.description)
+      if (suggestions.length > 0) title = suggestions[0]
+    } catch {
+      // Ignore AI title generation failure on fallback
+    }
+  }
+
   const created = await repo.create({
     ...body,
+    title,
     email: user.email,
   })
   return c.json(created, 201)

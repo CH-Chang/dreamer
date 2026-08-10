@@ -1,6 +1,7 @@
 import { Hono } from 'hono'
 import { authMiddleware, type AuthEnv } from '../middleware/auth'
-import { getVideoRepository } from '../repositories/factory'
+import { getVideoRepository, getDreamRepository } from '../repositories/factory'
+import { triggerVeoVideo } from '../services/aiService'
 import type { VideoStatus } from '../../../shared/types/video'
 
 export const videosRoute = new Hono<AuthEnv>()
@@ -22,13 +23,29 @@ videosRoute.get('/', async (c) => {
 videosRoute.post('/', authMiddleware, async (c) => {
   const user = c.get('user')
   const body = await c.req.json<{ dream_id: string; with_character?: boolean }>()
-  const repo = getVideoRepository()
-  const created = await repo.create({
+  const videoRepo = getVideoRepository()
+  const dreamRepo = getDreamRepository()
+
+  const dream = await dreamRepo.findById(body.dream_id)
+  const description = dream?.description || '夢境描述'
+
+  const created = await videoRepo.create({
     dream_id: body.dream_id,
     email: user.email,
     with_character: body.with_character,
   })
-  return c.json(created, 201)
+
+  try {
+    await videoRepo.updateStatus(created.id, 'generating')
+    const prompt = `Dream-like cinematic scene: ${description}`
+    await triggerVeoVideo(prompt, { aspectRatio: '16:9', resolution: '720p' })
+  } catch {
+    // If trigger fails, mark failed
+    await videoRepo.updateStatus(created.id, 'failed')
+  }
+
+  const result = await videoRepo.findByDreamId(body.dream_id)
+  return c.json(result || created, 201)
 })
 
 videosRoute.put('/:id/status', authMiddleware, async (c) => {
