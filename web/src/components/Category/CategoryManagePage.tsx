@@ -2,7 +2,6 @@ import { useEffect, useState } from 'react'
 import { motion as m } from 'framer-motion'
 import { Link } from 'react-router-dom'
 import { useCategoryStore } from '../../stores/categoryStore'
-import { query } from '../../lib/alaSqlService'
 import { MessageBox } from '../ui/MessageBox'
 
 const COLOR_PRESETS = ['#8B5CF6', '#3B82F6', '#10B981', '#F59E0B', '#EF4444', '#EC4899', '#6366F1', '#14B8A6', '#F97316', '#84CC16']
@@ -18,30 +17,9 @@ export function CategoryManagePage() {
   const [editColor, setEditColor] = useState('')
   const [editIcon, setEditIcon] = useState('')
   const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null)
-  const [usageCount, setUsageCount] = useState(0)
-  const [usageMap, setUsageMap] = useState<Record<string, number>>({})
   const [saving, setSaving] = useState(false)
 
   useEffect(() => { loadCategories() }, [loadCategories])
-
-  useEffect(() => {
-    query<{ tags: string }>('SELECT tags FROM dreams').then((rows) => {
-      try {
-        const map: Record<string, number> = {}
-        for (const row of rows) {
-          if (!row.tags) continue
-          try {
-            const ids: string[] = JSON.parse(row.tags)
-            for (const id of ids) map[id] = (map[id] || 0) + 1
-          } catch { /* ignore malformed tags */ }
-        }
-        setUsageMap(map)
-      } catch (e) {
-        console.error(e)
-        setUsageMap({})
-      }
-    })
-  }, [])
 
   const handleAdd = async () => {
     if (!name.trim() || saving) return
@@ -71,7 +49,6 @@ export function CategoryManagePage() {
   }
 
   const confirmDelete = (id: string) => {
-    setUsageCount(usageMap[id] || 0)
     setDeleteConfirm(id)
   }
 
@@ -158,7 +135,6 @@ export function CategoryManagePage() {
                 <span>{cat.icon}</span>
                 <span className="text-xs text-gray-600 flex-1">{cat.name}</span>
                 <span className="w-3 h-3 rounded-full" style={{ backgroundColor: cat.color }} />
-                <span className="text-[10px] text-gray-300 tracking-wider">{usageMap[cat.id] || 0} 次</span>
                 <button onClick={() => startEdit(cat)} className="text-[10px] text-gray-300 hover:text-gray-500 tracking-wider">編輯</button>
                 <button onClick={() => confirmDelete(cat.id)} className="text-[10px] text-gray-300 hover:text-red-400 tracking-wider">刪除</button>
               </>
@@ -173,7 +149,7 @@ export function CategoryManagePage() {
       <MessageBox
         open={deleteConfirm !== null}
         title="刪除類別"
-        message={usageCount > 0 ? `此類別已被 ${usageCount} 則夢境使用。刪除後這些夢境中的標籤將顯示為「未知類別」。確定刪除？` : '確定刪除此類別？'}
+        message="確定刪除此類別？"
         confirmText={saving ? '刪除中...' : '確定'}
         onConfirm={handleDelete}
         onCancel={() => !saving ? setDeleteConfirm(null) : undefined}

@@ -1,12 +1,11 @@
 import { useCallback } from 'react'
 import { useDreamStore } from '../stores/dreamStore'
 import { useAuthStore } from '../stores/authStore'
-import { query } from '../lib/alaSqlService'
 import { getDreamRepository } from '../repositories/factory'
 
 export function useCalendar() {
   const { user } = useAuthStore()
-  const { currentMonth, setCurrentMonth, setDreams, setDreamsWithVideo, dreams } = useDreamStore()
+  const { currentMonth, setCurrentMonth, setDreams, dreams } = useDreamStore()
 
   const loadMonth = useCallback(async () => {
     if (!user) return
@@ -17,12 +16,7 @@ export function useCalendar() {
       currentMonth.month,
     )
     setDreams(monthDreams)
-    const videos = await query<{ dream_id: string }>(
-      'SELECT DISTINCT dream_id FROM videos WHERE status = ?',
-      ['done'],
-    )
-    setDreamsWithVideo(videos.map((v) => v.dream_id))
-  }, [user, currentMonth.year, currentMonth.month, setDreams, setDreamsWithVideo])
+  }, [user, currentMonth.year, currentMonth.month, setDreams])
 
   const goToPrevMonth = () => {
     const { year, month } = currentMonth
