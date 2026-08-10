@@ -15,6 +15,8 @@ export interface CreateDreamInput {
   email: string
   date: string
   description: string
+  title?: string
+  title_candidates?: string[]
   visibility?: 'public' | 'private'
 }
 

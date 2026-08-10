@@ -138,5 +138,5 @@ export async function triggerVeoVideo(
     throw new Error(`Veo API request failed: ${errorText}`)
   }
 
-  return res.json()
+  return (await res.json()) as { name: string }
 }
