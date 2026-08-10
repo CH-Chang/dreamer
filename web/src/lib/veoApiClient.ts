@@ -37,46 +37,24 @@ interface GenerateVideoOptions {
 }
 
 class VeoApiClient {
-  private model = 'veo-3.1-fast-generate-001'
-
   async generateVideo(options: GenerateVideoOptions): Promise<VeoGenerateResponse> {
     const token = useAuthStore.getState().token
     if (!token) throw new Error('Not authenticated')
 
     const { gcpProjectId, gcpLocation } = useSettingsStore.getState().settings
-    if (!gcpProjectId) throw new Error('GCP Project ID not configured')
 
-    const parameters: Record<string, string> = {}
-    if (options.aspectRatio) parameters.aspectRatio = options.aspectRatio
-    if (options.resolution) parameters.resolution = options.resolution
-
-    const instance: Record<string, unknown> = { prompt: options.prompt }
-
-    if (options.referenceImage) {
-      instance.referenceImages = [{
-        referenceType: 'asset',
-        image: {
-          bytesBase64Encoded: options.referenceImage.bytesBase64Encoded,
-          mimeType: options.referenceImage.mimeType,
-        },
-      }]
-      parameters.personGeneration = 'allow'
-    }
-
-    const res = await fetch(
-      `https://aiplatform.googleapis.com/v1/projects/${gcpProjectId}/locations/${gcpLocation}/publishers/google/models/${this.model}:predictLongRunning`,
-      {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`,
-        },
-        body: JSON.stringify({
-          instances: [instance],
-          parameters,
-        }),
+    const res = await fetch('/api/ai/generate-video', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`,
       },
-    )
+      body: JSON.stringify({
+        ...options,
+        gcpProjectId,
+        gcpLocation,
+      }),
+    })
 
     if (!res.ok) {
       const bodyText = await res.text()
@@ -91,18 +69,22 @@ class VeoApiClient {
 
     const { gcpProjectId, gcpLocation } = useSettingsStore.getState().settings
 
-    const url = `https://${gcpLocation}-aiplatform.googleapis.com/v1/projects/${gcpProjectId}/locations/${gcpLocation}/publishers/google/models/${this.model}:fetchPredictOperation`
-
-    const res = await fetch(url, {
+    const res = await fetch('/api/ai/video-operation', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
         'Authorization': `Bearer ${token}`,
       },
-      body: JSON.stringify({ operationName: name }),
+      body: JSON.stringify({
+        operationName: name,
+        gcpProjectId,
+        gcpLocation,
+      }),
     })
+
     if (!res.ok) throw new Error('Failed to get operation status')
     return res.json()
-  }}
+  }
+}
 
 export const veoApiClient = new VeoApiClient()

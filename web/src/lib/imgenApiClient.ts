@@ -1,97 +1,35 @@
 import { useAuthStore } from '../stores/authStore'
 import { useSettingsStore } from '../stores/settingsStore'
 
-interface GeminiImagePart {
-  text?: string
-  inlineData?: {
-    mimeType: string
-    data: string
-  }
-  inline_data?: {
-    mime_type: string
-    data: string
-  }
-}
-
-interface GeminiResponse {
-  candidates?: Array<{
-    content?: {
-      parts?: GeminiImagePart[]
-    }
-  }>
-}
-
 interface ReferenceImage {
   bytesBase64Encoded: string
   mimeType: string
 }
 
 class ImagenApiClient {
-  private model = 'gemini-3.1-flash-image'
-
   async generateImage(prompt: string, referenceImage?: ReferenceImage): Promise<{ bytesBase64Encoded: string; mimeType: string }> {
     const token = useAuthStore.getState().token
     if (!token) throw new Error('Not authenticated')
     const { gcpProjectId } = useSettingsStore.getState().settings
-    if (!gcpProjectId) throw new Error('GCP Project ID not configured')
 
-    const parts: GeminiImagePart[] = [{ text: prompt }]
-
-    if (referenceImage) {
-      parts.push({
-        inlineData: {
-          mimeType: referenceImage.mimeType,
-          data: referenceImage.bytesBase64Encoded,
-        },
-      })
-    }
-
-    const res = await fetch(
-      `https://aiplatform.googleapis.com/v1/projects/${gcpProjectId}/locations/global/publishers/google/models/${this.model}:generateContent`,
-      {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`,
-        },
-        body: JSON.stringify({
-          contents: {
-            role: 'user',
-            parts,
-          },
-          generation_config: {
-            response_modalities: ['TEXT', 'IMAGE'],
-          },
-        }),
+    const res = await fetch('/api/ai/generate-image', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`,
       },
-    )
+      body: JSON.stringify({ prompt, referenceImage, gcpProjectId }),
+    })
 
     if (!res.ok) {
       const bodyText = await res.text()
       throw new Error(`Imagen API request failed: ${bodyText}`)
     }
 
-    const data: GeminiResponse = await res.json()
-    const responseParts = data.candidates?.[0]?.content?.parts || []
-    let bytesBase64Encoded = ''
-    let mimeType = ''
+    const data = await res.json()
+    if (!data.bytesBase64Encoded) throw new Error('Imagen returned no image data')
 
-    for (const p of responseParts) {
-      if (p.inlineData) {
-        bytesBase64Encoded = p.inlineData.data
-        mimeType = p.inlineData.mimeType
-        break
-      }
-      if (p.inline_data) {
-        bytesBase64Encoded = p.inline_data.data
-        mimeType = p.inline_data.mime_type
-        break
-      }
-    }
-
-    if (!bytesBase64Encoded) throw new Error('Gemini returned no image data')
-
-    return { bytesBase64Encoded, mimeType: mimeType || 'image/png' }
+    return data
   }
 }
 

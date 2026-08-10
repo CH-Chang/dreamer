@@ -25,9 +25,7 @@ describe('geminiTextClient', () => {
   it('sends request with correct URL and headers', async () => {
     mockFetch.mockResolvedValueOnce({
       ok: true,
-      json: async () => ({
-        candidates: [{ content: { parts: [{ text: 'title1\ntitle2\ntitle3' }] } }],
-      }),
+      json: async () => ({ text: 'title1\ntitle2\ntitle3' }),
     })
 
     const { geminiTextClient } = await import('../geminiTextClient')
@@ -35,10 +33,15 @@ describe('geminiTextClient', () => {
 
     expect(result).toBe('title1\ntitle2\ntitle3')
     expect(mockFetch).toHaveBeenCalledTimes(1)
-    const callUrl = mockFetch.mock.calls[0][0]
-    expect(callUrl).toContain('test-project')
-    expect(callUrl).toContain('gemini-3.5-flash')
-    expect(callUrl).toContain('generateContent')
+    expect(mockFetch).toHaveBeenCalledWith(
+      '/api/ai/generate-text',
+      expect.objectContaining({
+        method: 'POST',
+        headers: expect.objectContaining({
+          Authorization: 'Bearer test-token',
+        }),
+      }),
+    )
   })
 
   it('throws when not authenticated', async () => {
@@ -62,25 +65,10 @@ describe('geminiTextClient', () => {
   it('throws when no text in response', async () => {
     mockFetch.mockResolvedValueOnce({
       ok: true,
-      json: async () => ({ candidates: [] }),
+      json: async () => ({ text: '' }),
     })
 
     const { geminiTextClient } = await import('../geminiTextClient')
     await expect(geminiTextClient.generate('test')).rejects.toThrow('Gemini returned no text')
-  })
-
-  it('includes system_instruction when systemPrompt provided', async () => {
-    mockFetch.mockResolvedValueOnce({
-      ok: true,
-      json: async () => ({
-        candidates: [{ content: { parts: [{ text: 'result' }] } }],
-      }),
-    })
-
-    const { geminiTextClient } = await import('../geminiTextClient')
-    await geminiTextClient.generate('prompt', 'system')
-
-    const body = JSON.parse(mockFetch.mock.calls[0][1].body)
-    expect(body.system_instruction).toEqual({ parts: [{ text: 'system' }] })
   })
 })

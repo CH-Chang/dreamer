@@ -9,6 +9,7 @@ import { rateLimitsRoute } from './routes/rateLimits'
 import { videosRoute } from './routes/videos'
 import { comicsRoute } from './routes/comics'
 import { editLogsRoute } from './routes/editLogs'
+import { aiRoute } from './routes/ai'
 
 const app = new Hono()
 
@@ -29,6 +30,7 @@ app.route('/api/rate-limits', rateLimitsRoute)
 app.route('/api/videos', videosRoute)
 app.route('/api/comics', comicsRoute)
 app.route('/api/edit-logs', editLogsRoute)
+app.route('/api/ai', aiRoute)
 
 const port = Number(process.env.PORT) || 3000
 
