@@ -11,6 +11,7 @@
   },
   "dependencies": {
     "@hono/node-server": "^1.13.8",
+    "alasql": "^4.17.3",
     "google-auth-library": "^9.15.0",
     "hono": "^4.7.2"
   },

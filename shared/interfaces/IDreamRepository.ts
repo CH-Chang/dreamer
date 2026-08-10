@@ -8,4 +8,5 @@ export interface IDreamRepository {
   findPublicPage(cursor?: string, limit?: number): Promise<{ items: Dream[]; nextCursor?: string }>
   create(input: CreateDreamInput): Promise<Dream>
   update(id: string, data: UpdateDreamInput): Promise<Dream>
+  delete(id: string, email?: string): Promise<void>
 }
