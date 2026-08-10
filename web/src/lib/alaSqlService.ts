@@ -16,16 +16,19 @@ alasql.fn.strftime = alasql.fn.STRFTIME
 
 let dbInited = false
 
-const SHEET_NAMES = ['users', 'dreams', 'videos', 'categories', 'comics', 'rate_limits', 'comments', 'edit_logs'] as const
-
 export async function initDatabase(force = false): Promise<void> {
   if (dbInited && !force) return
   dbInited = false
 
-  for (const sheetName of SHEET_NAMES) {
-    await alasql.promise(`DROP TABLE IF EXISTS ${sheetName}`)
-    await alasql.promise(`CREATE TABLE ${sheetName} (dummy TEXT)`)
-  }
+  await alasql.promise(`CREATE TABLE IF NOT EXISTS users (email STRING, name STRING, avatar_url STRING, role STRING, created_at STRING)`)
+  await alasql.promise(`CREATE TABLE IF NOT EXISTS dreams (id STRING, email STRING, title STRING, date STRING, description STRING, visibility STRING, tags STRING, title_candidates STRING, created_at STRING, updated_at STRING)`)
+  await alasql.promise(`CREATE TABLE IF NOT EXISTS videos (id STRING, dream_id STRING, user_email STRING, status STRING, video_url STRING, prompt STRING, created_at STRING)`)
+  await alasql.promise(`CREATE TABLE IF NOT EXISTS categories (id STRING, name STRING, color STRING, created_at STRING)`)
+  await alasql.promise(`CREATE TABLE IF NOT EXISTS comics (id STRING, dream_id STRING, user_email STRING, status STRING, image_urls STRING, prompt STRING, created_at STRING)`)
+  await alasql.promise(`CREATE TABLE IF NOT EXISTS rate_limits (type STRING, identifier STRING, [count] INT, window_start INT)`)
+  await alasql.promise(`CREATE TABLE IF NOT EXISTS comments (id STRING, dream_id STRING, user_email STRING, user_name STRING, content STRING, created_at STRING)`)
+  await alasql.promise(`CREATE TABLE IF NOT EXISTS edit_logs (id STRING, dream_id STRING, user_email STRING, action STRING, created_at STRING)`)
+
   dbInited = true
   try {
     const { rateLimitService } = await import('./rateLimitService')

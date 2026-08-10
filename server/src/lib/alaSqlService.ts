@@ -54,14 +54,14 @@ export async function initDatabase(force = false): Promise<void> {
 
 export async function query<T>(sql: string, params?: unknown[]): Promise<T[]> {
   if (!dbInited) {
-    // Ensure tables exist before running query
-    for (const sheetName of SHEET_NAMES) {
-      try {
-        await alasql.promise(`CREATE TABLE IF NOT EXISTS ${sheetName}`)
-      } catch {
-        // Table may already exist
-      }
-    }
+    await alasql.promise(`CREATE TABLE IF NOT EXISTS users (email STRING, name STRING, avatar_url STRING, role STRING, created_at STRING)`)
+    await alasql.promise(`CREATE TABLE IF NOT EXISTS dreams (id STRING, email STRING, title STRING, date STRING, description STRING, visibility STRING, tags STRING, title_candidates STRING, created_at STRING, updated_at STRING)`)
+    await alasql.promise(`CREATE TABLE IF NOT EXISTS videos (id STRING, dream_id STRING, user_email STRING, status STRING, video_url STRING, prompt STRING, created_at STRING)`)
+    await alasql.promise(`CREATE TABLE IF NOT EXISTS categories (id STRING, name STRING, color STRING, created_at STRING)`)
+    await alasql.promise(`CREATE TABLE IF NOT EXISTS comics (id STRING, dream_id STRING, user_email STRING, status STRING, image_urls STRING, prompt STRING, created_at STRING)`)
+    await alasql.promise(`CREATE TABLE IF NOT EXISTS rate_limits (type STRING, identifier STRING, [count] INT, window_start INT)`)
+    await alasql.promise(`CREATE TABLE IF NOT EXISTS comments (id STRING, dream_id STRING, user_email STRING, user_name STRING, content STRING, created_at STRING)`)
+    await alasql.promise(`CREATE TABLE IF NOT EXISTS edit_logs (id STRING, dream_id STRING, user_email STRING, action STRING, created_at STRING)`)
     dbInited = true
   }
   return alasql.promise(sql, params)
