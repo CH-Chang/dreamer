@@ -15,6 +15,12 @@ usersRoute.get('/me', authMiddleware, async (c) => {
   return c.json(profile)
 })
 
+usersRoute.get('/count', async (c) => {
+  const repo = getUserRepository()
+  const count = await repo.findCount()
+  return c.json({ count })
+})
+
 usersRoute.get('/:email', async (c) => {
   const email = c.req.param('email')
   const repo = getUserRepository()
@@ -40,11 +46,12 @@ usersRoute.post('/', authMiddleware, async (c) => {
     const updated = await repo.findByEmail(user.email)
     return c.json(updated)
   } else {
+    const count = await repo.findCount()
     const created = await repo.create({
       email: user.email,
       name: body.name || user.name || '',
       avatar_url: body.avatar_url || user.picture || '',
-      role: body.role || 'user',
+      role: body.role || (count === 0 ? 'admin' : 'user'),
     })
     return c.json(created, 201)
   }
