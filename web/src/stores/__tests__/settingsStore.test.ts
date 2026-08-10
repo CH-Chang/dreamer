@@ -5,8 +5,9 @@ describe('settingsStore', () => {
   beforeEach(() => {
     localStorage.clear()
     useSettingsStore.setState({
-      settings: { googleSheetsUrl: '', googleClientId: '', gcpProjectId: '', gcpLocation: 'us-central1', driveFolderName: '' },
+      settings: { googleSheetsUrl: '', googleClientId: '', gcpProjectId: '', gcpLocation: 'us-central1', driveFolderName: '', aiMode: 'system', customGcpProjectId: '', customGcpLocation: 'us-central1' },
     })
+
   })
 
   it('loads empty settings when nothing in localStorage', () => {

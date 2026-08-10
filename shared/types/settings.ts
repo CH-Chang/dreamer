@@ -1,7 +1,11 @@
 export interface AppSettings {
-  googleSheetsUrl: string
   googleClientId: string
-  gcpProjectId: string
-  gcpLocation: string
-  driveFolderName: string
+  aiMode: 'system' | 'custom'
+  customGcpProjectId: string
+  customGcpLocation: string
+  googleSheetsUrl?: string
+  gcpProjectId?: string
+  gcpLocation?: string
+  driveFolderName?: string
 }
+

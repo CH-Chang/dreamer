@@ -52,7 +52,7 @@ export function SettingsPage() {
 
   useEffect(() => {
     loadSettings()
-  }, [])
+  }, [loadSettings])
 
   useEffect(() => {
     setDraft(settings)
@@ -63,7 +63,9 @@ export function SettingsPage() {
     setRateLimits(await repo.findAll())
   }, [])
 
-  useEffect(() => { if (user?.role === 'admin') loadRateLimits() }, [loadRateLimits, user?.role])
+  useEffect(() => {
+    if (user?.role === 'admin') loadRateLimits()
+  }, [loadRateLimits, user?.role])
 
   const doSave = () => {
     setSettings(draft)
@@ -121,20 +123,9 @@ export function SettingsPage() {
 
         <div className="space-y-10">
           <div className="space-y-8">
-            <m.h2 variants={slideUp} className="text-sm tracking-wider text-gray-500">連線設定</m.h2>
-            <m.div variants={slideUp}>
-              <label className="block text-xs tracking-wider text-gray-400 mb-2">
-                試算表網址
-              </label>
-              <input
-                type="url"
-                value={draft.googleSheetsUrl}
-                onChange={(e) => setDraft({ ...draft, googleSheetsUrl: e.target.value })}
-                placeholder="https://docs.google.com/spreadsheets/d/..."
-                className="w-full px-4 py-3 bg-white border border-gray-200 text-sm text-gray-600
-                           placeholder-gray-200 focus:outline-none focus:border-gray-400 transition-colors"
-              />
-            </m.div>
+            <m.h2 variants={slideUp} className="text-sm tracking-wider text-gray-500">
+              連線與 AI 設定
+            </m.h2>
 
             <m.div variants={slideUp}>
               <label className="block text-xs tracking-wider text-gray-400 mb-2">
@@ -153,48 +144,90 @@ export function SettingsPage() {
 
             <m.div variants={slideUp}>
               <label className="block text-xs tracking-wider text-gray-400 mb-2">
-                GCP 專案 ID
+                AI 執行模式
               </label>
-              <p className="text-[10px] text-gray-300 mb-2">Vertex AI 用，從 Google Cloud Console 取得</p>
-              <input
-                type="text"
-                value={draft.gcpProjectId}
-                onChange={(e) => setDraft({ ...draft, gcpProjectId: e.target.value })}
-                placeholder="my-project-123"
-                className="w-full px-4 py-3 bg-white border border-gray-200 text-sm text-gray-600
-                           placeholder-gray-200 focus:outline-none focus:border-gray-400 transition-colors"
-              />
+              <div className="grid grid-cols-1 gap-3 mt-2">
+                <label
+                  className={`flex items-start p-3.5 border cursor-pointer transition-all ${
+                    draft.aiMode === 'system' || !draft.aiMode
+                      ? 'border-gray-800 bg-gray-50/50'
+                      : 'border-gray-200 bg-white hover:border-gray-300'
+                  }`}
+                >
+                  <input
+                    type="radio"
+                    name="aiMode"
+                    value="system"
+                    checked={draft.aiMode === 'system' || !draft.aiMode}
+                    onChange={() => setDraft({ ...draft, aiMode: 'system' })}
+                    className="mt-0.5 text-gray-800 focus:ring-0"
+                  />
+                  <div className="ml-3">
+                    <span className="block text-xs font-medium text-gray-700">系統預設配額 (System)</span>
+                    <span className="block text-[11px] text-gray-400 mt-0.5">
+                      使用系統提供之每日/每月免費配額。
+                    </span>
+                  </div>
+                </label>
+
+                <label
+                  className={`flex items-start p-3.5 border cursor-pointer transition-all ${
+                    draft.aiMode === 'custom'
+                      ? 'border-gray-800 bg-gray-50/50'
+                      : 'border-gray-200 bg-white hover:border-gray-300'
+                  }`}
+                >
+                  <input
+                    type="radio"
+                    name="aiMode"
+                    value="custom"
+                    checked={draft.aiMode === 'custom'}
+                    onChange={() => setDraft({ ...draft, aiMode: 'custom' })}
+                    className="mt-0.5 text-gray-800 focus:ring-0"
+                  />
+                  <div className="ml-3">
+                    <span className="block text-xs font-medium text-gray-700">自訂 GCP 專案 (BYOK)</span>
+                    <span className="block text-[11px] text-gray-400 mt-0.5">
+                      使用您自身的 GCP 專案，不佔用系統額度。
+                    </span>
+                  </div>
+                </label>
+              </div>
             </m.div>
 
-            <m.div variants={slideUp}>
-              <label className="block text-xs tracking-wider text-gray-400 mb-2">
-                Vertex AI 地區
-              </label>
-              <p className="text-[10px] text-gray-300 mb-2">預設 us-central1，非必要不需修改</p>
-              <input
-                type="text"
-                value={draft.gcpLocation}
-                onChange={(e) => setDraft({ ...draft, gcpLocation: e.target.value })}
-                placeholder="us-central1"
-                className="w-full px-4 py-3 bg-white border border-gray-200 text-sm text-gray-600
-                           placeholder-gray-200 focus:outline-none focus:border-gray-400 transition-colors"
-              />
-            </m.div>
+            {draft.aiMode === 'custom' && (
+              <>
+                <m.div variants={slideUp}>
+                  <label className="block text-xs tracking-wider text-gray-400 mb-2">
+                    GCP 專案 ID
+                  </label>
+                  <p className="text-[10px] text-gray-300 mb-2">Vertex AI 用，從 Google Cloud Console 取得</p>
+                  <input
+                    type="text"
+                    value={draft.customGcpProjectId}
+                    onChange={(e) => setDraft({ ...draft, customGcpProjectId: e.target.value })}
+                    placeholder="my-project-123"
+                    className="w-full px-4 py-3 bg-white border border-gray-200 text-sm text-gray-600
+                               placeholder-gray-200 focus:outline-none focus:border-gray-400 transition-colors"
+                  />
+                </m.div>
 
-            <m.div variants={slideUp}>
-              <label className="block text-xs tracking-wider text-gray-400 mb-2">
-                Drive 資料夾
-              </label>
-              <p className="text-[10px] text-gray-300 mb-2">影片存放在 Google Drive 的資料夾，自動建立</p>
-              <input
-                type="text"
-                value={draft.driveFolderName}
-                onChange={(e) => setDraft({ ...draft, driveFolderName: e.target.value })}
-                placeholder="夢貘 Videos"
-                className="w-full px-4 py-3 bg-white border border-gray-200 text-sm text-gray-600
-                           placeholder-gray-200 focus:outline-none focus:border-gray-400 transition-colors"
-              />
-            </m.div>
+                <m.div variants={slideUp}>
+                  <label className="block text-xs tracking-wider text-gray-400 mb-2">
+                    Vertex AI 地區
+                  </label>
+                  <p className="text-[10px] text-gray-300 mb-2">預設 us-central1，非必要不需修改</p>
+                  <input
+                    type="text"
+                    value={draft.customGcpLocation}
+                    onChange={(e) => setDraft({ ...draft, customGcpLocation: e.target.value })}
+                    placeholder="us-central1"
+                    className="w-full px-4 py-3 bg-white border border-gray-200 text-sm text-gray-600
+                               placeholder-gray-200 focus:outline-none focus:border-gray-400 transition-colors"
+                  />
+                </m.div>
+              </>
+            )}
 
             <m.div variants={slideUp}>
               <div className="flex items-center gap-3">
@@ -227,121 +260,188 @@ export function SettingsPage() {
             </m.div>
           </div>
 
-          <div className="space-y-8 pt-8 border-t border-gray-200">
-            <m.h2 variants={slideUp} className="text-sm tracking-wider text-gray-500">配額</m.h2>
+          {user?.role === 'admin' && (
+            <div className="space-y-8 pt-8 border-t border-gray-200">
+              <m.h2 variants={slideUp} className="text-sm tracking-wider text-gray-500">
+                配額管理
+              </m.h2>
 
-            <m.div variants={slideUp}>
-              {user?.role === 'admin' && (
-                <>
-                  <h2 className="text-sm tracking-wider text-gray-500 mb-4">配額管理</h2>
-                  {rateLimits.filter(r => r.scope === 'system').map(r => (
+              <m.div variants={slideUp}>
+                {rateLimits
+                  .filter((r) => r.scope === 'system')
+                  .map((r) => (
                     <div key={r.id} className="mb-6 p-4 bg-gray-50 rounded">
-                      <p className="text-xs tracking-wider text-gray-400 mb-3">{r.type === 'video' ? '影片' : '漫畫'} — 系統預設</p>
+                      <p className="text-xs tracking-wider text-gray-400 mb-3">
+                        {r.type === 'video' ? '影片' : '漫畫'} — 系統預設
+                      </p>
                       {editingId === r.id ? (
                         <div className="flex items-center gap-2">
                           <label className="text-xs text-gray-400">每日</label>
-                          <input type="number" value={editDaily} onChange={e => setEditDaily(e.target.value)}
-                            className="w-20 px-2 py-1 text-xs border border-gray-200 rounded" />
+                          <input
+                            type="number"
+                            value={editDaily}
+                            onChange={(e) => setEditDaily(e.target.value)}
+                            className="w-20 px-2 py-1 text-xs border border-gray-200 rounded"
+                          />
                           <label className="text-xs text-gray-400">每月</label>
-                          <input type="number" value={editMonthly} onChange={e => setEditMonthly(e.target.value)}
-                            className="w-20 px-2 py-1 text-xs border border-gray-200 rounded" />
-                          <button onClick={async () => {
-                            if (!editDaily || !editMonthly || quotaLoading) return
-                            setQuotaLoading(r.id)
-                            const repo = getRateLimitRepository()
-                            try {
-                              await repo.update(r.id, { daily_limit: Number(editDaily), monthly_limit: Number(editMonthly) })
-                              setEditingId(null)
-                              loadRateLimits()
-                            } catch (err) {
-                              console.error('Failed to update rate limit:', err)
-                            } finally {
-                              setQuotaLoading(null)
-                            }
-                          }} disabled={quotaLoading === r.id}
-                            className="px-3 py-1 text-xs bg-gray-800 text-white rounded disabled:opacity-40 inline-flex items-center gap-1.5">
+                          <input
+                            type="number"
+                            value={editMonthly}
+                            onChange={(e) => setEditMonthly(e.target.value)}
+                            className="w-20 px-2 py-1 text-xs border border-gray-200 rounded"
+                          />
+                          <button
+                            onClick={async () => {
+                              if (!editDaily || !editMonthly || quotaLoading) return
+                              setQuotaLoading(r.id)
+                              const repo = getRateLimitRepository()
+                              try {
+                                await repo.update(r.id, {
+                                  daily_limit: Number(editDaily),
+                                  monthly_limit: Number(editMonthly),
+                                })
+                                setEditingId(null)
+                                loadRateLimits()
+                              } catch (err) {
+                                console.error('Failed to update rate limit:', err)
+                              } finally {
+                                setQuotaLoading(null)
+                              }
+                            }}
+                            disabled={quotaLoading === r.id}
+                            className="px-3 py-1 text-xs bg-gray-800 text-white rounded disabled:opacity-40 inline-flex items-center gap-1.5"
+                          >
                             {quotaLoading === r.id && <Spinner />}
-                            更新</button>
-                          <button onClick={() => setEditingId(null)} className="px-3 py-1 text-xs text-gray-400">取消</button>
+                            更新
+                          </button>
+                          <button onClick={() => setEditingId(null)} className="px-3 py-1 text-xs text-gray-400">
+                            取消
+                          </button>
                         </div>
                       ) : (
                         <div className="flex items-center gap-3">
-                          <span className="text-xs text-gray-500">每日 {r.daily_limit} · 每月 {r.monthly_limit}</span>
-                          <button onClick={() => { setEditingId(r.id); setEditDaily(String(r.daily_limit)); setEditMonthly(String(r.monthly_limit)) }}
-                            className="text-xs text-gray-400 hover:text-gray-600">編輯</button>
+                          <span className="text-xs text-gray-500">
+                            每日 {r.daily_limit} · 每月 {r.monthly_limit}
+                          </span>
+                          <button
+                            onClick={() => {
+                              setEditingId(r.id)
+                              setEditDaily(String(r.daily_limit))
+                              setEditMonthly(String(r.monthly_limit))
+                            }}
+                            className="text-xs text-gray-400 hover:text-gray-600"
+                          >
+                            編輯
+                          </button>
                         </div>
                       )}
                     </div>
                   ))}
 
-                  {rateLimits.filter(r => r.scope !== 'system').map(r => (
+                {rateLimits
+                  .filter((r) => r.scope !== 'system')
+                  .map((r) => (
                     <div key={r.id} className="mb-3 flex items-center gap-3">
                       <span className="text-xs text-gray-500 w-40 truncate">{r.scope}</span>
                       <span className="text-xs text-gray-400 w-8">{r.type === 'video' ? '影片' : '漫畫'}</span>
-                      <span className="text-xs text-gray-400">每日 {r.daily_limit} · 每月 {r.monthly_limit}</span>
-                      <button onClick={async () => {
-                        if (quotaLoading) return
-                        setQuotaLoading(r.id)
-                        const repo = getRateLimitRepository()
-                        try {
-                          await repo.delete(r.id)
-                          loadRateLimits()
-                        } catch (err) {
-                          console.error('Failed to delete rate limit:', err)
-                        } finally {
-                          setQuotaLoading(null)
-                        }
-                      }} disabled={quotaLoading === r.id}
-                        className="text-xs text-red-300 hover:text-red-500 disabled:opacity-40 inline-flex items-center gap-1.5">
+                      <span className="text-xs text-gray-400">
+                        每日 {r.daily_limit} · 每月 {r.monthly_limit}
+                      </span>
+                      <button
+                        onClick={async () => {
+                          if (quotaLoading) return
+                          setQuotaLoading(r.id)
+                          const repo = getRateLimitRepository()
+                          try {
+                            await repo.delete(r.id)
+                            loadRateLimits()
+                          } catch (err) {
+                            console.error('Failed to delete rate limit:', err)
+                          } finally {
+                            setQuotaLoading(null)
+                          }
+                        }}
+                        disabled={quotaLoading === r.id}
+                        className="text-xs text-red-300 hover:text-red-500 disabled:opacity-40 inline-flex items-center gap-1.5"
+                      >
                         {quotaLoading === r.id && <Spinner />}
-                        刪除</button>
+                        刪除
+                      </button>
                     </div>
                   ))}
 
-                  <div className="mt-4 pt-4 border-t border-gray-200">
-                    <p className="text-xs text-gray-400 mb-2">新增使用者覆寫</p>
-                    <div className="flex items-center gap-2 flex-wrap">
-                      <input type="email" placeholder="user@email.com" value={newUserEmail} onChange={e => setNewUserEmail(e.target.value)}
-                        className="px-2 py-1 text-xs border border-gray-200 rounded w-44" />
-                      <select value={newType} onChange={e => setNewType(e.target.value as 'video' | 'comic')}
-                        className="px-2 py-1 text-xs border border-gray-200 rounded">
-                        <option value="video">影片</option>
-                        <option value="comic">漫畫</option>
-                      </select>
-                      <input type="number" placeholder="每日" value={newDaily} onChange={e => setNewDaily(e.target.value)}
-                        className="px-2 py-1 text-xs border border-gray-200 rounded w-16" />
-                      <input type="number" placeholder="每月" value={newMonthly} onChange={e => setNewMonthly(e.target.value)}
-                        className="px-2 py-1 text-xs border border-gray-200 rounded w-16" />
-                      <button onClick={async () => {
+                <div className="mt-4 pt-4 border-t border-gray-200">
+                  <p className="text-xs text-gray-400 mb-2">新增使用者覆寫</p>
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <input
+                      type="email"
+                      placeholder="user@email.com"
+                      value={newUserEmail}
+                      onChange={(e) => setNewUserEmail(e.target.value)}
+                      className="px-2 py-1 text-xs border border-gray-200 rounded w-44"
+                    />
+                    <select
+                      value={newType}
+                      onChange={(e) => setNewType(e.target.value as 'video' | 'comic')}
+                      className="px-2 py-1 text-xs border border-gray-200 rounded"
+                    >
+                      <option value="video">影片</option>
+                      <option value="comic">漫畫</option>
+                    </select>
+                    <input
+                      type="number"
+                      placeholder="每日"
+                      value={newDaily}
+                      onChange={(e) => setNewDaily(e.target.value)}
+                      className="px-2 py-1 text-xs border border-gray-200 rounded w-16"
+                    />
+                    <input
+                      type="number"
+                      placeholder="每月"
+                      value={newMonthly}
+                      onChange={(e) => setNewMonthly(e.target.value)}
+                      className="px-2 py-1 text-xs border border-gray-200 rounded w-16"
+                    />
+                    <button
+                      onClick={async () => {
                         if (!newUserEmail || !newDaily || !newMonthly || quotaLoading) return
                         setQuotaLoading('create')
                         const repo = getRateLimitRepository()
                         try {
-                          await repo.create({ type: newType, scope: newUserEmail, daily_limit: Number(newDaily), monthly_limit: Number(newMonthly) })
-                          setNewUserEmail(''); setNewDaily(''); setNewMonthly('')
+                          await repo.create({
+                            type: newType,
+                            scope: newUserEmail,
+                            daily_limit: Number(newDaily),
+                            monthly_limit: Number(newMonthly),
+                          })
+                          setNewUserEmail('')
+                          setNewDaily('')
+                          setNewMonthly('')
                           loadRateLimits()
                         } catch (err) {
                           console.error('Failed to create rate limit:', err)
                         } finally {
                           setQuotaLoading(null)
                         }
-                      }} disabled={quotaLoading === 'create'}
-                        className="px-3 py-1 text-xs bg-gray-800 text-white rounded disabled:opacity-40 inline-flex items-center gap-1.5">
-                        {quotaLoading === 'create' && <Spinner />}
-                        新增</button>
-                    </div>
+                      }}
+                      disabled={quotaLoading === 'create'}
+                      className="px-3 py-1 text-xs bg-gray-800 text-white rounded disabled:opacity-40 inline-flex items-center gap-1.5"
+                    >
+                      {quotaLoading === 'create' && <Spinner />}
+                      新增
+                    </button>
                   </div>
-                </>
-              )}
-            </m.div>
-          </div>
+                </div>
+              </m.div>
+            </div>
+          )}
         </div>
       </m.div>
 
       <MessageBox
         open={!!confirmAction}
         title="未檢查連線"
-        message="尚未執行連線檢查，確定要直接儲存嗎？建議先點「檢查連線」確認試算表可以正常讀寫。"
+        message="尚未執行連線檢查，確定要直接儲存嗎？建議先點「檢查連線」確認 API 伺服器連線正常。"
         confirmText="直接儲存"
         onConfirm={() => {
           confirmAction?.()

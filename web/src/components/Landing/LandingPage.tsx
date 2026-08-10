@@ -10,7 +10,7 @@ const fadeUp = {
 
 export function LandingPage() {
   const { settings } = useSettingsStore()
-  const isConfigured = !!(settings.googleSheetsUrl && settings.googleClientId)
+  const isConfigured = !!settings.googleClientId
 
   return (
     <div className="min-h-screen bg-[#fcfcf9] flex flex-col">

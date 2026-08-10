@@ -7,7 +7,11 @@ export interface AuthUser {
   email: string
   name: string
   picture: string
+  ai_mode?: 'system' | 'custom'
+  custom_gcp_project_id?: string
+  custom_gcp_location?: string
 }
+
 
 export type AuthEnv = {
   Variables: {

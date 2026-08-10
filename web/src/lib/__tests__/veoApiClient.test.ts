@@ -7,8 +7,9 @@ beforeEach(() => {
   vi.restoreAllMocks()
   useAuthStore.setState({ token: 'test-oauth-token', user: null, isAuthenticated: false })
   useSettingsStore.setState({
-    settings: { googleSheetsUrl: '', googleClientId: '', gcpProjectId: 'test-project', gcpLocation: 'us-central1', driveFolderName: '' },
+    settings: { googleSheetsUrl: '', googleClientId: '', gcpProjectId: 'test-project', gcpLocation: 'us-central1', driveFolderName: '', aiMode: 'system', customGcpProjectId: 'test-project', customGcpLocation: 'us-central1' },
   })
+
 })
 
 describe('veoApiClient', () => {
