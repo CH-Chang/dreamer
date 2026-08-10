@@ -129,21 +129,6 @@ export function SettingsPage() {
 
             <m.div variants={slideUp}>
               <label className="block text-xs tracking-wider text-gray-400 mb-2">
-                應用程式代號
-              </label>
-              <p className="text-[10px] text-gray-300 mb-2">Google 登入用，從 Google Cloud Console 取得</p>
-              <input
-                type="text"
-                value={draft.googleClientId}
-                onChange={(e) => setDraft({ ...draft, googleClientId: e.target.value })}
-                placeholder="123456789-xxxxx.apps.googleusercontent.com"
-                className="w-full px-4 py-3 bg-white border border-gray-200 text-sm text-gray-600
-                           placeholder-gray-200 focus:outline-none focus:border-gray-400 transition-colors"
-              />
-            </m.div>
-
-            <m.div variants={slideUp}>
-              <label className="block text-xs tracking-wider text-gray-400 mb-2">
                 AI 執行模式
               </label>
               <div className="grid grid-cols-1 gap-3 mt-2">
@@ -237,7 +222,7 @@ export function SettingsPage() {
                     onClick={saveAndRelogin}
                     className="px-6 py-2.5 border border-gray-300 text-xs tracking-[0.2em] text-gray-400 hover:bg-gray-50 transition-colors whitespace-nowrap"
                   >
-                    儲存並重新登入
+                    儲存變更
                   </button>
                 ) : (
                   <button
