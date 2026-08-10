@@ -75,3 +75,16 @@ export function setUserRepository(repo: IUserRepository | null) {
 export function setCommentRepository(repo: ICommentRepository | null) {
   commentRepo = repo
 }
+
+export function setRateLimitRepository(repo: IRateLimitRepository | null) {
+  rateLimitRepo = repo
+}
+
+export function setVideoRepository(repo: IVideoRepository | null) {
+  videoRepo = repo
+}
+
+export function setComicRepository(repo: IComicRepository | null) {
+  comicRepo = repo
+}
+

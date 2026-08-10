@@ -1,7 +1,8 @@
 import { Hono } from 'hono'
 import { authMiddleware, type AuthEnv } from '../middleware/auth'
-import { getComicRepository, getDreamRepository } from '../repositories/factory'
+import { getComicRepository, getDreamRepository, getRateLimitRepository } from '../repositories/factory'
 import { generateComicImage } from '../services/aiService'
+import { config } from '../config'
 import type { ComicStatus } from '../../../shared/types/comic'
 
 export const comicsRoute = new Hono<AuthEnv>()
@@ -15,7 +16,25 @@ comicsRoute.get('/', async (c) => {
 
 comicsRoute.post('/', authMiddleware, async (c) => {
   const user = c.get('user')
-  const body = await c.req.json<{ dream_id: string; with_character?: boolean }>()
+  const body = await c.req.json<{
+    dream_id: string
+    with_character?: boolean
+    mode?: 'system' | 'custom'
+    custom_gcp_project_id?: string
+    custom_gcp_location?: string
+  }>()
+
+  const mode = body.mode || user.ai_mode || 'system'
+  if (mode === 'system') {
+    const allowed = await getRateLimitRepository().checkLimit(user.email, 'comic')
+    if (!allowed) {
+      return c.json({ error: 'Rate limit exceeded' }, 429)
+    }
+  }
+
+  const custom_gcp_project_id = body.custom_gcp_project_id || user.custom_gcp_project_id
+  const gcpProjectId = mode === 'custom' ? (custom_gcp_project_id || config.systemGcpProjectId) : config.systemGcpProjectId
+
   const comicRepo = getComicRepository()
   const dreamRepo = getDreamRepository()
 
@@ -30,7 +49,7 @@ comicsRoute.post('/', authMiddleware, async (c) => {
 
   try {
     const prompt = `夢境連環漫畫插畫風格：${description}`
-    const { bytesBase64Encoded, mimeType } = await generateComicImage(prompt)
+    const { bytesBase64Encoded, mimeType } = await generateComicImage(prompt, undefined, { gcpProjectId })
     const imageUrl = `data:${mimeType};base64,${bytesBase64Encoded}`
 
     const updated = await comicRepo.updateStatus(created.id, 'done', imageUrl)

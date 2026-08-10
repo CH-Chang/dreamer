@@ -1,5 +1,7 @@
 import { Hono } from 'hono'
 import { authMiddleware, type AuthEnv } from '../middleware/auth'
+import { getRateLimitRepository } from '../repositories/factory'
+import { config } from '../config'
 
 export const aiRoute = new Hono<AuthEnv>()
 
@@ -7,18 +9,26 @@ aiRoute.use('*', authMiddleware)
 
 // 1. Generate Text (Gemini)
 aiRoute.post('/generate-text', async (c) => {
+  const user = c.get('user')
   const authHeader = c.req.header('Authorization') || ''
   const token = authHeader.replace('Bearer ', '')
-  const { prompt, systemPrompt, gcpProjectId = process.env.GCP_PROJECT_ID || 'dreamer-448202' } = await c.req.json<{
+  const reqBody = await c.req.json<{
     prompt: string
     systemPrompt?: string
+    mode?: 'system' | 'custom'
     gcpProjectId?: string
+    custom_gcp_project_id?: string
   }>()
 
-  const contents = [{ role: 'user', parts: [{ text: prompt }] }]
+  const mode = reqBody.mode || user?.ai_mode || 'system'
+  const gcpProjectId = mode === 'custom'
+    ? (reqBody.custom_gcp_project_id || reqBody.gcpProjectId || user?.custom_gcp_project_id || config.systemGcpProjectId)
+    : config.systemGcpProjectId
+
+  const contents = [{ role: 'user', parts: [{ text: reqBody.prompt }] }]
   const body: Record<string, unknown> = { contents }
-  if (systemPrompt) {
-    body.system_instruction = { parts: [{ text: systemPrompt }] }
+  if (reqBody.systemPrompt) {
+    body.system_instruction = { parts: [{ text: reqBody.systemPrompt }] }
   }
 
   const model = 'gemini-3.5-flash'
@@ -50,35 +60,48 @@ aiRoute.post('/generate-text', async (c) => {
 
 // 2. Generate Video (Veo)
 aiRoute.post('/generate-video', async (c) => {
+  const user = c.get('user')
   const authHeader = c.req.header('Authorization') || ''
   const token = authHeader.replace('Bearer ', '')
-  const {
-    prompt,
-    aspectRatio,
-    resolution,
-    referenceImage,
-    gcpProjectId = process.env.GCP_PROJECT_ID || 'dreamer-448202',
-    gcpLocation = process.env.GCP_LOCATION || 'us-central1',
-  } = await c.req.json<{
+  const reqBody = await c.req.json<{
     prompt: string
     aspectRatio?: string
     resolution?: string
     referenceImage?: { bytesBase64Encoded: string; mimeType: string }
+    mode?: 'system' | 'custom'
     gcpProjectId?: string
     gcpLocation?: string
+    custom_gcp_project_id?: string
+    custom_gcp_location?: string
   }>()
 
-  const parameters: Record<string, string> = {}
-  if (aspectRatio) parameters.aspectRatio = aspectRatio
-  if (resolution) parameters.resolution = resolution
+  const mode = reqBody.mode || user?.ai_mode || 'system'
+  if (mode === 'system') {
+    const allowed = await getRateLimitRepository().checkLimit(user?.email || '', 'video')
+    if (!allowed) {
+      return c.json({ error: 'Rate limit exceeded' }, 429)
+    }
+  }
 
-  const instance: Record<string, unknown> = { prompt }
-  if (referenceImage) {
+  const gcpProjectId = mode === 'custom'
+    ? (reqBody.custom_gcp_project_id || reqBody.gcpProjectId || user?.custom_gcp_project_id || config.systemGcpProjectId)
+    : config.systemGcpProjectId
+
+  const gcpLocation = mode === 'custom'
+    ? (reqBody.custom_gcp_location || reqBody.gcpLocation || user?.custom_gcp_location || config.systemGcpLocation)
+    : config.systemGcpLocation
+
+  const parameters: Record<string, string> = {}
+  if (reqBody.aspectRatio) parameters.aspectRatio = reqBody.aspectRatio
+  if (reqBody.resolution) parameters.resolution = reqBody.resolution
+
+  const instance: Record<string, unknown> = { prompt: reqBody.prompt }
+  if (reqBody.referenceImage) {
     instance.referenceImages = [{
       referenceType: 'asset',
       image: {
-        bytesBase64Encoded: referenceImage.bytesBase64Encoded,
-        mimeType: referenceImage.mimeType,
+        bytesBase64Encoded: reqBody.referenceImage.bytesBase64Encoded,
+        mimeType: reqBody.referenceImage.mimeType,
       },
     }]
     parameters.personGeneration = 'allow'
@@ -111,17 +134,26 @@ aiRoute.post('/generate-video', async (c) => {
 
 // 3. Poll Video Operation (Veo)
 aiRoute.post('/video-operation', async (c) => {
+  const user = c.get('user')
   const authHeader = c.req.header('Authorization') || ''
   const token = authHeader.replace('Bearer ', '')
-  const {
-    operationName,
-    gcpProjectId = process.env.GCP_PROJECT_ID || 'dreamer-448202',
-    gcpLocation = process.env.GCP_LOCATION || 'us-central1',
-  } = await c.req.json<{
+  const reqBody = await c.req.json<{
     operationName: string
+    mode?: 'system' | 'custom'
     gcpProjectId?: string
     gcpLocation?: string
+    custom_gcp_project_id?: string
+    custom_gcp_location?: string
   }>()
+
+  const mode = reqBody.mode || user?.ai_mode || 'system'
+  const gcpProjectId = mode === 'custom'
+    ? (reqBody.custom_gcp_project_id || reqBody.gcpProjectId || user?.custom_gcp_project_id || config.systemGcpProjectId)
+    : config.systemGcpProjectId
+
+  const gcpLocation = mode === 'custom'
+    ? (reqBody.custom_gcp_location || reqBody.gcpLocation || user?.custom_gcp_location || config.systemGcpLocation)
+    : config.systemGcpLocation
 
   const model = 'veo-3.1-fast-generate-001'
   const url = `https://${gcpLocation}-aiplatform.googleapis.com/v1/projects/${gcpProjectId}/locations/${gcpLocation}/publishers/google/models/${model}:fetchPredictOperation`
@@ -132,7 +164,7 @@ aiRoute.post('/video-operation', async (c) => {
       'Content-Type': 'application/json',
       'Authorization': `Bearer ${token}`,
     },
-    body: JSON.stringify({ operationName }),
+    body: JSON.stringify({ operationName: reqBody.operationName }),
   })
 
   if (!res.ok) {
@@ -145,24 +177,35 @@ aiRoute.post('/video-operation', async (c) => {
 
 // 4. Generate Image (Imagen)
 aiRoute.post('/generate-image', async (c) => {
+  const user = c.get('user')
   const authHeader = c.req.header('Authorization') || ''
   const token = authHeader.replace('Bearer ', '')
-  const {
-    prompt,
-    referenceImage,
-    gcpProjectId = process.env.GCP_PROJECT_ID || 'dreamer-448202',
-  } = await c.req.json<{
+  const reqBody = await c.req.json<{
     prompt: string
     referenceImage?: { bytesBase64Encoded: string; mimeType: string }
+    mode?: 'system' | 'custom'
     gcpProjectId?: string
+    custom_gcp_project_id?: string
   }>()
 
-  const parts: Array<Record<string, unknown>> = [{ text: prompt }]
-  if (referenceImage) {
+  const mode = reqBody.mode || user?.ai_mode || 'system'
+  if (mode === 'system') {
+    const allowed = await getRateLimitRepository().checkLimit(user?.email || '', 'comic')
+    if (!allowed) {
+      return c.json({ error: 'Rate limit exceeded' }, 429)
+    }
+  }
+
+  const gcpProjectId = mode === 'custom'
+    ? (reqBody.custom_gcp_project_id || reqBody.gcpProjectId || user?.custom_gcp_project_id || config.systemGcpProjectId)
+    : config.systemGcpProjectId
+
+  const parts: Array<Record<string, unknown>> = [{ text: reqBody.prompt }]
+  if (reqBody.referenceImage) {
     parts.push({
       inlineData: {
-        mimeType: referenceImage.mimeType,
-        data: referenceImage.bytesBase64Encoded,
+        mimeType: reqBody.referenceImage.mimeType,
+        data: reqBody.referenceImage.bytesBase64Encoded,
       },
     })
   }

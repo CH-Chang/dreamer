@@ -1,7 +1,8 @@
 import { Hono } from 'hono'
 import { authMiddleware, type AuthEnv } from '../middleware/auth'
-import { getVideoRepository, getDreamRepository } from '../repositories/factory'
+import { getVideoRepository, getDreamRepository, getRateLimitRepository } from '../repositories/factory'
 import { triggerVeoVideo } from '../services/aiService'
+import { config } from '../config'
 import type { VideoStatus } from '../../../shared/types/video'
 
 export const videosRoute = new Hono<AuthEnv>()
@@ -22,7 +23,27 @@ videosRoute.get('/', async (c) => {
 
 videosRoute.post('/', authMiddleware, async (c) => {
   const user = c.get('user')
-  const body = await c.req.json<{ dream_id: string; with_character?: boolean }>()
+  const body = await c.req.json<{
+    dream_id: string
+    with_character?: boolean
+    mode?: 'system' | 'custom'
+    custom_gcp_project_id?: string
+    custom_gcp_location?: string
+  }>()
+
+  const mode = body.mode || user.ai_mode || 'system'
+  if (mode === 'system') {
+    const allowed = await getRateLimitRepository().checkLimit(user.email, 'video')
+    if (!allowed) {
+      return c.json({ error: 'Rate limit exceeded' }, 429)
+    }
+  }
+
+  const custom_gcp_project_id = body.custom_gcp_project_id || user.custom_gcp_project_id
+  const custom_gcp_location = body.custom_gcp_location || user.custom_gcp_location
+  const gcpProjectId = mode === 'custom' ? (custom_gcp_project_id || config.systemGcpProjectId) : config.systemGcpProjectId
+  const gcpLocation = mode === 'custom' ? (custom_gcp_location || config.systemGcpLocation) : config.systemGcpLocation
+
   const videoRepo = getVideoRepository()
   const dreamRepo = getDreamRepository()
 
@@ -38,9 +59,13 @@ videosRoute.post('/', authMiddleware, async (c) => {
   try {
     await videoRepo.updateStatus(created.id, 'generating')
     const prompt = `Dream-like cinematic scene: ${description}`
-    await triggerVeoVideo(prompt, { aspectRatio: '16:9', resolution: '720p' })
+    await triggerVeoVideo(prompt, {
+      aspectRatio: '16:9',
+      resolution: '720p',
+      gcpProjectId,
+      gcpLocation,
+    })
   } catch {
-    // If trigger fails, mark failed
     await videoRepo.updateStatus(created.id, 'failed')
   }
 

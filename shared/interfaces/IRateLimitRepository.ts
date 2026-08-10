@@ -6,4 +6,6 @@ export interface IRateLimitRepository {
   create(input: CreateRateLimitInput): Promise<RateLimit>
   update(id: string, input: UpdateRateLimitInput): Promise<RateLimit>
   delete(id: string): Promise<void>
+  checkLimit(email: string, type: RateLimitType): Promise<boolean>
 }
+

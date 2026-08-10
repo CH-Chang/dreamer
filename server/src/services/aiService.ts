@@ -1,5 +1,10 @@
-export async function generateTitleSuggestions(description: string): Promise<string[]> {
-  const gcpProjectId = process.env.GCP_PROJECT_ID || 'dreamer-448202'
+import { config } from '../config'
+
+export async function generateTitleSuggestions(
+  description: string,
+  options: { gcpProjectId?: string; gcpLocation?: string } = {},
+): Promise<string[]> {
+  const gcpProjectId = options.gcpProjectId || config.systemGcpProjectId
   const prompt = `請根據以下夢境內容，產生 3 個簡短、富有詩意或吸引人的夢境標題（繁體中文），每行一個標題，不要有編號或額外說明：\n${description}`
   const systemPrompt = '你是一個夢境解析與命名大師。請只輸出 3 行標題。'
 
@@ -35,8 +40,9 @@ export async function generateTitleSuggestions(description: string): Promise<str
 export async function generateComicImage(
   prompt: string,
   referenceImage?: { bytesBase64Encoded: string; mimeType: string },
+  options: { gcpProjectId?: string } = {},
 ): Promise<{ bytesBase64Encoded: string; mimeType: string }> {
-  const gcpProjectId = process.env.GCP_PROJECT_ID || 'dreamer-448202'
+  const gcpProjectId = options.gcpProjectId || config.systemGcpProjectId
   const parts: Array<Record<string, unknown>> = [{ text: prompt }]
 
   if (referenceImage) {
@@ -97,10 +103,12 @@ export async function triggerVeoVideo(
     aspectRatio?: string
     resolution?: string
     referenceImage?: { bytesBase64Encoded: string; mimeType: string }
+    gcpProjectId?: string
+    gcpLocation?: string
   } = {},
 ): Promise<{ name: string }> {
-  const gcpProjectId = process.env.GCP_PROJECT_ID || 'dreamer-448202'
-  const gcpLocation = process.env.GCP_LOCATION || 'us-central1'
+  const gcpProjectId = options.gcpProjectId || config.systemGcpProjectId
+  const gcpLocation = options.gcpLocation || config.systemGcpLocation
 
   const parameters: Record<string, string> = {}
   if (options.aspectRatio) parameters.aspectRatio = options.aspectRatio

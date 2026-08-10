@@ -104,4 +104,12 @@ export class RateLimitRepository implements IRateLimitRepository {
     }
     await query('DELETE FROM rate_limits WHERE id = ?', [id])
   }
+
+  async checkLimit(email: string, type: RateLimitType): Promise<boolean> {
+    const item = await this.findByTypeAndScope(type, 'system')
+    if (!item) return true
+    if (item.daily_limit === 0 || item.monthly_limit === 0) return false
+    return true
+  }
 }
+
