@@ -109,11 +109,12 @@ describe('HttpDreamRepository', () => {
       email: 'user@test.com',
       date: '2026-08-10',
       description: 'New dream',
-      visibility: 'public',
+      visibility: 'public' as const,
     }
     const mockCreated: Dream = {
       id: 'd_new',
       ...input,
+      visibility: 'public',
       title: '',
       tags: [],
       created_at: '2026-08-10T00:00:00Z',
@@ -138,7 +139,6 @@ describe('HttpDreamRepository', () => {
 
   it('update sends PUT request with updated data', async () => {
     const updateInput: UpdateDreamInput = {
-      id: 'd1',
       title: 'Updated Title',
     }
     const mockUpdated: Dream = {

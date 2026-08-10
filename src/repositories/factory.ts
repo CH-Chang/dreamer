@@ -50,7 +50,7 @@ export function getComicRepository(): IComicRepository {
 }
 
 export function getRateLimitRepository(): IRateLimitRepository {
-  if (!rateLimitRepo) rateLimitRepo = new RateLimitRepository()
+  if (!rateLimitRepo) rateLimitRepo = new HttpRateLimitRepository()
   return rateLimitRepo
 }
 

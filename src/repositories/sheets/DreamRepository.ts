@@ -197,4 +197,8 @@ export class DreamRepository implements IDreamRepository {
     }
     return dream
   }
+
+  async delete(id: string, _email?: string): Promise<void> {
+    await query('DELETE FROM dreams WHERE id = ?', [id])
+  }
 }
