@@ -5,31 +5,39 @@ import type { CreateDreamInput, UpdateDreamInput } from '../../../shared/types/d
 
 export const dreamsRoute = new Hono<AuthEnv>()
 
+dreamsRoute.get('/public', async (c) => {
+  const cursor = c.req.query('cursor')
+  const limit = c.req.query('limit')
+  const repo = getDreamRepository()
+  const result = await repo.findPublicPage(cursor, limit ? Number(limit) : 10)
+  return c.json(result)
+})
+
+dreamsRoute.get('/by-date', async (c) => {
+  const email = c.req.query('email') || ''
+  const date = c.req.query('date') || ''
+  const repo = getDreamRepository()
+  const dream = await repo.findByDate(email, date)
+  return dream ? c.json(dream) : c.json(null)
+})
+
+dreamsRoute.get('/by-month', async (c) => {
+  const email = c.req.query('email') || ''
+  const year = Number(c.req.query('year'))
+  const month = Number(c.req.query('month'))
+  const repo = getDreamRepository()
+  const dreams = await repo.findByMonth(email, year, month)
+  return c.json(dreams)
+})
+
 dreamsRoute.get('/', async (c) => {
   const repo = getDreamRepository()
   const email = c.req.query('email')
-  const date = c.req.query('date')
-  const year = c.req.query('year')
-  const month = c.req.query('month')
-  const cursor = c.req.query('cursor')
-  const limit = c.req.query('limit')
-
-  if (email && date) {
-    const dream = await repo.findByDate(email, date)
-    return dream ? c.json(dream) : c.json({ error: 'Dream not found' }, 404)
-  }
-
-  if (email && year !== undefined && month !== undefined) {
-    const dreams = await repo.findByMonth(email, Number(year), Number(month))
-    return c.json(dreams)
-  }
-
   if (email) {
     const dreams = await repo.findAllByEmail(email)
     return c.json(dreams)
   }
-
-  const result = await repo.findPublicPage(cursor, limit ? Number(limit) : 10)
+  const result = await repo.findPublicPage()
   return c.json(result)
 })
 
