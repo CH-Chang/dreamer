@@ -1,8 +1,1 @@
-import type { Video, VideoStatus } from '../../types/video'
-
-export interface IVideoRepository {
-  findByDreamId(dreamId: string): Promise<Video | null>
-  findAllByDreamId(dreamId: string): Promise<Video[]>
-  create(video: { dream_id: string; email: string; with_character?: boolean }): Promise<Video>
-  updateStatus(id: string, status: VideoStatus, videoUrl?: string): Promise<Video>
-}
+export * from '../../../shared/interfaces/IVideoRepository'
