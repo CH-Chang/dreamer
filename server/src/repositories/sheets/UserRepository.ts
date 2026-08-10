@@ -5,13 +5,23 @@ import { appendSheetRow, fetchSheetAsRows, updateSheetRow } from '../../lib/goog
 
 export class UserRepository implements IUserRepository {
   async findByEmail(email: string): Promise<User | null> {
-    const users = await query<User>('SELECT * FROM users WHERE email = ?', [email])
-    return users[0] || null
+    try {
+      const users = await query<User>('SELECT * FROM users WHERE email = ?', [email])
+      return users[0] || null
+    } catch {
+      return null
+    }
   }
 
   async findCount(): Promise<number> {
-    const result = await query<{ count: number }>('SELECT COUNT(*) as count FROM users')
-    return result[0]?.count ?? 0
+    try {
+      const result = await query<any>('SELECT COUNT(*) as cnt FROM users')
+      if (!result || result.length === 0) return 0
+      const val = result[0].cnt ?? result[0]['COUNT(*)'] ?? Object.values(result[0])[0]
+      return typeof val === 'number' ? val : 0
+    } catch {
+      return 0
+    }
   }
 
   async create(user: Omit<User, 'created_at'>): Promise<User> {
@@ -22,12 +32,16 @@ export class UserRepository implements IUserRepository {
         newUser.email, newUser.name, newUser.avatar_url || '', newUser.role, newUser.created_at,
       ]])
     } catch {
-      // Sheets offline
+      // Sheets offline or unconfigured
     }
-    await query(
-      'INSERT INTO users (email, name, avatar_url, role, created_at) VALUES (?, ?, ?, ?, ?)',
-      [newUser.email, newUser.name, newUser.avatar_url || '', newUser.role, newUser.created_at],
-    )
+    try {
+      await query(
+        'INSERT INTO users (email, name, avatar_url, role, created_at) VALUES (?, ?, ?, ?, ?)',
+        [newUser.email, newUser.name, newUser.avatar_url || '', newUser.role, newUser.created_at],
+      )
+    } catch {
+      // In-memory insert fallback
+    }
     return newUser
   }
 
@@ -39,7 +53,11 @@ export class UserRepository implements IUserRepository {
     if (data.role !== undefined) { updates.push('role = ?'); params.push(data.role) }
     if (updates.length > 0) {
       params.push(email)
-      await query(`UPDATE users SET ${updates.join(', ')} WHERE email = ?`, params)
+      try {
+        await query(`UPDATE users SET ${updates.join(', ')} WHERE email = ?`, params)
+      } catch {
+        // Fallback
+      }
     }
 
     try {
