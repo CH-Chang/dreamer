@@ -215,19 +215,19 @@ export function SettingsPage() {
             )}
 
             <m.div variants={slideUp}>
-              <div className="flex items-center gap-3">
+              <div className="flex items-start gap-3">
                 <ConnectionTest onTested={() => setConnectionTested(true)} />
                 {isAuthenticated ? (
                   <button
                     onClick={saveAndRelogin}
-                    className="px-6 py-2.5 border border-gray-300 text-xs tracking-[0.2em] text-gray-400 hover:bg-gray-50 transition-colors whitespace-nowrap"
+                    className="h-10 px-5 border border-gray-300 text-xs tracking-[0.15em] text-gray-500 hover:bg-gray-50 transition-colors whitespace-nowrap flex items-center justify-center font-medium"
                   >
                     儲存變更
                   </button>
                 ) : (
                   <button
                     onClick={save}
-                    className="px-6 py-2.5 border border-gray-300 text-xs tracking-[0.2em] text-gray-500 hover:bg-gray-50 transition-colors"
+                    className="h-10 px-5 border border-gray-300 text-xs tracking-[0.15em] text-gray-500 hover:bg-gray-50 transition-colors flex items-center justify-center font-medium"
                   >
                     {saved ? '已儲存' : '儲存'}
                   </button>
