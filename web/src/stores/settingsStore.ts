@@ -17,9 +17,12 @@ interface SettingsState {
   loadSettings: () => void
 }
 
+const DEFAULT_GOOGLE_CLIENT_ID =
+  '931072805115-92s5rot2jqavlrcoukpk1tqt8o2bslv1.apps.googleusercontent.com'
+
 export const useSettingsStore = create<SettingsState>((set) => ({
   settings: {
-    googleClientId: '',
+    googleClientId: DEFAULT_GOOGLE_CLIENT_ID,
     aiMode: 'system',
     customGcpProjectId: '',
     customGcpLocation: 'us-central1',
@@ -44,10 +47,10 @@ export const useSettingsStore = create<SettingsState>((set) => ({
       if (next.googleSheetsUrl !== undefined) localStorage.setItem('dreamer_sheet_url', next.googleSheetsUrl)
       if (next.googleClientId !== undefined) localStorage.setItem('dreamer_oauth_client_id', next.googleClientId)
       if (next.aiMode !== undefined) localStorage.setItem('dreamer_ai_mode', next.aiMode)
-      
+
       const targetGcpProject = next.customGcpProjectId || next.gcpProjectId || ''
       const targetGcpLocation = next.customGcpLocation || next.gcpLocation || 'us-central1'
-      
+
       localStorage.setItem('dreamer_custom_gcp_project_id', targetGcpProject)
       localStorage.setItem('dreamer_gcp_project_id', targetGcpProject)
       localStorage.setItem('dreamer_custom_gcp_location', targetGcpLocation)
@@ -61,7 +64,7 @@ export const useSettingsStore = create<SettingsState>((set) => ({
     set({
       settings: {
         googleSheetsUrl: localStorage.getItem('dreamer_sheet_url') || '',
-        googleClientId: localStorage.getItem('dreamer_oauth_client_id') || '',
+        googleClientId: localStorage.getItem('dreamer_oauth_client_id') || DEFAULT_GOOGLE_CLIENT_ID,
         aiMode: (localStorage.getItem('dreamer_ai_mode') as 'system' | 'custom') || 'system',
         customGcpProjectId: localStorage.getItem('dreamer_custom_gcp_project_id') || localStorage.getItem('dreamer_gcp_project_id') || '',
         customGcpLocation: localStorage.getItem('dreamer_custom_gcp_location') || localStorage.getItem('dreamer_gcp_location') || 'us-central1',

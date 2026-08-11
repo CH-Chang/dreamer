@@ -1,20 +1,21 @@
 import { describe, it, expect, beforeEach } from 'vitest'
 import { useSettingsStore } from '../settingsStore'
 
+const DEFAULT_CLIENT = '931072805115-92s5rot2jqavlrcoukpk1tqt8o2bslv1.apps.googleusercontent.com'
+
 describe('settingsStore', () => {
   beforeEach(() => {
     localStorage.clear()
     useSettingsStore.setState({
-      settings: { googleSheetsUrl: '', googleClientId: '', gcpProjectId: '', gcpLocation: 'us-central1', driveFolderName: '', aiMode: 'system', customGcpProjectId: '', customGcpLocation: 'us-central1' },
+      settings: { googleSheetsUrl: '', googleClientId: DEFAULT_CLIENT, gcpProjectId: '', gcpLocation: 'us-central1', driveFolderName: '', aiMode: 'system', customGcpProjectId: '', customGcpLocation: 'us-central1' },
     })
-
   })
 
-  it('loads empty settings when nothing in localStorage', () => {
+  it('loads default settings when nothing in localStorage', () => {
     useSettingsStore.getState().loadSettings()
     const state = useSettingsStore.getState()
     expect(state.settings.googleSheetsUrl).toBe('')
-    expect(state.settings.googleClientId).toBe('')
+    expect(state.settings.googleClientId).toBe(DEFAULT_CLIENT)
     expect(state.settings.gcpProjectId).toBe('')
     expect(state.settings.gcpLocation).toBe('us-central1')
   })
@@ -47,7 +48,7 @@ describe('settingsStore', () => {
     useSettingsStore.getState().setSettings({ googleSheetsUrl: 'new-url' })
     const state = useSettingsStore.getState()
     expect(state.settings.googleSheetsUrl).toBe('new-url')
-    expect(state.settings.googleClientId).toBe('')
+    expect(state.settings.googleClientId).toBe(DEFAULT_CLIENT)
     expect(state.settings.gcpProjectId).toBe('')
     expect(state.settings.gcpLocation).toBe('us-central1')
   })
