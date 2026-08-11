@@ -32,13 +32,13 @@ export function ConnectionTest({ onTested }: Props) {
         whileTap={{ scale: 0.98 }}
         onClick={testConnection}
         disabled={status === 'testing'}
-        className="h-10 w-36 bg-gray-800 text-white text-xs tracking-wider font-medium
-                   hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed 
+        className="h-10 w-36 border border-gray-300 bg-white text-gray-700 text-xs tracking-wider font-medium
+                   hover:bg-gray-50 hover:border-gray-400 disabled:opacity-50 disabled:cursor-not-allowed 
                    transition-all flex items-center justify-center gap-2 rounded-none"
       >
         {status === 'testing' ? (
           <>
-            <svg className="animate-spin h-3.5 w-3.5 text-white" viewBox="0 0 16 16" fill="none">
+            <svg className="animate-spin h-3.5 w-3.5 text-gray-600" viewBox="0 0 16 16" fill="none">
               <circle cx="8" cy="8" r="6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" className="opacity-30" />
               <path d="M8 2a6 6 0 0 1 6 6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
             </svg>
