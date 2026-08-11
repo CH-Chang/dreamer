@@ -1,23 +1,10 @@
 import { Hono } from 'hono'
 import { authMiddleware, type AuthEnv } from '../middleware/auth'
 import { getDreamRepository } from '../repositories/factory'
-import { generateTitleSuggestions } from '../services/aiService'
+import { config } from '../config'
 import type { CreateDreamInput, UpdateDreamInput } from '../../../shared/types/dream'
 
 export const dreamsRoute = new Hono<AuthEnv>()
-
-dreamsRoute.post('/suggest-title', authMiddleware, async (c) => {
-  const { description } = await c.req.json<{ description: string }>()
-  if (!description) {
-    return c.json({ error: 'Description is required' }, 400)
-  }
-  try {
-    const titles = await generateTitleSuggestions(description)
-    return c.json({ titles })
-  } catch (err) {
-    return c.json({ error: (err as Error).message || 'Failed to suggest titles' }, 500)
-  }
-})
 
 dreamsRoute.get('/public', async (c) => {
   const cursor = c.req.query('cursor')
@@ -67,7 +54,10 @@ dreamsRoute.get('/:id', async (c) => {
 
 dreamsRoute.post('/', authMiddleware, async (c) => {
   const user = c.get('user')
+  const authHeader = c.req.header('Authorization') || ''
+  const token = authHeader.replace('Bearer ', '')
   const body = await c.req.json<CreateDreamInput>()
+
   if (!body.date || !body.description) {
     return c.json({ error: 'Missing required fields: date and description' }, 400)
   }
@@ -75,18 +65,55 @@ dreamsRoute.post('/', authMiddleware, async (c) => {
   const repo = getDreamRepository()
 
   let title = body.title
-  if (!title) {
+  let titleCandidates: string[] = body.title_candidates || []
+
+  // Generate 3 candidate titles using Gemini LLM upon dream creation
+  if (titleCandidates.length === 0) {
     try {
-      const suggestions = await generateTitleSuggestions(body.description)
-      if (suggestions.length > 0) title = suggestions[0]
-    } catch {
-      // Ignore AI title generation failure on fallback
+      const prompt = `請根據以下夢境內容，產生 3 個簡短、富有詩意或吸引人的夢境標題（繁體中文），每行一個標題，不要有編號或額外說明：\n${body.description}`
+      const systemPrompt = '你是一個夢境解析與命名大師。請只輸出 3 行標題。'
+      const model = 'gemini-3.5-flash'
+      const res = await fetch(
+        `https://aiplatform.googleapis.com/v1/projects/${config.systemGcpProjectId}/locations/us-central1/publishers/google/models/${model}:generateContent`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`,
+          },
+          body: JSON.stringify({
+            contents: [{ role: 'user', parts: [{ text: prompt }] }],
+            system_instruction: { parts: [{ text: systemPrompt }] },
+          }),
+        },
+      )
+
+      if (res.ok) {
+        const data = (await res.json()) as any
+        const text = data.candidates?.[0]?.content?.parts?.[0]?.text || ''
+        const suggestions = text
+          .split('\n')
+          .map((line: string) => line.replace(/^[\d\s.、-]+/, '').trim())
+          .filter(Boolean)
+          .slice(0, 3)
+
+        if (suggestions.length > 0) {
+          titleCandidates = suggestions
+          if (!title) {
+            title = suggestions[0]
+          }
+        }
+      }
+    } catch (err) {
+      console.warn('AI title generation error:', err)
     }
   }
 
   const created = await repo.create({
     ...body,
-    title,
+    title: title || '',
+    title_candidates: titleCandidates,
+    visibility: body.visibility ?? 'public',
     email: user.email,
   })
   return c.json(created, 201)

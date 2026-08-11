@@ -17,6 +17,7 @@ export interface CreateDreamInput {
   description: string
   title?: string
   title_candidates?: string[]
+  tags?: string[]
   visibility?: 'public' | 'private'
 }
 

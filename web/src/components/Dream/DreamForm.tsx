@@ -13,7 +13,7 @@ interface Props {
 export function DreamForm({ date }: Props) {
   const [description, setDescription] = useState('')
   const [saving, setSaving] = useState(false)
-  const [visibility, setVisibility] = useState<'public' | 'private'>('private')
+  const [visibility, setVisibility] = useState<'public' | 'private'>('public')
   const { user } = useAuthStore()
   const { addDream } = useDreamStore()
 
@@ -50,28 +50,28 @@ export function DreamForm({ date }: Props) {
   return (
     <div>
       <p className="text-xs text-gray-400 tracking-wider mb-3">{date}</p>
-      <div className="relative">
+      <div>
         <textarea
           value={description}
           onChange={(e) => setDescription(e.target.value)}
           onKeyDown={handleKeyDown}
           placeholder="記錄你的夢境..."
           rows={4}
-          className="w-full resize-none bg-transparent border-b border-gray-200 text-sm text-gray-600 placeholder-gray-200 focus:outline-none focus:border-gray-400 transition-colors pb-3 pr-8"
+          className="w-full resize-none bg-transparent border-b border-gray-200 text-sm text-gray-600 placeholder-gray-200 focus:outline-none focus:border-gray-400 transition-colors pb-3 leading-relaxed"
         />
-        <div className="absolute bottom-3 right-1">
-          <MicButton onTranscript={handleTranscript} disabled={saving} />
-        </div>
       </div>
       <div className="flex items-center justify-between mt-3">
-        <Switch checked={visibility === 'public'} onChange={(v) => setVisibility(v ? 'public' : 'private')} />
+        <div className="flex items-center gap-3">
+          <Switch checked={visibility === 'public'} onChange={(v) => setVisibility(v ? 'public' : 'private')} />
+          <MicButton onTranscript={handleTranscript} disabled={saving} />
+        </div>
         <m.button
           whileTap={{ scale: 0.97 }}
           onClick={handleSave}
           disabled={saving || !description.trim()}
           className="px-6 py-2 bg-gray-800 text-white text-xs tracking-[0.2em] hover:bg-gray-700 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
         >
-          {saving ? '儲存中...' : '儲存'}
+          {saving ? 'AI 命名與儲存中...' : '儲存'}
         </m.button>
       </div>
     </div>

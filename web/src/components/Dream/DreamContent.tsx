@@ -7,6 +7,7 @@ import { getDreamRepository, getEditLogRepository } from '../../repositories/fac
 import { geminiTextClient } from '../../lib/geminiTextClient'
 import { TagInput } from '../ui/TagInput'
 import { Switch } from '../ui/Switch'
+import { MicButton } from '../ui/MicButton'
 import { useCategoryStore } from '../../stores/categoryStore'
 
 interface Props {
@@ -20,7 +21,7 @@ export function DreamContent({ dream }: Props) {
   const [description, setDescription] = useState(dream.description)
   const [saving, setSaving] = useState(false)
   const [polishing, setPolishing] = useState(false)
-  const [visibility, setVisibility] = useState<'public' | 'private'>(dream.visibility || 'private')
+  const [visibility, setVisibility] = useState<'public' | 'private'>(dream.visibility || 'public')
   const [showEditLog, setShowEditLog] = useState(false)
   const [editLogs, setEditLogs] = useState<EditLogEntry[]>([])
   const [loadingLogs, setLoadingLogs] = useState(false)
@@ -67,7 +68,7 @@ export function DreamContent({ dream }: Props) {
       const data: UpdateDreamInput = {}
       if (title !== (dream.title || '')) data.title = title
       if (JSON.stringify(tags) !== JSON.stringify(dream.tags || [])) data.tags = tags
-      if (visibility !== (dream.visibility || 'private')) data.visibility = visibility
+      if (visibility !== (dream.visibility || 'public')) data.visibility = visibility
       if (description !== dream.description) data.description = description
       if (Object.keys(data).length === 0) {
         setEditing(false)
@@ -87,7 +88,7 @@ export function DreamContent({ dream }: Props) {
     setTitle(dream.title || '')
     setTags(dream.tags || [])
     setDescription(dream.description)
-    setVisibility(dream.visibility || 'private')
+    setVisibility(dream.visibility || 'public')
     setEditing(false)
   }
 
@@ -133,13 +134,16 @@ export function DreamContent({ dream }: Props) {
           className="w-full resize-none bg-transparent border-b border-gray-200 text-sm text-gray-500 placeholder-gray-200 focus:outline-none focus:border-gray-400 transition-colors pb-3 leading-relaxed"
         />
         <div className="flex justify-between items-center mt-4">
-          <button
-            onClick={handlePolish}
-            disabled={polishing || !description.trim()}
-            className="text-xs tracking-wider px-3 py-1.5 rounded-md border border-gray-200 text-gray-400 hover:text-gray-600 hover:border-gray-400 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
-          >
-            {polishing ? '潤飾中...' : '✨ 潤飾'}
-          </button>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={handlePolish}
+              disabled={polishing || !description.trim()}
+              className="text-xs tracking-wider px-3 py-1.5 rounded-md border border-gray-200 text-gray-400 hover:text-gray-600 hover:border-gray-400 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+            >
+              {polishing ? '潤飾中...' : '✨ 潤飾'}
+            </button>
+            <MicButton onTranscript={(text) => setDescription((prev) => prev + text)} disabled={saving || polishing} />
+          </div>
           <div className="flex gap-3">
             <button
               onClick={handleCancel}
@@ -163,85 +167,85 @@ export function DreamContent({ dream }: Props) {
 
   return (
     <div>
-        <div className="flex items-start justify-between gap-4">
-          <div className="flex-1">
-            <p className="text-xs text-gray-400 tracking-wider mb-3">
-              {dream.date}
-              <span className="ml-2">· {dream.visibility === 'public' ? '公開' : '私有'}</span>
-            </p>
-            <h1 className="text-xl font-serif tracking-widest text-gray-700">
-              {dream.title || '無標題'}
-            </h1>
-            {dream.tags && dream.tags.length > 0 && (
-              <div className="flex flex-wrap gap-1 mt-2">
-                {dream.tags.map((tagId) => {
-                  const cat = categories.find((c) => c.id === tagId)
-                  return cat ? (
-                    <span
-                      key={tagId}
-                      className="inline-flex items-center gap-0.5 text-[10px] tracking-wider px-1.5 py-0.5 rounded-full"
-                      style={{ backgroundColor: cat.color + '20', color: cat.color }}
-                    >
-                      {cat.icon} {cat.name}
-                    </span>
-                  ) : (
-                    <span key={tagId} className="inline-flex items-center gap-0.5 text-[10px] tracking-wider px-1.5 py-0.5 rounded-full bg-gray-100 text-gray-300">
-                      ???
-                    </span>
-                  )
-                })}
-              </div>
-            )}
-            {dream.title_candidates && dream.title_candidates.length > 0 && (
-              <div className="flex flex-wrap items-center gap-1.5 mt-3">
-                {selectingTitle ? (
-                  <span className="text-[10px] tracking-wider text-gray-300">選取中...</span>
+      <div className="flex items-start justify-between gap-4">
+        <div className="flex-1">
+          <p className="text-xs text-gray-400 tracking-wider mb-3">
+            {dream.date}
+            <span className="ml-2">· {dream.visibility === 'public' ? '公開' : '私有'}</span>
+          </p>
+          <h1 className="text-xl font-serif tracking-widest text-gray-700">
+            {dream.title || '無標題'}
+          </h1>
+          {dream.tags && dream.tags.length > 0 && (
+            <div className="flex flex-wrap gap-1 mt-2">
+              {dream.tags.map((tagId) => {
+                const cat = categories.find((c) => c.id === tagId)
+                return cat ? (
+                  <span
+                    key={tagId}
+                    className="inline-flex items-center gap-0.5 text-[10px] tracking-wider px-1.5 py-0.5 rounded-full"
+                    style={{ backgroundColor: cat.color + '20', color: cat.color }}
+                  >
+                    {cat.icon} {cat.name}
+                  </span>
                 ) : (
-                  <>
-                    <span className="text-[10px] tracking-wider text-gray-300 mr-1">快速選標題：</span>
-                    {dream.title_candidates.map((candidate, i) => (
-                      <button
-                        key={i}
-                        type="button"
-                        onClick={async () => {
-                          setSelectingTitle(true)
-                          try {
-                            const repo = getDreamRepository()
-                            const updated = await repo.update(dream.id, { title: candidate, title_candidates: [] })
-                            updateDream(updated)
-                          } catch {
-                            setSelectingTitle(false)
-                          }
-                        }}
-                        className={`text-[11px] tracking-wider px-2.5 py-0.5 rounded-full border transition-colors ${
-                          dream.title === candidate
-                            ? 'border-gray-800 bg-gray-800 text-white'
-                            : 'border-gray-200 text-gray-400 hover:border-gray-400'
-                        }`}
-                      >
-                        {candidate}
-                      </button>
-                    ))}
-                  </>
-                )}
-              </div>
-            )}
-          </div>
-          <div className="flex items-center gap-2 mt-1">
-            <button
-              onClick={() => setShowEditLog(true)}
-              className="text-[10px] tracking-wider text-gray-300 hover:text-gray-500 transition-colors whitespace-nowrap"
-            >
-              紀錄
-            </button>
-            <button
-              onClick={() => setEditing(true)}
-              className="text-[10px] tracking-wider text-gray-300 hover:text-gray-500 transition-colors whitespace-nowrap"
-            >
-              編輯
-            </button>
-          </div>
+                  <span key={tagId} className="inline-flex items-center gap-0.5 text-[10px] tracking-wider px-1.5 py-0.5 rounded-full bg-gray-100 text-gray-300">
+                    ???
+                  </span>
+                )
+              })}
+            </div>
+          )}
+          {dream.title_candidates && dream.title_candidates.length > 0 && (
+            <div className="flex flex-wrap items-center gap-1.5 mt-3">
+              {selectingTitle ? (
+                <span className="text-[10px] tracking-wider text-gray-300">選取中...</span>
+              ) : (
+                <>
+                  <span className="text-[10px] tracking-wider text-gray-300 mr-1">快速選標題：</span>
+                  {dream.title_candidates.map((candidate, i) => (
+                    <button
+                      key={i}
+                      type="button"
+                      onClick={async () => {
+                        setSelectingTitle(true)
+                        try {
+                          const repo = getDreamRepository()
+                          const updated = await repo.update(dream.id, { title: candidate, title_candidates: [] })
+                          updateDream(updated)
+                        } catch {
+                          setSelectingTitle(false)
+                        }
+                      }}
+                      className={`text-[11px] tracking-wider px-2.5 py-0.5 rounded-full border transition-colors ${
+                        dream.title === candidate
+                          ? 'border-gray-800 bg-gray-800 text-white'
+                          : 'border-gray-200 text-gray-400 hover:border-gray-400'
+                      }`}
+                    >
+                      {candidate}
+                    </button>
+                  ))}
+                </>
+              )}
+            </div>
+          )}
         </div>
+        <div className="flex items-center gap-2 mt-1">
+          <button
+            onClick={() => setShowEditLog(true)}
+            className="text-[10px] tracking-wider text-gray-300 hover:text-gray-500 transition-colors whitespace-nowrap"
+          >
+            紀錄
+          </button>
+          <button
+            onClick={() => setEditing(true)}
+            className="text-[10px] tracking-wider text-gray-300 hover:text-gray-500 transition-colors whitespace-nowrap"
+          >
+            編輯
+          </button>
+        </div>
+      </div>
       <p className="mt-6 text-sm text-gray-500 leading-relaxed whitespace-pre-wrap">
         {dream.description}
       </p>

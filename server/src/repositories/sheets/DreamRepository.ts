@@ -2,79 +2,86 @@ import type { Dream, CreateDreamInput, UpdateDreamInput } from '../../../../shar
 import type { IDreamRepository } from '../../../../shared/interfaces/IDreamRepository'
 import { query } from '../../lib/alaSqlService'
 import { appendSheetRow, updateSheetRow, fetchSheetAsRows } from '../../lib/googleSheetsClient'
-import { getEditLogRepository } from '../factory'
 import { generateId } from '../../utils/idGenerator'
+import { getEditLogRepository } from '../factory'
 
 export class DreamRepository implements IDreamRepository {
-  private parseRow = (row: Dream): Dream => ({
-    ...row,
-    tags: typeof row.tags === 'string' ? this.safeParse(row.tags, []) : (row.tags || []),
-    title_candidates: typeof row.title_candidates === 'string' ? this.safeParse(row.title_candidates, []) : (row.title_candidates || []),
-  })
+  private parseDreamRow(row: Record<string, unknown>): Dream {
+    return {
+      id: String(row.id || ''),
+      email: String(row.email || ''),
+      date: String(row.date || ''),
+      description: String(row.description || ''),
+      title: row.title ? String(row.title) : undefined,
+      tags: typeof row.tags === 'string' ? this.safeParse(row.tags, []) : (row.tags as string[] || []),
+      title_candidates: typeof row.title_candidates === 'string' ? this.safeParse(row.title_candidates, []) : (row.title_candidates as string[] || []),
+      visibility: (row.visibility as 'public' | 'private') || 'public',
+      created_at: String(row.created_at || ''),
+      updated_at: String(row.updated_at || ''),
+    }
+  }
 
-  private safeParse = <T>(val: string, fallback: T): T => {
-    try { return JSON.parse(val) } catch { return fallback }
+  private safeParse<T>(jsonStr: string, fallback: T): T {
+    try {
+      return JSON.parse(jsonStr)
+    } catch {
+      return fallback
+    }
   }
 
   async findById(id: string): Promise<Dream | null> {
-    const dreams = await query<Dream>(
-      'SELECT * FROM dreams WHERE id = ?',
-      [id],
-    )
-    return dreams[0] ? this.parseRow(dreams[0]) : null
-  }
-
-  async findAllByEmail(email: string): Promise<Dream[]> {
-    const dreams = await query<Dream>(
-      'SELECT * FROM dreams WHERE email = ? ORDER BY created_at DESC',
-      [email],
-    )
-    return dreams.map(this.parseRow)
+    const rows = await query<Record<string, unknown>>('SELECT * FROM dreams WHERE id = ?', [id])
+    if (rows.length === 0) return null
+    return this.parseDreamRow(rows[0])
   }
 
   async findByDate(email: string, date: string): Promise<Dream | null> {
-    const dreams = await query<Dream>(
+    const rows = await query<Record<string, unknown>>(
       'SELECT * FROM dreams WHERE email = ? AND date = ?',
       [email, date],
     )
-    return dreams[0] ? this.parseRow(dreams[0]) : null
+    if (rows.length === 0) return null
+    return this.parseDreamRow(rows[0])
   }
 
   async findByMonth(email: string, year: number, month: number): Promise<Dream[]> {
-    const monthStr = `${year}-${String(month + 1).padStart(2, '0')}`
-    const dreams = await query<Dream>(
-      'SELECT * FROM dreams WHERE email = ? AND date LIKE ?',
-      [email, `${monthStr}%`],
+    const monthStr = String(month + 1).padStart(2, '0')
+    const prefix = `${year}-${monthStr}`
+    const rows = await query<Record<string, unknown>>(
+      'SELECT * FROM dreams WHERE email = ? AND date LIKE ? ORDER BY date ASC',
+      [email, `${prefix}%`],
     )
-    return dreams.map(this.parseRow)
+    return rows.map((r) => this.parseDreamRow(r))
+  }
+
+  async findAllByEmail(email: string): Promise<Dream[]> {
+    const rows = await query<Record<string, unknown>>(
+      'SELECT * FROM dreams WHERE email = ? ORDER BY date DESC',
+      [email],
+    )
+    return rows.map((r) => this.parseDreamRow(r))
   }
 
   async findPublicPage(cursor?: string, limit = 10): Promise<{ items: Dream[]; nextCursor?: string }> {
-    const subquery = `(id IN (SELECT dream_id FROM videos WHERE status = 'done') OR id IN (SELECT dream_id FROM comics WHERE status = 'done'))`
-    let sql: string
-    let params: unknown[]
-
+    let sql = "SELECT * FROM dreams WHERE visibility = 'public'"
+    const params: unknown[] = []
     if (cursor) {
-      sql = `SELECT * FROM dreams WHERE visibility = 'public' AND created_at < ? AND ${subquery} ORDER BY created_at DESC LIMIT ${limit}`
-      params = [cursor]
-    } else {
-      sql = `SELECT * FROM dreams WHERE visibility = 'public' AND ${subquery} ORDER BY created_at DESC LIMIT ${limit}`
-      params = []
+      sql += ' AND created_at < ?'
+      params.push(cursor)
+    }
+    sql += ' ORDER BY created_at DESC LIMIT ?'
+    params.push(limit + 1)
+
+    const rows = await query<Record<string, unknown>>(sql, params)
+    const dreams = rows.map((r) => this.parseDreamRow(r))
+    let nextCursor: string | undefined = undefined
+
+    if (dreams.length > limit) {
+      const last = dreams.pop()!
+      nextCursor = last.created_at
     }
 
-    try {
-      const items = await query<Dream>(sql, params)
-      const nextCursor = items.length === limit ? items[items.length - 1].created_at : undefined
-      return { items: items.map(this.parseRow), nextCursor }
-    } catch {
-      // Fallback if video/comic tables don't exist yet
-      const fallbackSql = cursor
-        ? `SELECT * FROM dreams WHERE visibility = 'public' AND created_at < ? ORDER BY created_at DESC LIMIT ${limit}`
-        : `SELECT * FROM dreams WHERE visibility = 'public' ORDER BY created_at DESC LIMIT ${limit}`
-      const items = await query<Dream>(fallbackSql, cursor ? [cursor] : [])
-      const nextCursor = items.length === limit ? items[items.length - 1].created_at : undefined
-      return { items: items.map(this.parseRow), nextCursor }
-    }
+    return { items: dreams, nextCursor }
   }
 
   async create(input: CreateDreamInput): Promise<Dream> {
@@ -84,9 +91,10 @@ export class DreamRepository implements IDreamRepository {
       email: input.email,
       date: input.date,
       description: input.description,
-      title_candidates: [],
-      tags: [],
-      visibility: input.visibility ?? 'private',
+      title: input.title || '',
+      title_candidates: input.title_candidates || [],
+      tags: input.tags || [],
+      visibility: input.visibility ?? 'public',
       created_at: now,
       updated_at: now,
     }
@@ -109,59 +117,56 @@ export class DreamRepository implements IDreamRepository {
 
   async update(id: string, data: UpdateDreamInput): Promise<Dream> {
     const now = new Date().toISOString()
-    let oldValues: string[] = []
-    let rowIdx = -1
-    let headers: string[] = []
-
-    try {
-      const rows = await fetchSheetAsRows('dreams')
-      if (rows.length >= 2) {
-        headers = rows[0]
-        rowIdx = rows.findIndex((r, i) => i > 0 && r[0]?.trim() === id)
-        if (rowIdx !== -1) oldValues = rows[rowIdx]
-      }
-    } catch {
-      // Sheet offline
-    }
-
-    const updateFields: string[] = ["updated_at = ?"]
-    const updateValues: unknown[] = [now]
-    if (data.title !== undefined) { updateFields.push("title = ?"); updateValues.push(data.title) }
-    if (data.tags !== undefined) { updateFields.push("tags = ?"); updateValues.push(JSON.stringify(data.tags)) }
-    if (data.visibility !== undefined) { updateFields.push("visibility = ?"); updateValues.push(data.visibility) }
-    if (data.description !== undefined) { updateFields.push("description = ?"); updateValues.push(data.description) }
-    if (data.title_candidates !== undefined) { updateFields.push("title_candidates = ?"); updateValues.push(JSON.stringify(data.title_candidates)) }
-    updateValues.push(id)
-
-    if (updateFields.length > 1) {
-      await query(`UPDATE dreams SET ${updateFields.join(", ")} WHERE id = ?`, updateValues)
-    }
-
     const existing = await this.findById(id)
     if (!existing) throw new Error('Dream not found')
 
-    if (rowIdx !== -1 && oldValues.length > 0) {
-      const newValues = [...oldValues]
-      const colIndex = (name: string) => headers.findIndex((h) => h.trim() === name)
-      if (data.title !== undefined) { const ci = colIndex('title'); if (ci !== -1) newValues[ci] = data.title }
-      if (data.tags !== undefined) { const ci = colIndex('tags'); if (ci !== -1) newValues[ci] = JSON.stringify(data.tags) }
-      if (data.visibility !== undefined) { const ci = colIndex('visibility'); if (ci !== -1) newValues[ci] = data.visibility }
-      if (data.description !== undefined) { const ci = colIndex('description'); if (ci !== -1) newValues[ci] = data.description }
-      if (data.title_candidates !== undefined) { const ci = colIndex('title_candidates'); if (ci !== -1) newValues[ci] = JSON.stringify(data.title_candidates) }
-      const updatedAtCol = colIndex('updated_at')
-      if (updatedAtCol !== -1) newValues[updatedAtCol] = now
+    const updateFields: string[] = ['updated_at = ?']
+    const updateValues: unknown[] = [now]
+    const changes: Record<string, { from: string; to: string }> = {}
 
+    if (data.title !== undefined && data.title !== existing.title) {
+      updateFields.push('title = ?')
+      updateValues.push(data.title)
+      changes.title = { from: existing.title || '', to: data.title }
+    }
+    if (data.description !== undefined && data.description !== existing.description) {
+      updateFields.push('description = ?')
+      updateValues.push(data.description)
+      changes.description = { from: existing.description, to: data.description }
+    }
+    if (data.tags !== undefined) {
+      updateFields.push('tags = ?')
+      updateValues.push(JSON.stringify(data.tags))
+      changes.tags = { from: JSON.stringify(existing.tags || []), to: JSON.stringify(data.tags) }
+    }
+    if (data.title_candidates !== undefined) {
+      updateFields.push('title_candidates = ?')
+      updateValues.push(JSON.stringify(data.title_candidates))
+      changes.title_candidates = { from: JSON.stringify(existing.title_candidates || []), to: JSON.stringify(data.title_candidates) }
+    }
+    if (data.visibility !== undefined && data.visibility !== existing.visibility) {
+      updateFields.push('visibility = ?')
+      updateValues.push(data.visibility)
+      changes.visibility = { from: existing.visibility, to: data.visibility }
+    }
+
+    updateValues.push(id)
+    await query(`UPDATE dreams SET ${updateFields.join(', ')} WHERE id = ?`, updateValues)
+
+    if (Object.keys(changes).length > 0) {
       try {
-        await updateSheetRow('dreams', rowIdx + 1, newValues)
+        await getEditLogRepository().create({ dream_id: id, edited_at: now, changes })
       } catch {
-        // Sheet update failed
+        // Ignore edit log creation failure
       }
     }
 
-    return existing
+    const updated = await this.findById(id)
+    if (!updated) throw new Error('Dream not found after update')
+    return updated
   }
 
-  async delete(id: string, _email?: string): Promise<void> {
-    await query('DELETE FROM dreams WHERE id = ?', [id])
+  async delete(id: string, email: string): Promise<void> {
+    await query('DELETE FROM dreams WHERE id = ? AND email = ?', [id, email])
   }
 }
