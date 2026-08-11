@@ -32,6 +32,15 @@ function Spinner() {
   )
 }
 
+function getUniqueRateLimits(limits: RateLimit[]): RateLimit[] {
+  const map = new Map<string, RateLimit>()
+  for (const item of limits) {
+    const key = `${item.scope}:${item.type}`
+    map.set(key, item)
+  }
+  return Array.from(map.values())
+}
+
 export function SettingsPage() {
   const { settings, setSettings, loadSettings } = useSettingsStore()
   const { user, isAuthenticated, logout } = useAuthStore()
@@ -60,7 +69,8 @@ export function SettingsPage() {
 
   const loadRateLimits = useCallback(async () => {
     const repo = getRateLimitRepository()
-    setRateLimits(await repo.findAll())
+    const all = await repo.findAll()
+    setRateLimits(getUniqueRateLimits(all))
   }, [])
 
   useEffect(() => {
