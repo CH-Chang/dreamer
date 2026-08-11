@@ -16,6 +16,8 @@ comicsRoute.get('/', async (c) => {
 
 comicsRoute.post('/', authMiddleware, async (c) => {
   const user = c.get('user')
+  const authHeader = c.req.header('Authorization') || ''
+  const token = authHeader.replace('Bearer ', '')
   const body = await c.req.json<{
     dream_id: string
     with_character?: boolean
@@ -49,12 +51,13 @@ comicsRoute.post('/', authMiddleware, async (c) => {
 
   try {
     const prompt = `夢境連環漫畫插畫風格：${description}`
-    const { bytesBase64Encoded, mimeType } = await generateComicImage(prompt, undefined, { gcpProjectId })
+    const { bytesBase64Encoded, mimeType } = await generateComicImage(prompt, undefined, { gcpProjectId, token })
     const imageUrl = `data:${mimeType};base64,${bytesBase64Encoded}`
 
     const updated = await comicRepo.updateStatus(created.id, 'done', imageUrl)
     return c.json(updated, 201)
   } catch (err) {
+    console.error('Comic generation failed error:', err)
     const updated = await comicRepo.updateStatus(created.id, 'failed')
     return c.json(updated, 201)
   }

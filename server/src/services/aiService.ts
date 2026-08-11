@@ -2,7 +2,7 @@ import { config } from '../config'
 
 export async function generateTitleSuggestions(
   description: string,
-  options: { gcpProjectId?: string; gcpLocation?: string } = {},
+  options: { gcpProjectId?: string; gcpLocation?: string; token?: string } = {},
 ): Promise<string[]> {
   const gcpProjectId = options.gcpProjectId || config.systemGcpProjectId
   const prompt = `請根據以下夢境內容，產生 3 個簡短、富有詩意或吸引人的夢境標題（繁體中文），每行一個標題，不要有編號或額外說明：\n${description}`
@@ -13,12 +13,17 @@ export async function generateTitleSuggestions(
     system_instruction: { parts: [{ text: systemPrompt }] },
   }
 
+  const headers: Record<string, string> = { 'Content-Type': 'application/json' }
+  if (options.token) {
+    headers['Authorization'] = `Bearer ${options.token}`
+  }
+
   const model = 'gemini-3.5-flash'
   const res = await fetch(
     `https://aiplatform.googleapis.com/v1/projects/${gcpProjectId}/locations/us-central1/publishers/google/models/${model}:generateContent`,
     {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers,
       body: JSON.stringify(body),
     },
   )
@@ -40,7 +45,7 @@ export async function generateTitleSuggestions(
 export async function generateComicImage(
   prompt: string,
   referenceImage?: { bytesBase64Encoded: string; mimeType: string },
-  options: { gcpProjectId?: string } = {},
+  options: { gcpProjectId?: string; token?: string } = {},
 ): Promise<{ bytesBase64Encoded: string; mimeType: string }> {
   const gcpProjectId = options.gcpProjectId || config.systemGcpProjectId
   const parts: Array<Record<string, unknown>> = [{ text: prompt }]
@@ -54,12 +59,17 @@ export async function generateComicImage(
     })
   }
 
+  const headers: Record<string, string> = { 'Content-Type': 'application/json' }
+  if (options.token) {
+    headers['Authorization'] = `Bearer ${options.token}`
+  }
+
   const model = 'gemini-3.1-flash-image'
   const res = await fetch(
     `https://aiplatform.googleapis.com/v1/projects/${gcpProjectId}/locations/global/publishers/google/models/${model}:generateContent`,
     {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers,
       body: JSON.stringify({
         contents: { role: 'user', parts },
         generation_config: { response_modalities: ['TEXT', 'IMAGE'] },
@@ -105,6 +115,7 @@ export async function triggerVeoVideo(
     referenceImage?: { bytesBase64Encoded: string; mimeType: string }
     gcpProjectId?: string
     gcpLocation?: string
+    token?: string
   } = {},
 ): Promise<{ name: string }> {
   const gcpProjectId = options.gcpProjectId || config.systemGcpProjectId
@@ -128,12 +139,17 @@ export async function triggerVeoVideo(
     parameters.personGeneration = 'allow'
   }
 
+  const headers: Record<string, string> = { 'Content-Type': 'application/json' }
+  if (options.token) {
+    headers['Authorization'] = `Bearer ${options.token}`
+  }
+
   const model = 'veo-3.1-fast-generate-001'
   const res = await fetch(
     `https://aiplatform.googleapis.com/v1/projects/${gcpProjectId}/locations/${gcpLocation}/publishers/google/models/${model}:predictLongRunning`,
     {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers,
       body: JSON.stringify({
         instances: [instance],
         parameters,
