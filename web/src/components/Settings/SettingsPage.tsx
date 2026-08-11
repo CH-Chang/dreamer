@@ -64,8 +64,8 @@ export function SettingsPage() {
   }, [])
 
   useEffect(() => {
-    if (user?.role === 'admin') loadRateLimits()
-  }, [loadRateLimits, user?.role])
+    if (isAuthenticated) loadRateLimits()
+  }, [loadRateLimits, isAuthenticated])
 
   const doSave = () => {
     setSettings(draft)
@@ -247,7 +247,7 @@ export function SettingsPage() {
             </m.div>
           </div>
 
-          {user?.role === 'admin' && (
+          {isAuthenticated && (
             <div className="space-y-8 pt-8 border-t border-gray-200">
               <m.h2 variants={slideUp} className="text-sm tracking-wider text-gray-500">
                 配額管理
@@ -310,16 +310,18 @@ export function SettingsPage() {
                           <span className="text-xs text-gray-500">
                             每日 {r.daily_limit} · 每月 {r.monthly_limit}
                           </span>
-                          <button
-                            onClick={() => {
-                              setEditingId(r.id)
-                              setEditDaily(String(r.daily_limit))
-                              setEditMonthly(String(r.monthly_limit))
-                            }}
-                            className="text-xs text-gray-400 hover:text-gray-600"
-                          >
-                            編輯
-                          </button>
+                          {user?.role === 'admin' && (
+                            <button
+                              onClick={() => {
+                                setEditingId(r.id)
+                                setEditDaily(String(r.daily_limit))
+                                setEditMonthly(String(r.monthly_limit))
+                              }}
+                              className="text-xs text-gray-400 hover:text-gray-600"
+                            >
+                              編輯
+                            </button>
+                          )}
                         </div>
                       )}
                     </div>
@@ -334,91 +336,95 @@ export function SettingsPage() {
                       <span className="text-xs text-gray-400">
                         每日 {r.daily_limit} · 每月 {r.monthly_limit}
                       </span>
+                      {user?.role === 'admin' && (
+                        <button
+                          onClick={async () => {
+                            if (quotaLoading) return
+                            setQuotaLoading(r.id)
+                            const repo = getRateLimitRepository()
+                            try {
+                              await repo.delete(r.id)
+                              loadRateLimits()
+                            } catch (err) {
+                              console.error('Failed to delete rate limit:', err)
+                            } finally {
+                              setQuotaLoading(null)
+                            }
+                          }}
+                          disabled={quotaLoading === r.id}
+                          className="text-xs text-red-300 hover:text-red-500 disabled:opacity-40 inline-flex items-center gap-1.5"
+                        >
+                          {quotaLoading === r.id && <Spinner />}
+                          刪除
+                        </button>
+                      )}
+                    </div>
+                  ))}
+
+                {user?.role === 'admin' && (
+                  <div className="mt-4 pt-4 border-t border-gray-200">
+                    <p className="text-xs text-gray-400 mb-2">新增使用者覆寫</p>
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <input
+                        type="email"
+                        placeholder="user@email.com"
+                        value={newUserEmail}
+                        onChange={(e) => setNewUserEmail(e.target.value)}
+                        className="px-2 py-1 text-xs border border-gray-200 rounded w-44"
+                      />
+                      <select
+                        value={newType}
+                        onChange={(e) => setNewType(e.target.value as 'video' | 'comic')}
+                        className="px-2 py-1 text-xs border border-gray-200 rounded"
+                      >
+                        <option value="video">影片</option>
+                        <option value="comic">漫畫</option>
+                      </select>
+                      <input
+                        type="number"
+                        placeholder="每日"
+                        value={newDaily}
+                        onChange={(e) => setNewDaily(e.target.value)}
+                        className="px-2 py-1 text-xs border border-gray-200 rounded w-16"
+                      />
+                      <input
+                        type="number"
+                        placeholder="每月"
+                        value={newMonthly}
+                        onChange={(e) => setNewMonthly(e.target.value)}
+                        className="px-2 py-1 text-xs border border-gray-200 rounded w-16"
+                      />
                       <button
                         onClick={async () => {
-                          if (quotaLoading) return
-                          setQuotaLoading(r.id)
+                          if (!newUserEmail || !newDaily || !newMonthly || quotaLoading) return
+                          setQuotaLoading('create')
                           const repo = getRateLimitRepository()
                           try {
-                            await repo.delete(r.id)
+                            await repo.create({
+                              type: newType,
+                              scope: newUserEmail,
+                              daily_limit: Number(newDaily),
+                              monthly_limit: Number(newMonthly),
+                            })
+                            setNewUserEmail('')
+                            setNewDaily('')
+                            setNewMonthly('')
                             loadRateLimits()
                           } catch (err) {
-                            console.error('Failed to delete rate limit:', err)
+                            console.error('Failed to create rate limit:', err)
                           } finally {
                             setQuotaLoading(null)
                           }
                         }}
-                        disabled={quotaLoading === r.id}
-                        className="text-xs text-red-300 hover:text-red-500 disabled:opacity-40 inline-flex items-center gap-1.5"
+                        disabled={quotaLoading === 'create'}
+                        className="px-3 py-1 text-xs bg-gray-800 text-white rounded disabled:opacity-40 inline-flex items-center gap-1.5"
                       >
-                        {quotaLoading === r.id && <Spinner />}
-                        刪除
+                        {quotaLoading === 'create' && <Spinner />}
+                        新增
                       </button>
                     </div>
-                  ))}
-
-                <div className="mt-4 pt-4 border-t border-gray-200">
-                  <p className="text-xs text-gray-400 mb-2">新增使用者覆寫</p>
-                  <div className="flex items-center gap-2 flex-wrap">
-                    <input
-                      type="email"
-                      placeholder="user@email.com"
-                      value={newUserEmail}
-                      onChange={(e) => setNewUserEmail(e.target.value)}
-                      className="px-2 py-1 text-xs border border-gray-200 rounded w-44"
-                    />
-                    <select
-                      value={newType}
-                      onChange={(e) => setNewType(e.target.value as 'video' | 'comic')}
-                      className="px-2 py-1 text-xs border border-gray-200 rounded"
-                    >
-                      <option value="video">影片</option>
-                      <option value="comic">漫畫</option>
-                    </select>
-                    <input
-                      type="number"
-                      placeholder="每日"
-                      value={newDaily}
-                      onChange={(e) => setNewDaily(e.target.value)}
-                      className="px-2 py-1 text-xs border border-gray-200 rounded w-16"
-                    />
-                    <input
-                      type="number"
-                      placeholder="每月"
-                      value={newMonthly}
-                      onChange={(e) => setNewMonthly(e.target.value)}
-                      className="px-2 py-1 text-xs border border-gray-200 rounded w-16"
-                    />
-                    <button
-                      onClick={async () => {
-                        if (!newUserEmail || !newDaily || !newMonthly || quotaLoading) return
-                        setQuotaLoading('create')
-                        const repo = getRateLimitRepository()
-                        try {
-                          await repo.create({
-                            type: newType,
-                            scope: newUserEmail,
-                            daily_limit: Number(newDaily),
-                            monthly_limit: Number(newMonthly),
-                          })
-                          setNewUserEmail('')
-                          setNewDaily('')
-                          setNewMonthly('')
-                          loadRateLimits()
-                        } catch (err) {
-                          console.error('Failed to create rate limit:', err)
-                        } finally {
-                          setQuotaLoading(null)
-                        }
-                      }}
-                      disabled={quotaLoading === 'create'}
-                      className="px-3 py-1 text-xs bg-gray-800 text-white rounded disabled:opacity-40 inline-flex items-center gap-1.5"
-                    >
-                      {quotaLoading === 'create' && <Spinner />}
-                      新增
-                    </button>
                   </div>
-                </div>
+                )}
               </m.div>
             </div>
           )}
