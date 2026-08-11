@@ -1,5 +1,6 @@
 import type { Comment } from '../../types/comment'
 import type { Participant } from './CommentForm'
+import { UserAvatar } from '../ui/UserAvatar'
 
 interface Props {
   comment: Comment
@@ -16,7 +17,7 @@ function renderContent(text: string, participants: Participant[]) {
       const name = part.slice(1)
       const found = participants.find(p => p.name === name)
       if (found) {
-        return <span key={i} className="text-blue-400">{part}</span>
+        return <span key={i} className="text-blue-400 font-medium">{part}</span>
       }
     }
     return <span key={i}>{part}</span>
@@ -25,13 +26,15 @@ function renderContent(text: string, participants: Participant[]) {
 
 export function CommentItem({ comment, participants, currentEmail, onReply, onDelete }: Props) {
   const isDeleted = comment.content === '[已刪除]'
+  const participant = comment.email ? participants.find(p => p.email === comment.email) : null
 
   return (
     <div className="py-2">
       <div className="flex items-start gap-2">
-        {comment.email && participants.find(p => p.email === comment.email)?.avatar_url && (
-          <img
-            src={participants.find(p => p.email === comment.email)!.avatar_url!}
+        {comment.email && (
+          <UserAvatar
+            avatarUrl={participant?.avatar_url}
+            name={participant?.name || comment.email}
             className="w-5 h-5 rounded-full mt-0.5 flex-shrink-0"
           />
         )}
@@ -39,7 +42,7 @@ export function CommentItem({ comment, participants, currentEmail, onReply, onDe
           <div className="flex items-center gap-2 mb-0.5">
             {comment.email ? (
               <span className="text-gray-600 text-[10px] tracking-wider">
-                {participants.find(p => p.email === comment.email)?.name ?? comment.email}
+                {participant?.name ?? comment.email}
               </span>
             ) : (
               <span className="text-gray-300 text-[10px]">[已刪除]</span>

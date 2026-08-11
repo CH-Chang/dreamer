@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect } from 'react'
 import type { CreateCommentInput } from '../../types/comment'
 import { getCommentRepository } from '../../repositories/factory'
+import { UserAvatar } from '../ui/UserAvatar'
 
 export interface Participant {
   email: string
@@ -140,10 +141,10 @@ export function CommentForm({ dreamId, targetType, targetId, parentId, participa
             <button
               key={p.email}
               onClick={() => insertMention(p)}
-              className={`block w-full text-left px-3 py-1.5 text-xs text-gray-700 hover:bg-gray-50 transition-colors ${i === mentionIdx ? 'bg-gray-100' : ''}`}
+              className={`flex items-center gap-2 w-full text-left px-3 py-1.5 text-xs text-gray-700 hover:bg-gray-50 transition-colors ${i === mentionIdx ? 'bg-gray-100' : ''}`}
             >
-              {p.avatar_url && <img src={p.avatar_url} className="w-4 h-4 rounded-full inline mr-1.5" />}
-              {p.name}
+              <UserAvatar avatarUrl={p.avatar_url} name={p.name} className="w-4 h-4 rounded-full" />
+              <span>{p.name}</span>
             </button>
           ))}
         </div>
