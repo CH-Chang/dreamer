@@ -1,9 +1,16 @@
 import { useState } from 'react'
 import { useGoogleLogin } from '@react-oauth/google'
 import { useAuth } from '../../hooks/useAuth'
+import type { GoogleUserInfo } from '../../hooks/useAuth'
 
-export function LoginButton() {
-  const { onLoginSuccess } = useAuth()
+interface Props {
+  buttonText?: string
+  className?: string
+  onNeedsTerms?: (userInfo: GoogleUserInfo, accessToken: string) => void
+}
+
+export function LoginButton({ buttonText = '開始使用', className, onNeedsTerms }: Props) {
+  const { handleLoginToken } = useAuth()
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
 
@@ -13,7 +20,10 @@ export function LoginButton() {
       setLoading(true)
       setError('')
       try {
-        await onLoginSuccess(tokenResponse.access_token)
+        const result = await handleLoginToken(tokenResponse.access_token)
+        if (result.status === 'needs_terms' && onNeedsTerms) {
+          onNeedsTerms(result.userInfo, result.accessToken)
+        }
       } catch (e) {
         setError(e instanceof Error ? e.message : '登入失敗')
       } finally {
@@ -24,20 +34,17 @@ export function LoginButton() {
     flow: 'implicit',
   })
 
-  if (loading) {
-    return (
-      <div className="text-xs text-gray-300 tracking-wider">載入中...</div>
-    )
-  }
-
   return (
-    <div>
+    <div className="inline-block text-center">
       <button
         onClick={() => login()}
         disabled={loading}
-        className="px-8 py-3 border border-gray-300 text-gray-500 text-xs tracking-[0.2em] hover:bg-gray-50 transition-colors disabled:opacity-50"
+        className={
+          className ||
+          'px-9 py-3 bg-gray-800 text-white text-xs tracking-[0.25em] hover:bg-gray-700 transition-colors disabled:opacity-50 font-light'
+        }
       >
-        Google 登入
+        {loading ? '驗證中...' : buttonText}
       </button>
       {error && (
         <p className="mt-3 text-xs text-red-400 tracking-wider text-center">{error}</p>

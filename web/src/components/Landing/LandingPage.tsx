@@ -1,7 +1,11 @@
+import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { motion as m } from 'framer-motion'
-import { useSettingsStore } from '../../stores/settingsStore'
+import { useAuthStore } from '../../stores/authStore'
+import { useAuth } from '../../hooks/useAuth'
+import type { GoogleUserInfo } from '../../hooks/useAuth'
 import { LoginButton } from './LoginButton'
+import { PrivacyTermsModal } from '../Auth/PrivacyTermsModal'
 
 const fadeUp = {
   initial: { opacity: 0, y: 20 },
@@ -9,8 +13,21 @@ const fadeUp = {
 }
 
 export function LandingPage() {
-  const { settings } = useSettingsStore()
-  const isConfigured = !!settings.googleClientId
+  const { isAuthenticated } = useAuthStore()
+  const { completeRegistration } = useAuth()
+  const [pendingTerms, setPendingTerms] = useState<{
+    userInfo: GoogleUserInfo
+    accessToken: string
+  } | null>(null)
+
+  const handleAcceptTerms = async () => {
+    if (!pendingTerms) return
+    try {
+      await completeRegistration(pendingTerms.userInfo, pendingTerms.accessToken)
+    } finally {
+      setPendingTerms(null)
+    }
+  }
 
   return (
     <div className="min-h-screen bg-[#fcfcf9] flex flex-col">
@@ -24,17 +41,15 @@ export function LandingPage() {
           夢貘
         </Link>
         <nav className="flex items-center gap-8 text-xs tracking-widest text-gray-400">
-          {isConfigured && (
+          {isAuthenticated ? (
             <Link to="/calendar" className="hover:text-gray-600 transition-colors">
-              日曆
+              前往日曆
+            </Link>
+          ) : (
+            <Link to="/about" className="hover:text-gray-600 transition-colors">
+              關於
             </Link>
           )}
-          <Link
-            to="/settings"
-            className="hover:text-gray-600 transition-colors cursor-pointer"
-          >
-            設定
-          </Link>
         </nav>
       </m.header>
 
@@ -75,20 +90,20 @@ export function LandingPage() {
           animate="animate"
           transition={{ duration: 0.8, delay: 0.45, ease: [0.16, 1, 0.3, 1] as const }}
         >
-          {isConfigured ? (
-            <LoginButton />
+          {isAuthenticated ? (
+            <Link
+              to="/calendar"
+              className="inline-block px-9 py-3 bg-gray-800 text-white text-xs tracking-[0.25em] hover:bg-gray-700 transition-colors font-light"
+            >
+              進入我的夢境日曆
+            </Link>
           ) : (
-            <div className="text-center">
-              <p className="text-xs text-gray-400 mb-4 tracking-wider">
-                初次使用？
-              </p>
-              <Link
-                to="/settings"
-                className="inline-block px-8 py-3 bg-gray-800 text-white text-xs tracking-[0.2em] hover:bg-gray-700 transition-colors"
-              >
-                開始使用
-              </Link>
-            </div>
+            <LoginButton
+              buttonText="開始使用"
+              onNeedsTerms={(userInfo, accessToken) =>
+                setPendingTerms({ userInfo, accessToken })
+              }
+            />
           )}
         </m.div>
 
@@ -110,6 +125,17 @@ export function LandingPage() {
       >
         夢貘
       </m.footer>
+
+      {/* Privacy Policy & Terms Modal for New Users */}
+      {pendingTerms && (
+        <PrivacyTermsModal
+          open={!!pendingTerms}
+          userEmail={pendingTerms.userInfo.email}
+          userName={pendingTerms.userInfo.name}
+          onAccept={handleAcceptTerms}
+          onCancel={() => setPendingTerms(null)}
+        />
+      )}
     </div>
   )
 }
