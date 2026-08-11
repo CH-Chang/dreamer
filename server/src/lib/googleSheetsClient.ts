@@ -1,12 +1,53 @@
+import { config } from '../config'
+
 function getSpreadsheetId(): string {
-  const envId = process.env.SPREADSHEET_ID
-  if (envId) return envId
-  return 'dummy_spreadsheet_id'
+  return config.spreadsheetId || process.env.GOOGLE_SPREADSHEET_ID || process.env.SPREADSHEET_ID || 'dummy_spreadsheet_id'
 }
 
 function getToken(): string {
   const token = process.env.GOOGLE_ACCESS_TOKEN || ''
   return token
+}
+
+function parseCSV(csvText: string): string[][] {
+  const lines: string[][] = []
+  let currentRow: string[] = []
+  let currentVal = ''
+  let insideQuotes = false
+
+  for (let i = 0; i < csvText.length; i++) {
+    const char = csvText[i]
+    const nextChar = csvText[i + 1]
+
+    if (char === '"') {
+      if (insideQuotes && nextChar === '"') {
+        currentVal += '"'
+        i++
+      } else {
+        insideQuotes = !insideQuotes
+      }
+    } else if (char === ',' && !insideQuotes) {
+      currentRow.push(currentVal)
+      currentVal = ''
+    } else if ((char === '\r' || char === '\n') && !insideQuotes) {
+      if (char === '\r' && nextChar === '\n') i++
+      currentRow.push(currentVal)
+      currentVal = ''
+      if (currentRow.some((cell) => cell.length > 0)) {
+        lines.push(currentRow)
+      }
+      currentRow = []
+    } else {
+      currentVal += char
+    }
+  }
+
+  if (currentVal.length > 0 || currentRow.length > 0) {
+    currentRow.push(currentVal)
+    lines.push(currentRow)
+  }
+
+  return lines
 }
 
 async function apiFetch(path: string, init?: RequestInit): Promise<Response> {
@@ -48,9 +89,27 @@ export async function createSheet(title: string): Promise<void> {
 }
 
 export async function fetchSheetAsRows(sheetName: string): Promise<string[][]> {
-  const res = await apiFetch(`/values/${encodeURIComponent(sheetName)}`)
-  const data = (await res.json()) as { values?: string[][] }
-  return data.values || []
+  const sheetId = getSpreadsheetId()
+  const token = getToken()
+
+  if (token) {
+    try {
+      const res = await apiFetch(`/values/${encodeURIComponent(sheetName)}`)
+      const data = (await res.json()) as { values?: string[][] }
+      if (data.values) return data.values
+    } catch (err) {
+      console.warn(`v4 API fetch failed for ${sheetName}, falling back to GViz CSV:`, err)
+    }
+  }
+
+  // Fallback to public GViz CSV export endpoint
+  const url = `https://docs.google.com/spreadsheets/d/${sheetId}/gviz/tq?tqx=out:csv&sheet=${encodeURIComponent(sheetName)}`
+  const res = await fetch(url)
+  if (!res.ok) {
+    throw new Error(`Failed to fetch sheet ${sheetName} via GViz: ${res.statusText}`)
+  }
+  const csvText = await res.text()
+  return parseCSV(csvText)
 }
 
 export async function appendSheetRow(
@@ -113,15 +172,19 @@ export async function updateSheetRow(
 export async function ensureSheetsExist(
   sheetNames: string[],
 ): Promise<void> {
-  const info = await getSpreadsheetInfo()
-  const existing = new Set(
-    info.sheets.map((s) => s.properties.title),
-  )
-  for (const name of sheetNames) {
-    if (!existing.has(name)) {
-      await createSheet(name)
-      await appendSheetRow(name, [getHeadersForSheet(name)])
+  try {
+    const info = await getSpreadsheetInfo()
+    const existing = new Set(
+      info.sheets.map((s) => s.properties.title),
+    )
+    for (const name of sheetNames) {
+      if (!existing.has(name)) {
+        await createSheet(name)
+        await appendSheetRow(name, [getHeadersForSheet(name)])
+      }
     }
+  } catch {
+    // If v4 API info is unavailable (e.g. read-only GViz mode), ignore
   }
 }
 
