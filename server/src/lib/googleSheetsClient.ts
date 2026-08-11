@@ -189,6 +189,50 @@ export async function ensureSheetsExist(
 }
 
 export function parseRowsToObjects(rows: string[][]): Record<string, unknown>[] {
+  if (rows.length < 1) return []
+
+  // Smart recovery for space-concatenated cells in header row (e.g. "id 414b5832... 393fd338...")
+  if (rows[0]?.[0]?.startsWith('id ')) {
+    const results: Record<string, unknown>[] = []
+    for (let r = 0; r < rows.length; r++) {
+      const row = rows[r]
+      if (r === 0 && row[0]?.startsWith('id ')) {
+        const ids = row[0].split(/\s+/).filter(Boolean)
+        const dreamIds = (row[1] || '').split(/\s+/).filter(Boolean)
+        const emails = (row[2] || '').split(/\s+/).filter(Boolean)
+        const statuses = (row[3] || '').split(/\s+/).filter(Boolean)
+        const videoUrls = (row[4] || '').split(/\s+/).filter(Boolean)
+        const createdAts = (row[6] || '').split(/\s+/).filter(Boolean)
+
+        const count = ids.length - 1
+        for (let i = 1; i <= count; i++) {
+          results.push({
+            id: ids[i] || '',
+            dream_id: dreamIds[i] || '',
+            email: emails[i] || '',
+            status: statuses[i] || 'done',
+            video_url: videoUrls[i] && videoUrls[i] !== 'video_url' ? videoUrls[i] : '',
+            with_character: false,
+            created_at: createdAts[i] && createdAts[i] !== 'created_at' ? createdAts[i] : new Date().toISOString(),
+            updated_at: '',
+          })
+        }
+      } else if (r > 0) {
+        const headers = rows[0].map((h) => h.split(/\s+/)[0].trim())
+        const obj: Record<string, unknown> = {}
+        headers.forEach((h, i) => {
+          if (h && row[i] !== undefined) {
+            obj[h] = row[i]?.trim() || ''
+          }
+        })
+        if (obj.id && obj.id !== 'id') {
+          results.push(obj)
+        }
+      }
+    }
+    return results
+  }
+
   if (rows.length < 2) return []
   const headers = rows[0]
   return rows.slice(1).map((row) => {

@@ -11,6 +11,9 @@ export class VideoRepository implements IVideoRepository {
   }
 
   async findAllByDreamId(dreamId: string): Promise<Video[]> {
+    if (!dreamId) {
+      return query<Video>('SELECT * FROM videos ORDER BY created_at DESC')
+    }
     return query<Video>(
       'SELECT * FROM videos WHERE dream_id = ? ORDER BY created_at DESC',
       [dreamId],

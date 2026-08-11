@@ -6,6 +6,9 @@ import { generateId } from '../../utils/idGenerator'
 
 export class ComicRepository implements IComicRepository {
   async findAllByDreamId(dreamId: string): Promise<Comic[]> {
+    if (!dreamId) {
+      return query<Comic>('SELECT * FROM comics ORDER BY created_at DESC')
+    }
     return query<Comic>(
       'SELECT * FROM comics WHERE dream_id = ? ORDER BY created_at DESC',
       [dreamId],
