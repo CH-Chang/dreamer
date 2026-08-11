@@ -19,7 +19,9 @@ app.use('*', cors({
   allowHeaders: ['Content-Type', 'Authorization'],
 }))
 
+// Health check endpoints (both /health and /api/health)
 app.get('/health', (c) => c.json({ status: 'ok' }))
+app.get('/api/health', (c) => c.json({ status: 'ok' }))
 
 // Mount all API routes
 app.route('/api/dreams', dreamsRoute)
