@@ -218,19 +218,21 @@ export function SettingsPage() {
               <div className="flex items-start gap-3">
                 <ConnectionTest onTested={() => setConnectionTested(true)} />
                 {isAuthenticated ? (
-                  <button
+                  <m.button
+                    whileTap={{ scale: 0.98 }}
                     onClick={saveAndRelogin}
-                    className="h-10 px-5 border border-gray-300 text-xs tracking-[0.15em] text-gray-500 hover:bg-gray-50 transition-colors whitespace-nowrap flex items-center justify-center font-medium"
+                    className="h-10 w-36 bg-gray-800 text-white text-xs tracking-wider font-medium hover:bg-gray-700 transition-all flex items-center justify-center rounded-none"
                   >
                     儲存變更
-                  </button>
+                  </m.button>
                 ) : (
-                  <button
+                  <m.button
+                    whileTap={{ scale: 0.98 }}
                     onClick={save}
-                    className="h-10 px-5 border border-gray-300 text-xs tracking-[0.15em] text-gray-500 hover:bg-gray-50 transition-colors flex items-center justify-center font-medium"
+                    className="h-10 w-36 bg-gray-800 text-white text-xs tracking-wider font-medium hover:bg-gray-700 transition-all flex items-center justify-center rounded-none"
                   >
                     {saved ? '已儲存' : '儲存'}
-                  </button>
+                  </m.button>
                 )}
               </div>
             </m.div>

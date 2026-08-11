@@ -32,9 +32,9 @@ export function ConnectionTest({ onTested }: Props) {
         whileTap={{ scale: 0.98 }}
         onClick={testConnection}
         disabled={status === 'testing'}
-        className="h-10 px-5 bg-gray-800 text-white text-xs tracking-wider font-medium
+        className="h-10 w-36 bg-gray-800 text-white text-xs tracking-wider font-medium
                    hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed 
-                   transition-all flex items-center gap-2 rounded-none"
+                   transition-all flex items-center justify-center gap-2 rounded-none"
       >
         {status === 'testing' ? (
           <>
