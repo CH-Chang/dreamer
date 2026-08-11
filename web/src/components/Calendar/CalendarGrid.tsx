@@ -17,7 +17,7 @@ const container = {
 }
 
 export function CalendarGrid() {
-  const { currentMonth, dreams, dreamsWithVideo, selectedDate, setSelectedDate } = useDreamStore()
+  const { currentMonth, dreams, dreamsWithVideo, dreamsWithComic, selectedDate, setSelectedDate } = useDreamStore()
   const { year, month } = currentMonth
   const daysInMonth = getDaysInMonth(year, month)
   const firstDay = getFirstDayOfMonth(year, month)
@@ -54,6 +54,7 @@ export function CalendarGrid() {
             day={d}
             hasDream={!!dream}
             hasVideo={!!dream && dreamsWithVideo.includes(dream.id)}
+            hasComic={!!dream && dreamsWithComic.includes(dream.id)}
             isSelected={selectedDate === dateStr}
             isToday={todayStr === dateStr}
             onSelect={() => setSelectedDate(dateStr)}
@@ -66,6 +67,8 @@ export function CalendarGrid() {
     daysInMonth,
     firstDay,
     dreamMap,
+    dreamsWithVideo,
+    dreamsWithComic,
     selectedDate,
     todayStr,
     year,

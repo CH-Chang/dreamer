@@ -11,7 +11,9 @@ interface DreamState {
   currentMonth: { year: number; month: number }
   setCurrentMonth: (year: number, month: number) => void
   dreamsWithVideo: string[]
+  dreamsWithComic: string[]
   setDreamsWithVideo: (ids: string[]) => void
+  setDreamsWithComic: (ids: string[]) => void
 }
 
 export const useDreamStore = create<DreamState>((set) => ({
@@ -33,5 +35,7 @@ export const useDreamStore = create<DreamState>((set) => ({
     })),
   setCurrentMonth: (year, month) => set({ currentMonth: { year, month } }),
   dreamsWithVideo: [],
+  dreamsWithComic: [],
   setDreamsWithVideo: (ids) => set({ dreamsWithVideo: ids }),
+  setDreamsWithComic: (ids) => set({ dreamsWithComic: ids }),
 }))
