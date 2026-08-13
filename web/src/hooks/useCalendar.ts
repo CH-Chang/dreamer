@@ -34,11 +34,11 @@ export function useCalendar() {
       ])
 
       const videoDreamIds = allVideos
-        .filter((v) => (v.status === 'done' || v.status === 'generating') && v.dream_id)
+        .filter((v) => v.status === 'done' && v.dream_id)
         .map((v) => v.dream_id)
 
       const comicDreamIds = allComics
-        .filter((c) => (c.status === 'done' || c.status === 'generating') && c.dream_id)
+        .filter((c) => c.status === 'done' && c.dream_id)
         .map((c) => c.dream_id)
 
       setDreamsWithVideo(Array.from(new Set(videoDreamIds)))
