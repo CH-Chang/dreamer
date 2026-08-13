@@ -179,8 +179,12 @@ export async function pollVeoOperation(
   
   while (true) {
     const res = await fetch(
-      `https://${gcpLocation}-aiplatform.googleapis.com/v1/${operationName}`,
-      { headers }
+      `https://${gcpLocation}-aiplatform.googleapis.com/v1/projects/${gcpProjectId}/locations/${gcpLocation}/publishers/google/models/veo-3.1-fast-generate-001:fetchPredictOperation`,
+      {
+        method: 'POST',
+        headers,
+        body: JSON.stringify({ operationName })
+      }
     )
     if (!res.ok) {
       const errorText = await res.text()
