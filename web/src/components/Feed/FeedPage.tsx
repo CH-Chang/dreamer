@@ -26,11 +26,8 @@ export function FeedPage() {
     setLoading(true)
     try {
       const page = await service.findPublicPage(c)
-      if (c) {
-        setItems(prev => [...prev, ...page.items])
-      } else {
-        setItems(page.items)
-      }
+      
+      setItems(prev => c ? [...prev, ...page.items] : page.items)
       setCursor(page.nextCursor)
     } catch (err) {
       setError(err instanceof Error ? err.message : '載入失敗')

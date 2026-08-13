@@ -42,7 +42,7 @@ export class HttpDreamRepository implements IDreamRepository {
     const params = new URLSearchParams()
     if (cursor) params.set('cursor', cursor)
     params.set('limit', String(limit))
-    const res = await fetch(`/api/dreams?${params.toString()}`, { headers: this.getHeaders() })
+    const res = await fetch(`/api/dreams/public?${params.toString()}`, { headers: this.getHeaders() })
     if (!res.ok) return { items: [] }
     return res.json()
   }
