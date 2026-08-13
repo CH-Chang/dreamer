@@ -179,7 +179,7 @@ export async function pollVeoOperation(
   
   while (true) {
     const res = await fetch(
-      `https://aiplatform.googleapis.com/v1/${operationName}`,
+      `https://${gcpLocation}-aiplatform.googleapis.com/v1/${operationName}`,
       { headers }
     )
     if (!res.ok) {

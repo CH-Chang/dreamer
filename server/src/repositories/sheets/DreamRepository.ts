@@ -154,6 +154,26 @@ export class DreamRepository implements IDreamRepository {
     updateValues.push(id)
     await query(`UPDATE dreams SET ${updateFields.join(', ')} WHERE id = ?`, updateValues)
 
+    try {
+      // Find row index in Google Sheets
+      const { fetchSheetAsRows } = await import('../../lib/googleSheetsClient')
+      const rows = await fetchSheetAsRows('dreams')
+      const rowIndex = rows.findIndex(r => r[0] === id)
+      if (rowIndex > 0) {
+        const updatedDream = await this.findById(id)
+        if (updatedDream) {
+          await updateSheetRow('dreams', rowIndex + 1, [
+            updatedDream.id, updatedDream.email, updatedDream.date, updatedDream.description,
+            updatedDream.title || '', JSON.stringify(updatedDream.tags || []), updatedDream.visibility,
+            JSON.stringify(updatedDream.title_candidates || []),
+            updatedDream.created_at, updatedDream.updated_at
+          ])
+        }
+      }
+    } catch (err) {
+      console.error('DreamRepository: Google Sheets updateSheetRow failed', err)
+    }
+
     if (Object.keys(changes).length > 0) {
       try {
         await getEditLogRepository().create({ dream_id: id, edited_at: now, changes })

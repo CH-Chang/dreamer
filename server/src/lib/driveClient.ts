@@ -62,11 +62,12 @@ export async function uploadBase64ToDrive(
   }
   
   const boundary = '-------314159265358979323846'
+  const startDelimiter = `--${boundary}\r\n`
   const delimiter = `\r\n--${boundary}\r\n`
   const closeDelimiter = `\r\n--${boundary}--`
   
   const multipartRequestBody =
-    delimiter +
+    startDelimiter +
     'Content-Type: application/json\r\n\r\n' +
     JSON.stringify(metadata) +
     delimiter +
