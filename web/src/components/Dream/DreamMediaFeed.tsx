@@ -91,7 +91,7 @@ export function DreamMediaFeed({ dreamId, title, description }: Props) {
     if (isGenerating) {
       const timer = setInterval(() => {
         loadMedia()
-      }, 5000)
+      }, 20000)
       return () => clearInterval(timer)
     }
   }, [items, loadMedia])
