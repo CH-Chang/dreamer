@@ -23,6 +23,8 @@ videosRoute.get('/', async (c) => {
 
 videosRoute.post('/', authMiddleware, async (c) => {
   const user = c.get('user')
+  const authHeader = c.req.header('Authorization') || ''
+  const token = authHeader.replace('Bearer ', '')
   const body = await c.req.json<{
     dream_id: string
     with_character?: boolean
@@ -64,8 +66,10 @@ videosRoute.post('/', authMiddleware, async (c) => {
       resolution: '720p',
       gcpProjectId,
       gcpLocation,
+      token,
     })
-  } catch {
+  } catch (err) {
+    console.error('Video generation failed error:', err)
     await videoRepo.updateStatus(created.id, 'failed')
   }
 
