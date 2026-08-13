@@ -86,6 +86,16 @@ export function DreamMediaFeed({ dreamId, title, description }: Props) {
 
   useEffect(() => { loadMedia() }, [loadMedia])
 
+  useEffect(() => {
+    const isGenerating = items.some(i => i.data.status === 'generating' || i.data.status === 'pending')
+    if (isGenerating) {
+      const timer = setInterval(() => {
+        loadMedia()
+      }, 5000)
+      return () => clearInterval(timer)
+    }
+  }, [items, loadMedia])
+
   const doneItems = items.filter(i => i.type === 'video' ? i.data.status === 'done' && i.data.video_url : i.data.status === 'done' && i.data.image_url)
 
   useEffect(() => {
