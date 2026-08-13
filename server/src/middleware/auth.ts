@@ -69,8 +69,12 @@ export const authMiddleware: MiddlewareHandler<AuthEnv> = async (c, next) => {
       picture,
     })
 
-    await next()
+    const { requestContext } = await import('../lib/context')
+    await requestContext.run({ token }, async () => {
+      await next()
+    })
   } catch (err) {
     return c.json({ error: 'Unauthorized: Invalid token' }, 401)
   }
 }
+

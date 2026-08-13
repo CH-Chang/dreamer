@@ -105,7 +105,8 @@ export class DreamRepository implements IDreamRepository {
         JSON.stringify(dream.title_candidates || []),
         dream.created_at, dream.updated_at,
       ]])
-    } catch {
+    } catch (err) {
+      console.error('DreamRepository: Google Sheets appendSheetRow failed (falling back to AlaSQL)', err)
       // Sheets offline, proceed with AlaSQL
     }
     await query(
@@ -156,7 +157,8 @@ export class DreamRepository implements IDreamRepository {
     if (Object.keys(changes).length > 0) {
       try {
         await getEditLogRepository().create({ dream_id: id, edited_at: now, changes })
-      } catch {
+      } catch (err) {
+        console.error('DreamRepository: getEditLogRepository().create failed', err)
         // Ignore edit log creation failure
       }
     }

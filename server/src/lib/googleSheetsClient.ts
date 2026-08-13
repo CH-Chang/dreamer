@@ -4,9 +4,12 @@ function getSpreadsheetId(): string {
   return config.spreadsheetId || process.env.GOOGLE_SPREADSHEET_ID || process.env.SPREADSHEET_ID || 'dummy_spreadsheet_id'
 }
 
+import { requestContext } from './context'
+
 function getToken(): string {
-  const token = process.env.GOOGLE_ACCESS_TOKEN || ''
-  return token
+  const ctx = requestContext.getStore()
+  if (ctx?.token) return ctx.token
+  return process.env.GOOGLE_ACCESS_TOKEN || ''
 }
 
 function parseCSV(csvText: string): string[][] {
