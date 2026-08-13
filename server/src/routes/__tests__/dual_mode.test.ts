@@ -27,6 +27,7 @@ vi.mock('google-auth-library', () => {
 vi.mock('../../services/aiService', () => {
   return {
     triggerVeoVideo: vi.fn().mockResolvedValue({ name: 'operations/op-123' }),
+    pollVeoOperation: vi.fn().mockResolvedValue({ bytesBase64Encoded: 'fakebase64', mimeType: 'video/mp4' }),
     generateComicImage: vi.fn().mockResolvedValue({ bytesBase64Encoded: 'fakebase64', mimeType: 'image/png' }),
     generateTitleSuggestions: vi.fn().mockResolvedValue(['Title 1', 'Title 2', 'Title 3']),
   }

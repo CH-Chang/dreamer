@@ -164,3 +164,53 @@ export async function triggerVeoVideo(
 
   return (await res.json()) as { name: string }
 }
+
+export async function pollVeoOperation(
+  operationName: string,
+  options: { gcpProjectId?: string; gcpLocation?: string; token?: string } = {}
+): Promise<{ bytesBase64Encoded: string; mimeType: string }> {
+  const gcpProjectId = options.gcpProjectId || config.systemGcpProjectId
+  const gcpLocation = options.gcpLocation || config.systemGcpLocation
+  
+  const headers: Record<string, string> = { 'Content-Type': 'application/json' }
+  if (options.token) {
+    headers['Authorization'] = `Bearer ${options.token}`
+  }
+  
+  while (true) {
+    const res = await fetch(
+      `https://aiplatform.googleapis.com/v1/${operationName}`,
+      { headers }
+    )
+    if (!res.ok) {
+      const errorText = await res.text()
+      throw new Error(`Failed to poll operation: ${errorText}`)
+    }
+    const data = await res.json() as any
+    if (data.done) {
+      if (data.error) throw new Error(data.error.message || 'Operation failed')
+      
+      let base64 = ''
+      let mime = ''
+      
+      const genSamples = data.response?.generateVideoResponse?.generatedSamples
+      if (genSamples && genSamples.length > 0 && genSamples[0].video?.bytesBase64Encoded) {
+        base64 = genSamples[0].video.bytesBase64Encoded
+        mime = genSamples[0].video.mimeType || 'video/mp4'
+      } else if (data.response?.videos && data.response.videos.length > 0) {
+        base64 = data.response.videos[0].bytesBase64Encoded
+        mime = data.response.videos[0].mimeType || 'video/mp4'
+      }
+      
+      if (!base64) {
+        throw new Error('No video data found in operation response')
+      }
+      
+      return { bytesBase64Encoded: base64, mimeType: mime }
+    }
+    
+    // Wait 10 seconds before polling again
+    await new Promise(resolve => setTimeout(resolve, 10000))
+  }
+}
+

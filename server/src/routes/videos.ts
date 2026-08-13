@@ -61,12 +61,41 @@ videosRoute.post('/', authMiddleware, async (c) => {
   try {
     await videoRepo.updateStatus(created.id, 'generating')
     const prompt = `Dream-like cinematic scene: ${description}`
-    await triggerVeoVideo(prompt, {
+    const op = await triggerVeoVideo(prompt, {
       aspectRatio: '16:9',
       resolution: '720p',
       gcpProjectId,
       gcpLocation,
       token,
+    })
+
+    const { requestContext } = await import('../lib/context')
+    // Run polling and uploading in the background
+    requestContext.run({ token }, async () => {
+      try {
+        const { pollVeoOperation } = await import('../services/aiService')
+        const { uploadBase64ToDrive } = await import('../lib/driveClient')
+        
+        const { bytesBase64Encoded, mimeType } = await pollVeoOperation(op.name, {
+          gcpProjectId,
+          gcpLocation,
+          token,
+        })
+        
+        const fileId = await uploadBase64ToDrive(
+          `dream-video-${created.id}.mp4`,
+          bytesBase64Encoded,
+          mimeType,
+          undefined,
+          token
+        )
+        
+        const videoUrl = `drive://${fileId}`
+        await videoRepo.updateStatus(created.id, 'done', videoUrl)
+      } catch (bgErr) {
+        console.error('Video background generation failed error:', bgErr)
+        await videoRepo.updateStatus(created.id, 'failed')
+      }
     })
   } catch (err) {
     console.error('Video generation failed error:', err)
