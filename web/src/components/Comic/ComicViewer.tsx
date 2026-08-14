@@ -17,10 +17,11 @@ export function ComicViewer({ imageUrl }: Props) {
 
     const fileId = imageUrl.replace('drive://', '')
     const token = useAuthStore.getState().token
-    if (!token) return
+    const headers: Record<string, string> = {}
+    if (token) headers['Authorization'] = `Bearer ${token}`
 
     fetch(`/api/media/${fileId}`, {
-      headers: { Authorization: `Bearer ${token}` },
+      headers,
     })
       .then((res) => {
         if (!res.ok) throw new Error(`Drive fetch failed: ${res.status}`)

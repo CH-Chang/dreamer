@@ -4,6 +4,7 @@ import { motion as m, AnimatePresence } from 'framer-motion'
 import type { FeedItem as FeedItemType } from '../../lib/feedService'
 import { getVideoBlob } from '../../lib/videoBlobCache'
 import { useAuthStore } from '../../stores/authStore'
+import { UserAvatar } from '../ui/UserAvatar'
 
 interface Props {
   item: FeedItemType
@@ -37,21 +38,26 @@ export function FeedItem({ item, isActive }: Props) {
             setVideoLoading(false)
           }
         })
-        .catch(() => setError(true))
+        .catch((e) => {
+          console.error('Video load error:', e)
+          setError(true)
+        })
     } else {
       if (!item.mediaUrl.startsWith('drive://')) {
         setComicObjectUrl(item.mediaUrl)
         return
       }
       const token = useAuthStore.getState().token
-      if (!token) return
       const fileId = item.mediaUrl.replace('drive://', '')
-      fetch(`/api/media/${fileId}`, {
-        headers: { Authorization: `Bearer ${token}` },
-      })
+      const headers: Record<string, string> = {}
+      if (token) headers['Authorization'] = `Bearer ${token}`
+      fetch(`/api/media/${fileId}`, { headers })
         .then(res => { if (!res.ok) throw new Error(`Drive fetch failed: ${res.status}`); return res.blob() })
         .then(blob => { if (!cancelled) { currentObjectUrl = URL.createObjectURL(blob); setComicObjectUrl(currentObjectUrl) } })
-        .catch(() => setError(true))
+        .catch((e) => {
+          console.error('Comic load error:', e)
+          setError(true)
+        })
     }
 
     return () => {
@@ -119,9 +125,11 @@ export function FeedItem({ item, isActive }: Props) {
       >
         <div className="w-full max-w-md">
           <div className="flex items-center gap-2 mb-2">
-            {item.author.avatar_url && (
-              <img src={item.author.avatar_url} alt="" className="w-7 h-7 rounded-full ring-1 ring-white/30" />
-            )}
+            <UserAvatar
+              avatarUrl={item.author.avatar_url}
+              name={item.author.name}
+              className="w-7 h-7 rounded-full ring-1 ring-white/30"
+            />
             <span className="text-white/80 text-xs tracking-wider">{item.author.name}</span>
           </div>
           {item.dream.title && (

@@ -51,9 +51,9 @@ export function DreamMediaFeed({ dreamId, title, description }: Props) {
         } else {
           const token = useAuthStore.getState().token
           const fileId = item.data.image_url.replace('drive://', '')
-          const res = await fetch(`/api/media/${fileId}`, {
-            headers: { Authorization: `Bearer ${token}` },
-          })
+          const headers: Record<string, string> = {}
+          if (token) headers['Authorization'] = `Bearer ${token}`
+          const res = await fetch(`/api/media/${fileId}`, { headers })
           const blob = await res.blob()
           src = URL.createObjectURL(blob)
         }

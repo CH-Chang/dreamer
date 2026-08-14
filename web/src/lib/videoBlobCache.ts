@@ -19,12 +19,13 @@ async function fetchVideoBlob(
   onProgress?: (pct: number) => void,
 ): Promise<Blob> {
   const token = useAuthStore.getState().token
-  if (!token) throw new Error('Not authenticated')
-
   const fileId = videoUrl.replace('drive://', '')
+  const headers: Record<string, string> = {}
+  if (token) headers['Authorization'] = `Bearer ${token}`
+
   const res = await fetch(
     `/api/media/${fileId}`,
-    { headers: { Authorization: `Bearer ${token}` } },
+    { headers },
   )
   if (!res.ok) throw new Error(`Drive fetch failed: ${res.status}`)
 

@@ -8,14 +8,13 @@ export function useDriveImage(driveUrl: string | undefined | null): string | nul
   useEffect(() => {
     if (!driveUrl) { setSrc(null); return }
     if (!driveUrl.startsWith('drive://')) { setSrc(driveUrl); return }
-    if (!token) return
 
     let cancelled = false
     const fileId = driveUrl.replace('drive://', '')
+    const headers: Record<string, string> = {}
+    if (token) headers['Authorization'] = `Bearer ${token}`
 
-    fetch(`/api/media/${fileId}`, {
-      headers: { Authorization: `Bearer ${token}` },
-    })
+    fetch(`/api/media/${fileId}`, { headers })
       .then((res) => {
         if (!res.ok) throw new Error('Failed to fetch from Drive')
         return res.blob()
