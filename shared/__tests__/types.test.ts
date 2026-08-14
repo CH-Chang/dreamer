@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import type { User } from '../types/user'
+import type { User, SupportedLanguage } from '../types/user'
 import type { UsageLog } from '../types/usageLog'
 
 describe('Shared Types', () => {
@@ -16,6 +16,33 @@ describe('Shared Types', () => {
     expect(user.ai_mode).toBe('custom')
   })
 
+  it('supports language field with zh-TW, en-US, zh-CN', () => {
+    const userTW: User = {
+      email: 'tw@test.com',
+      name: 'TW User',
+      role: 'user',
+      created_at: '2026-08-14T00:00:00Z',
+      language: 'zh-TW',
+    }
+    const userUS: User = {
+      email: 'us@test.com',
+      name: 'US User',
+      role: 'user',
+      created_at: '2026-08-14T00:00:00Z',
+      language: 'en-US',
+    }
+    const userCN: User = {
+      email: 'cn@test.com',
+      name: 'CN User',
+      role: 'user',
+      created_at: '2026-08-14T00:00:00Z',
+      language: 'zh-CN',
+    }
+    expect(userTW.language).toBe('zh-TW')
+    expect(userUS.language).toBe('en-US')
+    expect(userCN.language).toBe('zh-CN')
+  })
+
   it('instantiates UsageLog correctly', () => {
     const log: UsageLog = {
       id: 'log-1',
@@ -29,3 +56,4 @@ describe('Shared Types', () => {
     expect(log.quota_deducted).toBe(true)
   })
 })
+

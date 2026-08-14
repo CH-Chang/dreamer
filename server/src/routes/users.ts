@@ -42,6 +42,7 @@ usersRoute.post('/', authMiddleware, async (c) => {
       name: body.name ?? user.name,
       avatar_url: body.avatar_url ?? user.picture,
       role: body.role ?? existing.role,
+      language: body.language ?? existing.language,
     })
     const updated = await repo.findByEmail(user.email)
     return c.json(updated)
@@ -52,6 +53,7 @@ usersRoute.post('/', authMiddleware, async (c) => {
       name: body.name || user.name || '',
       avatar_url: body.avatar_url || user.picture || '',
       role: body.role || (count === 0 ? 'admin' : 'user'),
+      language: body.language || 'zh-TW',
     })
     return c.json(created, 201)
   }

@@ -1,4 +1,4 @@
-import type { User } from '../../../../shared/types/user'
+import type { User, SupportedLanguage } from '../../../../shared/types/user'
 import type { IUserRepository } from '../../../../shared/interfaces/IUserRepository'
 import { query } from '../../lib/alaSqlService'
 import { appendSheetRow, fetchSheetAsRows, updateSheetRow } from '../../lib/googleSheetsClient'
@@ -7,7 +7,11 @@ export class UserRepository implements IUserRepository {
   async findByEmail(email: string): Promise<User | null> {
     try {
       const users = await query<User>('SELECT * FROM users WHERE email = ?', [email])
-      return users[0] || null
+      if (!users[0]) return null
+      return {
+        ...users[0],
+        language: (users[0].language as SupportedLanguage) || 'zh-TW',
+      }
     } catch {
       return null
     }
@@ -26,18 +30,19 @@ export class UserRepository implements IUserRepository {
 
   async create(user: Omit<User, 'created_at'>): Promise<User> {
     const now = new Date().toISOString()
-    const newUser: User = { ...user, created_at: now }
+    const language: SupportedLanguage = (user.language as SupportedLanguage) || 'zh-TW'
+    const newUser: User = { ...user, language, created_at: now }
     try {
       await appendSheetRow('users', [[
-        newUser.email, newUser.name, newUser.avatar_url || '', newUser.role, newUser.created_at,
+        newUser.email, newUser.name, newUser.avatar_url || '', newUser.role, newUser.created_at, newUser.language || 'zh-TW',
       ]])
     } catch {
       // Sheets offline or unconfigured
     }
     try {
       await query(
-        'INSERT INTO users (email, name, avatar_url, role, created_at) VALUES (?, ?, ?, ?, ?)',
-        [newUser.email, newUser.name, newUser.avatar_url || '', newUser.role, newUser.created_at],
+        'INSERT INTO users (email, name, avatar_url, role, created_at, language) VALUES (?, ?, ?, ?, ?, ?)',
+        [newUser.email, newUser.name, newUser.avatar_url || '', newUser.role, newUser.created_at, newUser.language],
       )
     } catch {
       // In-memory insert fallback
@@ -51,6 +56,7 @@ export class UserRepository implements IUserRepository {
     if (data.name !== undefined) { updates.push('name = ?'); params.push(data.name) }
     if (data.avatar_url !== undefined) { updates.push('avatar_url = ?'); params.push(data.avatar_url) }
     if (data.role !== undefined) { updates.push('role = ?'); params.push(data.role) }
+    if (data.language !== undefined) { updates.push('language = ?'); params.push(data.language) }
     if (updates.length > 0) {
       params.push(email)
       try {
@@ -71,6 +77,7 @@ export class UserRepository implements IUserRepository {
           if (data.name !== undefined) { const ci = colIndex('name'); if (ci !== -1) newValues[ci] = data.name }
           if (data.avatar_url !== undefined) { const ci = colIndex('avatar_url'); if (ci !== -1) newValues[ci] = data.avatar_url }
           if (data.role !== undefined) { const ci = colIndex('role'); if (ci !== -1) newValues[ci] = data.role }
+          if (data.language !== undefined) { const ci = colIndex('language'); if (ci !== -1) newValues[ci] = data.language }
           await updateSheetRow('users', rowIdx + 1, newValues)
         }
       }
@@ -79,3 +86,4 @@ export class UserRepository implements IUserRepository {
     }
   }
 }
+
