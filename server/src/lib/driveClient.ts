@@ -91,5 +91,20 @@ export async function uploadBase64ToDrive(
   }
   
   const data = (await res.json()) as any
-  return data.id
+  const fileId = data.id
+
+  try {
+    await fetch(`https://www.googleapis.com/drive/v3/files/${fileId}/permissions`, {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${t}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ role: 'reader', type: 'anyone' }),
+    })
+  } catch {
+    // Ignore permission grant failure
+  }
+
+  return fileId
 }

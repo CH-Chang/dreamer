@@ -5,7 +5,8 @@ export const mediaRoute = new Hono()
 mediaRoute.get('/:fileId', async (c) => {
   const fileId = c.req.param('fileId')
   const authHeader = c.req.header('Authorization') || ''
-  const userToken = authHeader.replace('Bearer ', '').trim()
+  const queryToken = c.req.query('token') || ''
+  const userToken = (authHeader.replace('Bearer ', '') || queryToken).trim()
   const fallbackToken = process.env.GOOGLE_ACCESS_TOKEN || ''
 
   try {
