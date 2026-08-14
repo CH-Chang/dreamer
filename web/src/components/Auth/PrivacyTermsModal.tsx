@@ -1,16 +1,25 @@
 import { useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
+import type { SupportedLanguage } from '../../types/user'
+
+const getDetectedLanguage = (): SupportedLanguage => {
+  const navLang = typeof navigator !== 'undefined' ? (navigator.language || '') : ''
+  if (/^zh-CN/i.test(navLang)) return 'zh-CN'
+  if (/^en/i.test(navLang)) return 'en-US'
+  return 'zh-TW'
+}
 
 interface Props {
   open: boolean
   userEmail: string
   userName: string
-  onAccept: () => void
+  onAccept: (language: SupportedLanguage) => void
   onCancel: () => void
 }
 
 export function PrivacyTermsModal({ open, userEmail, userName, onAccept, onCancel }: Props) {
   const [agreed, setAgreed] = useState(false)
+  const [language, setLanguage] = useState<SupportedLanguage>(getDetectedLanguage)
 
   if (!open) return null
 
@@ -81,6 +90,22 @@ export function PrivacyTermsModal({ open, userEmail, userName, onAccept, onCance
 
           {/* Footer & Consent Controls */}
           <div className="px-6 py-4 border-t border-gray-100 bg-[#fcfcf9] space-y-3">
+            <div className="flex items-center justify-between">
+              <label htmlFor="registration-language-select" className="text-xs text-gray-600 font-medium tracking-wider">
+                偏好語言 / Language
+              </label>
+              <select
+                id="registration-language-select"
+                value={language}
+                onChange={(e) => setLanguage(e.target.value as SupportedLanguage)}
+                className="text-xs bg-white border border-gray-200 rounded px-2.5 py-1 text-gray-700 focus:outline-none focus:border-gray-400"
+              >
+                <option value="zh-TW">繁體中文 (zh-TW)</option>
+                <option value="en-US">English (en-US)</option>
+                <option value="zh-CN">简体中文 (zh-CN)</option>
+              </select>
+            </div>
+
             <label className="flex items-center gap-3 cursor-pointer select-none">
               <input
                 type="checkbox"
@@ -104,7 +129,7 @@ export function PrivacyTermsModal({ open, userEmail, userName, onAccept, onCance
               <button
                 type="button"
                 disabled={!agreed}
-                onClick={onAccept}
+                onClick={() => onAccept(language)}
                 className="px-6 py-2.5 bg-gray-800 text-white text-xs tracking-[0.15em] font-medium
                            hover:bg-gray-700 disabled:opacity-30 disabled:cursor-not-allowed transition-all rounded-none"
               >

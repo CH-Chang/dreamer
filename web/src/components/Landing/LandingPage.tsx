@@ -4,6 +4,7 @@ import { motion as m } from 'framer-motion'
 import { useAuthStore } from '../../stores/authStore'
 import { useAuth } from '../../hooks/useAuth'
 import type { GoogleUserInfo } from '../../hooks/useAuth'
+import type { SupportedLanguage } from '../../types/user'
 import { LoginButton } from './LoginButton'
 import { PrivacyTermsModal } from '../Auth/PrivacyTermsModal'
 
@@ -20,10 +21,10 @@ export function LandingPage() {
     accessToken: string
   } | null>(null)
 
-  const handleAcceptTerms = async () => {
+  const handleAcceptTerms = async (language: SupportedLanguage) => {
     if (!pendingTerms) return
     try {
-      await completeRegistration(pendingTerms.userInfo, pendingTerms.accessToken)
+      await completeRegistration(pendingTerms.userInfo, pendingTerms.accessToken, language)
     } finally {
       setPendingTerms(null)
     }

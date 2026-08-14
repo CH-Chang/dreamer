@@ -1,7 +1,7 @@
 import { useNavigate } from 'react-router-dom'
 import { useAuthStore } from '../stores/authStore'
 import { getUserRepository } from '../repositories/factory'
-import type { User } from '../types/user'
+import type { User, SupportedLanguage } from '../types/user'
 
 export interface GoogleUserInfo {
   email: string
@@ -39,7 +39,11 @@ export function useAuth() {
     return { status: 'needs_terms', userInfo, accessToken }
   }
 
-  const completeRegistration = async (userInfo: GoogleUserInfo, accessToken: string): Promise<User> => {
+  const completeRegistration = async (
+    userInfo: GoogleUserInfo,
+    accessToken: string,
+    language: SupportedLanguage = 'zh-TW',
+  ): Promise<User> => {
     const repo = getUserRepository()
     const count = await repo.findCount()
     const newUser = await repo.create({
@@ -47,6 +51,7 @@ export function useAuth() {
       name: userInfo.name,
       avatar_url: userInfo.picture,
       role: count === 0 ? 'admin' : 'user',
+      language,
     })
 
     useAuthStore.getState().setSession(newUser, accessToken)
