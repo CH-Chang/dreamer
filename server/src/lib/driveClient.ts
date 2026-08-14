@@ -1,8 +1,11 @@
 import { config } from '../config'
 import { requestContext } from './context'
+import { getServerAccessToken } from './googleAuth'
 
-function getToken(overrideToken?: string): string {
+async function getToken(overrideToken?: string): Promise<string> {
   if (overrideToken) return overrideToken
+  const serverToken = await getServerAccessToken()
+  if (serverToken) return serverToken
   const ctx = requestContext.getStore()
   if (ctx?.token) return ctx.token
   if (process.env.GOOGLE_ACCESS_TOKEN) return process.env.GOOGLE_ACCESS_TOKEN
@@ -10,7 +13,7 @@ function getToken(overrideToken?: string): string {
 }
 
 export async function ensureDriveFolder(folderName: string = config.driveFolderName, token?: string): Promise<string> {
-  const t = getToken(token)
+  const t = await getToken(token)
   
   const query = encodeURIComponent(`mimeType='application/vnd.google-apps.folder' and name='${folderName}' and trashed=false`)
   const searchRes = await fetch(`https://www.googleapis.com/drive/v3/files?q=${query}&fields=files(id,name)`, {
@@ -53,7 +56,7 @@ export async function uploadBase64ToDrive(
   folderId?: string,
   token?: string
 ): Promise<string> {
-  const t = getToken(token)
+  const t = await getToken(token)
   const actualFolderId = folderId || await ensureDriveFolder(config.driveFolderName, t)
   
   const metadata = {

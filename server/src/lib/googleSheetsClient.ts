@@ -5,8 +5,11 @@ function getSpreadsheetId(): string {
 }
 
 import { requestContext } from './context'
+import { getServerAccessToken } from './googleAuth'
 
-function getToken(): string {
+async function getToken(): Promise<string> {
+  const serverToken = await getServerAccessToken()
+  if (serverToken) return serverToken
   const ctx = requestContext.getStore()
   if (ctx?.token) return ctx.token
   return process.env.GOOGLE_ACCESS_TOKEN || ''
@@ -55,7 +58,7 @@ function parseCSV(csvText: string): string[][] {
 
 async function apiFetch(path: string, init?: RequestInit): Promise<Response> {
   const sheetId = getSpreadsheetId()
-  const token = getToken()
+  const token = await getToken()
   const url = `https://sheets.googleapis.com/v4/spreadsheets/${sheetId}${path}`
   const headers: Record<string, string> = {
     ...((init?.headers as Record<string, string>) || {}),
@@ -93,7 +96,7 @@ export async function createSheet(title: string): Promise<void> {
 
 export async function fetchSheetAsRows(sheetName: string): Promise<string[][]> {
   const sheetId = getSpreadsheetId()
-  const token = getToken()
+  const token = await getToken()
 
   if (token) {
     try {
@@ -120,7 +123,7 @@ export async function appendSheetRow(
   values: string[][],
 ): Promise<void> {
   const sheetId = getSpreadsheetId()
-  const token = getToken()
+  const token = await getToken()
   const url = `https://sheets.googleapis.com/v4/spreadsheets/${sheetId}/values/${encodeURIComponent(sheetName)}:append?valueInputOption=USER_ENTERED`
   const headers: Record<string, string> = {
     'Content-Type': 'application/json',
@@ -153,7 +156,7 @@ export async function updateSheetRow(
   values: string[],
 ): Promise<void> {
   const sheetId = getSpreadsheetId()
-  const token = getToken()
+  const token = await getToken()
   const endCol = columnToLetter(values.length)
   const range = `${encodeURIComponent(sheetName)}!A${rowIndex}:${endCol}${rowIndex}`
   const url = `https://sheets.googleapis.com/v4/spreadsheets/${sheetId}/values/${range}?valueInputOption=USER_ENTERED`

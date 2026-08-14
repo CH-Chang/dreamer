@@ -1,4 +1,5 @@
 import { Hono } from 'hono'
+import { getServerAccessToken } from '../lib/googleAuth'
 
 export const mediaRoute = new Hono()
 
@@ -7,20 +8,21 @@ mediaRoute.get('/:fileId', async (c) => {
   const authHeader = c.req.header('Authorization') || ''
   const queryToken = c.req.query('token') || ''
   const userToken = (authHeader.replace('Bearer ', '') || queryToken).trim()
-  const fallbackToken = process.env.GOOGLE_ACCESS_TOKEN || ''
+  const serverToken = await getServerAccessToken()
+  const token = serverToken || userToken || process.env.GOOGLE_ACCESS_TOKEN || ''
 
   try {
     let res = await fetch(`https://www.googleapis.com/drive/v3/files/${fileId}?alt=media`, {
-      headers: userToken ? { Authorization: `Bearer ${userToken}` } : {},
+      headers: token ? { Authorization: `Bearer ${token}` } : {},
     })
 
-    if (res.status === 401 && fallbackToken && userToken !== fallbackToken) {
+    if (!res.ok && userToken && userToken !== token) {
       res = await fetch(`https://www.googleapis.com/drive/v3/files/${fileId}?alt=media`, {
-        headers: { Authorization: `Bearer ${fallbackToken}` },
+        headers: { Authorization: `Bearer ${userToken}` },
       })
     }
 
-    if (res.status === 401 && userToken) {
+    if (!res.ok) {
       res = await fetch(`https://www.googleapis.com/drive/v3/files/${fileId}?alt=media`)
     }
 

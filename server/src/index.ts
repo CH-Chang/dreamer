@@ -23,7 +23,9 @@ app.use('*', cors({
 
 // Auto-initialize DB from Google Sheets before handling requests
 app.use('*', async (c, next) => {
-  await initDatabase()
+  if (process.env.NODE_ENV !== 'test') {
+    await initDatabase()
+  }
   await next()
 })
 

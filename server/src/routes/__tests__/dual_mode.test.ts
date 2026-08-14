@@ -20,6 +20,13 @@ vi.mock('google-auth-library', () => {
         throw new Error('Invalid token')
       }
     },
+    GoogleAuth: class {
+      async getClient() {
+        return {
+          getAccessToken: async () => ({ token: 'mock-token' }),
+        }
+      }
+    },
   }
 })
 
