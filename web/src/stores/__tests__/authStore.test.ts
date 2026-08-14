@@ -42,4 +42,23 @@ describe('authStore', () => {
     expect(state.token).toBeNull()
     expect(state.isAuthenticated).toBe(false)
   })
+
+  it('sets session with user language and persists correctly', () => {
+    const user: User = {
+      email: 'test@example.com',
+      name: 'Test User',
+      role: 'user',
+      created_at: '2026-01-01T00:00:00Z',
+      language: 'en-US',
+    }
+    useAuthStore.getState().setSession(user, 'test-token')
+    const state = useAuthStore.getState()
+    expect(state.user?.language).toBe('en-US')
+
+    // Update with another language
+    const updated: User = { ...user, language: 'zh-CN' }
+    useAuthStore.getState().setSession(updated, 'test-token')
+    expect(useAuthStore.getState().user?.language).toBe('zh-CN')
+  })
 })
+

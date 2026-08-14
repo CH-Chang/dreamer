@@ -7,6 +7,7 @@ import { rateLimitService } from '../../lib/rateLimitService'
 import { uploadImage } from '../../lib/googleDriveClient'
 import { useDriveImage } from '../../lib/useDriveImage'
 import type { Dream } from '../../types/dream'
+import type { User, SupportedLanguage } from '../../types/user'
 
 const slideUp = {
   initial: { opacity: 0, y: 16 },
@@ -48,7 +49,7 @@ function resizeImage(file: File, maxSize: number): Promise<string> {
 }
 
 export function ProfilePage() {
-  const { user, setSession, setAvatarBase64, token } = useAuthStore()
+  const { user, setSession, setAvatarBase64, token, avatarBase64 } = useAuthStore()
   const [dreams, setDreams] = useState<Dream[]>([])
   const [myQuota, setMyQuota] = useState<Record<string, { daily_used: number; daily_limit: number; monthly_used: number; monthly_limit: number }> | null>(null)
   const [uploading, setUploading] = useState(false)
@@ -88,6 +89,20 @@ export function ProfilePage() {
 
   const handlePhotoClick = () => {
     inputRef.current?.click()
+  }
+
+  const handleLanguageChange = async (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const newLang = e.target.value as SupportedLanguage
+    if (!user) return
+    try {
+      const repo = getUserRepository()
+      await repo.update(user.email, { language: newLang })
+      const updatedUser: User = { ...user, language: newLang }
+      setSession(updatedUser, token || '', avatarBase64)
+    } catch (err) {
+      console.error('Failed to update language preference:', err)
+      alert('更新語言偏好失敗，請稍後再試')
+    }
   }
 
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -164,6 +179,26 @@ export function ProfilePage() {
             className="hidden"
             onChange={handleFileChange}
           />
+        </m.div>
+
+        {/* Language Preference Section */}
+        <m.div variants={slideUp} initial="initial" animate="animate" className="p-4 bg-gray-50 rounded space-y-2">
+          <div className="flex items-center justify-between">
+            <div>
+              <h2 className="text-sm tracking-wider text-gray-700">偏好語言 / Language</h2>
+              <p className="text-xs text-gray-400 mt-0.5">影響 AI 故事、漫畫及影片的生成風格與語系</p>
+            </div>
+            <select
+              value={user.language || 'zh-TW'}
+              onChange={handleLanguageChange}
+              aria-label="偏好語言"
+              className="text-xs bg-white border border-gray-200 rounded px-3 py-1.5 text-gray-700 focus:outline-none focus:border-gray-400 cursor-pointer"
+            >
+              <option value="zh-TW">繁體中文 (zh-TW)</option>
+              <option value="en-US">English (en-US)</option>
+              <option value="zh-CN">简体中文 (zh-CN)</option>
+            </select>
+          </div>
         </m.div>
 
         {/* Dream Statistics */}
