@@ -69,14 +69,14 @@ export class DreamRepository implements IDreamRepository {
       sql += ' AND created_at < ?'
       params.push(cursor)
     }
-    sql += ' ORDER BY created_at DESC LIMIT ?'
-    params.push(limit + 1)
+    const safeLimit = Math.max(1, Number(limit) || 10)
+    sql += ` ORDER BY created_at DESC LIMIT ${safeLimit + 1}`
 
     const rows = await query<Record<string, unknown>>(sql, params)
     const dreams = rows.map((r) => this.parseDreamRow(r))
     let nextCursor: string | undefined = undefined
 
-    if (dreams.length > limit) {
+    if (dreams.length > safeLimit) {
       const last = dreams.pop()!
       nextCursor = last.created_at
     }

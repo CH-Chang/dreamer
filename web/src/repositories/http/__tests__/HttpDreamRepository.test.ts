@@ -93,14 +93,14 @@ describe('HttpDreamRepository', () => {
     expect(result).toEqual([])
   })
 
-  it('findPublicPage calls GET /api/dreams with cursor and limit', async () => {
+  it('findPublicPage calls GET /api/dreams/public with cursor and limit', async () => {
     const mockResponse = { items: [], nextCursor: 'next-123' }
     vi.mocked(fetch).mockResolvedValueOnce(new Response(JSON.stringify(mockResponse), { status: 200 }))
 
     const repo = new HttpDreamRepository()
     const result = await repo.findPublicPage('cursor-1', 5)
 
-    expect(fetch).toHaveBeenCalledWith('/api/dreams?cursor=cursor-1&limit=5', expect.anything())
+    expect(fetch).toHaveBeenCalledWith('/api/dreams/public?cursor=cursor-1&limit=5', expect.anything())
     expect(result).toEqual(mockResponse)
   })
 

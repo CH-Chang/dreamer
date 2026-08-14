@@ -50,7 +50,8 @@ export function DreamMediaFeed({ dreamId, title, description }: Props) {
           src = item.data.image_url!
         } else {
           const token = useAuthStore.getState().token
-          const res = await fetch(`https://www.googleapis.com/drive/v3/files/${item.data.image_url.replace('drive://', '')}?alt=media`, {
+          const fileId = item.data.image_url.replace('drive://', '')
+          const res = await fetch(`/api/media/${fileId}`, {
             headers: { Authorization: `Bearer ${token}` },
           })
           const blob = await res.blob()

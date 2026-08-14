@@ -11,6 +11,7 @@ import { videosRoute } from './routes/videos'
 import { comicsRoute } from './routes/comics'
 import { editLogsRoute } from './routes/editLogs'
 import { aiRoute } from './routes/ai'
+import { mediaRoute } from './routes/media'
 
 const app = new Hono()
 
@@ -40,6 +41,7 @@ app.route('/api/videos', videosRoute)
 app.route('/api/comics', comicsRoute)
 app.route('/api/edit-logs', editLogsRoute)
 app.route('/api/ai', aiRoute)
+app.route('/api/media', mediaRoute)
 
 const port = Number(process.env.PORT) || 3000
 

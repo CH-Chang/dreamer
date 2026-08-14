@@ -46,7 +46,7 @@ export function FeedItem({ item, isActive }: Props) {
       const token = useAuthStore.getState().token
       if (!token) return
       const fileId = item.mediaUrl.replace('drive://', '')
-      fetch(`https://www.googleapis.com/drive/v3/files/${fileId}?alt=media`, {
+      fetch(`/api/media/${fileId}`, {
         headers: { Authorization: `Bearer ${token}` },
       })
         .then(res => { if (!res.ok) throw new Error(`Drive fetch failed: ${res.status}`); return res.blob() })

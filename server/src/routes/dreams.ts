@@ -38,7 +38,9 @@ dreamsRoute.get('/', async (c) => {
     const dreams = await repo.findAllByEmail(email)
     return c.json(dreams)
   }
-  const result = await repo.findPublicPage()
+  const cursor = c.req.query('cursor')
+  const limit = c.req.query('limit')
+  const result = await repo.findPublicPage(cursor, limit ? Number(limit) : 10)
   return c.json(result)
 })
 

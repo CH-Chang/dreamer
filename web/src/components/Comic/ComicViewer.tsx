@@ -19,7 +19,7 @@ export function ComicViewer({ imageUrl }: Props) {
     const token = useAuthStore.getState().token
     if (!token) return
 
-    fetch(`https://www.googleapis.com/drive/v3/files/${fileId}?alt=media`, {
+    fetch(`/api/media/${fileId}`, {
       headers: { Authorization: `Bearer ${token}` },
     })
       .then((res) => {

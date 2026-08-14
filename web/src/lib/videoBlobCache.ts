@@ -23,7 +23,7 @@ async function fetchVideoBlob(
 
   const fileId = videoUrl.replace('drive://', '')
   const res = await fetch(
-    `https://www.googleapis.com/drive/v3/files/${fileId}?alt=media`,
+    `/api/media/${fileId}`,
     { headers: { Authorization: `Bearer ${token}` } },
   )
   if (!res.ok) throw new Error(`Drive fetch failed: ${res.status}`)

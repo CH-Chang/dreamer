@@ -36,6 +36,7 @@ export class FeedService {
 
     while (feedItems.length === 0) {
       const { items: dreams, nextCursor } = await dreamRepo.findPublicPage(currentCursor, limit)
+      currentCursor = nextCursor
       if (dreams.length === 0) break
 
       for (const dream of dreams) {

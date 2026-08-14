@@ -92,7 +92,7 @@ function prefetchAvatar(user: User, accessToken: string) {
     }
     if (avatarUrl.startsWith('drive://')) {
       const fileId = avatarUrl.replace('drive://', '')
-      fetchAndCache(`https://www.googleapis.com/drive/v3/files/${fileId}?alt=media`, accessToken)
+      fetchAndCache(`/api/media/${fileId}`, accessToken)
     } else if (avatarUrl.startsWith('http')) {
       fetchAndCache(avatarUrl, accessToken)
     }

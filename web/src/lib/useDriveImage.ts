@@ -13,7 +13,7 @@ export function useDriveImage(driveUrl: string | undefined | null): string | nul
     let cancelled = false
     const fileId = driveUrl.replace('drive://', '')
 
-    fetch(`https://www.googleapis.com/drive/v3/files/${fileId}?alt=media`, {
+    fetch(`/api/media/${fileId}`, {
       headers: { Authorization: `Bearer ${token}` },
     })
       .then((res) => {
