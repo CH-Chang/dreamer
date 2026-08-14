@@ -21,6 +21,7 @@ comicsRoute.post('/', authMiddleware, async (c) => {
   const body = await c.req.json<{
     dream_id: string
     with_character?: boolean
+    language?: string
     mode?: 'system' | 'custom'
     custom_gcp_project_id?: string
     custom_gcp_location?: string
@@ -50,7 +51,9 @@ comicsRoute.post('/', authMiddleware, async (c) => {
   })
 
   try {
-    const prompt = `夢境連環漫畫插畫風格：${description}`
+    const lang = body.language || user.language || 'zh-TW'
+    const promptPrefix = lang === 'en-US' ? 'Dream comic illustration style: ' : (lang === 'zh-CN' ? '梦境连环漫画插画风格：' : '夢境連環漫畫插畫風格：')
+    const prompt = `${promptPrefix}${description}`
     const { bytesBase64Encoded, mimeType } = await generateComicImage(prompt, undefined, { gcpProjectId, token })
     const imageUrl = `data:${mimeType};base64,${bytesBase64Encoded}`
 

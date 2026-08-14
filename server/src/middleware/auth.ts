@@ -1,5 +1,6 @@
 import type { MiddlewareHandler } from 'hono'
 import { OAuth2Client } from 'google-auth-library'
+import type { SupportedLanguage } from '../../../shared/types/user'
 
 const client = new OAuth2Client()
 
@@ -7,6 +8,7 @@ export interface AuthUser {
   email: string
   name: string
   picture: string
+  language?: SupportedLanguage
   ai_mode?: 'system' | 'custom'
   custom_gcp_project_id?: string
   custom_gcp_location?: string
@@ -34,15 +36,17 @@ export const authMiddleware: MiddlewareHandler<AuthEnv> = async (c, next) => {
     let email = ''
     let name = ''
     let picture = ''
+    let language: SupportedLanguage | undefined = undefined
 
     // Try verifying as Google ID Token first
     try {
       const ticket = await client.verifyIdToken({ idToken: token })
-      const payload = ticket.getPayload()
+      const payload = ticket.getPayload() as any
       if (payload && payload.email) {
         email = payload.email
         name = payload.name ?? ''
         picture = payload.picture ?? ''
+        language = payload.language
       }
     } catch {
       // Fallback: Verify as Google OAuth Access Token via userinfo endpoint
@@ -50,11 +54,12 @@ export const authMiddleware: MiddlewareHandler<AuthEnv> = async (c, next) => {
         headers: { Authorization: `Bearer ${token}` },
       })
       if (userinfoRes.ok) {
-        const info = (await userinfoRes.json()) as { email?: string; name?: string; picture?: string }
+        const info = (await userinfoRes.json()) as { email?: string; name?: string; picture?: string; language?: SupportedLanguage }
         if (info && info.email) {
           email = info.email
           name = info.name ?? ''
           picture = info.picture ?? ''
+          language = info.language
         }
       }
     }
@@ -67,6 +72,7 @@ export const authMiddleware: MiddlewareHandler<AuthEnv> = async (c, next) => {
       email,
       name,
       picture,
+      language,
     })
 
     const { requestContext } = await import('../lib/context')

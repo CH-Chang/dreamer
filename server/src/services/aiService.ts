@@ -5,8 +5,8 @@ export async function generateTitleSuggestions(
   options: { gcpProjectId?: string; gcpLocation?: string; token?: string } = {},
 ): Promise<string[]> {
   const gcpProjectId = options.gcpProjectId || config.systemGcpProjectId
-  const prompt = `請根據以下夢境內容，產生 3 個簡短、富有詩意或吸引人的夢境標題（繁體中文），每行一個標題，不要有編號或額外說明：\n${description}`
-  const systemPrompt = '你是一個夢境解析與命名大師。請只輸出 3 行標題。'
+  const prompt = `請根據以下夢境內容的語言，產生 3 個與該語言相同、簡短且富有詩意或吸引人的夢境標題，每行一個標題，不要有編號或額外說明：\n${description}`
+  const systemPrompt = '你是一個夢境解析與命名大師。請偵測夢境描述的語言，並以完全相同的語言輸出 3 行標題。'
 
   const body = {
     contents: [{ role: 'user', parts: [{ text: prompt }] }],

@@ -28,6 +28,7 @@ videosRoute.post('/', authMiddleware, async (c) => {
   const body = await c.req.json<{
     dream_id: string
     with_character?: boolean
+    language?: string
     mode?: 'system' | 'custom'
     custom_gcp_project_id?: string
     custom_gcp_location?: string
@@ -60,7 +61,9 @@ videosRoute.post('/', authMiddleware, async (c) => {
 
   try {
     await videoRepo.updateStatus(created.id, 'generating')
-    const prompt = `Dream-like cinematic scene: ${description}`
+    const lang = body.language || user.language || 'zh-TW'
+    const promptPrefix = lang === 'en-US' ? 'Dream-like cinematic scene: ' : '夢境般唯美電影鏡頭場景：'
+    const prompt = `${promptPrefix}${description}`
     const op = await triggerVeoVideo(prompt, {
       aspectRatio: '16:9',
       resolution: '720p',
