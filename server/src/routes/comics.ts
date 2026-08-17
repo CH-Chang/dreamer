@@ -54,7 +54,13 @@ comicsRoute.post('/', authMiddleware, async (c) => {
     const lang = body.language || user.language || 'zh-TW'
     const promptPrefix = lang === 'en-US' ? 'Dream comic illustration style: ' : (lang === 'zh-CN' ? '梦境连环漫画插画风格：' : '夢境連環漫畫插畫風格：')
     const prompt = `${promptPrefix}${description}`
-    const { bytesBase64Encoded, mimeType } = await generateComicImage(prompt, undefined, { gcpProjectId, token })
+    const { getServerAccessToken } = await import('../lib/googleAuth')
+    const serverToken = await getServerAccessToken()
+    const { bytesBase64Encoded, mimeType } = await generateComicImage(
+      prompt,
+      undefined,
+      { gcpProjectId, token: serverToken || token },
+    )
 
     const { uploadBase64ToDrive } = await import('../lib/driveClient')
     const fileId = await uploadBase64ToDrive(

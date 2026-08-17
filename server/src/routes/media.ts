@@ -19,9 +19,11 @@ mediaRoute.post('/upload', authMiddleware, async (c) => {
   }
 
   try {
+    const authHeader = c.req.header('Authorization') || ''
+    const userToken = authHeader.replace('Bearer ', '').trim()
     const folderName = body.folderName || config.driveFolderName
-    const folderId = await ensureDriveFolder(folderName)
-    const fileId = await uploadBase64ToDrive(body.filename, body.base64Data, body.mimeType, folderId)
+    const folderId = await ensureDriveFolder(folderName, userToken)
+    const fileId = await uploadBase64ToDrive(body.filename, body.base64Data, body.mimeType, folderId, userToken)
 
     return c.json({
       fileId,

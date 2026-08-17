@@ -4,10 +4,10 @@ import { getServerAccessToken } from './googleAuth'
 
 async function getToken(overrideToken?: string): Promise<string> {
   if (overrideToken) return overrideToken
-  const serverToken = await getServerAccessToken()
-  if (serverToken) return serverToken
   const ctx = requestContext.getStore()
   if (ctx?.token) return ctx.token
+  const serverToken = await getServerAccessToken()
+  if (serverToken) return serverToken
   if (process.env.GOOGLE_ACCESS_TOKEN) return process.env.GOOGLE_ACCESS_TOKEN
   throw new Error('No Google Access Token available')
 }
