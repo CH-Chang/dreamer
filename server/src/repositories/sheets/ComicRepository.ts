@@ -70,8 +70,8 @@ export class ComicRepository implements IComicRepository {
           await updateSheetRow('comics', rowIdx + 1, newValues)
         }
       }
-    } catch {
-      // Sheets offline
+    } catch (err) {
+      console.error('ComicRepository: Google Sheets updateSheetRow failed:', err)
     }
 
     const comics = await query<Comic>('SELECT * FROM comics WHERE id = ?', [id])

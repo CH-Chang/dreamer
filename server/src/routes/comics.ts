@@ -55,7 +55,16 @@ comicsRoute.post('/', authMiddleware, async (c) => {
     const promptPrefix = lang === 'en-US' ? 'Dream comic illustration style: ' : (lang === 'zh-CN' ? '梦境连环漫画插画风格：' : '夢境連環漫畫插畫風格：')
     const prompt = `${promptPrefix}${description}`
     const { bytesBase64Encoded, mimeType } = await generateComicImage(prompt, undefined, { gcpProjectId, token })
-    const imageUrl = `data:${mimeType};base64,${bytesBase64Encoded}`
+
+    const { uploadBase64ToDrive } = await import('../lib/driveClient')
+    const fileId = await uploadBase64ToDrive(
+      `dream-comic-${created.id}.png`,
+      bytesBase64Encoded,
+      mimeType,
+      undefined,
+      token,
+    )
+    const imageUrl = `drive://${fileId}`
 
     const updated = await comicRepo.updateStatus(created.id, 'done', imageUrl)
     return c.json(updated, 201)
