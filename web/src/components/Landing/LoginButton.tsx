@@ -15,7 +15,7 @@ export function LoginButton({ buttonText = '開始使用', className, onNeedsTer
   const [error, setError] = useState('')
 
   const login = useGoogleLogin({
-    scope: 'https://www.googleapis.com/auth/spreadsheets https://www.googleapis.com/auth/userinfo.email https://www.googleapis.com/auth/userinfo.profile https://www.googleapis.com/auth/cloud-platform https://www.googleapis.com/auth/drive.file',
+    scope: 'openid email profile',
     onSuccess: async (tokenResponse) => {
       setLoading(true)
       setError('')
