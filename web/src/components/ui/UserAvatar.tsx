@@ -1,3 +1,4 @@
+import { useState, useEffect } from 'react'
 import { useDriveImage } from '../../lib/useDriveImage'
 
 interface Props {
@@ -8,26 +9,29 @@ interface Props {
 
 export function UserAvatar({ avatarUrl, name, className = 'w-5 h-5 rounded-full' }: Props) {
   const imageSrc = useDriveImage(avatarUrl)
+  const [loadFailed, setLoadFailed] = useState(false)
 
-  if (imageSrc) {
+  useEffect(() => {
+    setLoadFailed(false)
+  }, [avatarUrl, imageSrc])
+
+  const initial = (name || 'U').trim().charAt(0).toUpperCase()
+
+  if (imageSrc && !loadFailed) {
     return (
       <img
         src={imageSrc}
         alt={name || 'Avatar'}
         className={`${className} object-cover flex-shrink-0`}
-        onError={(e) => {
-          // If image fails to load, fallback to initial circle
-          e.currentTarget.style.display = 'none'
-        }}
+        onError={() => setLoadFailed(true)}
       />
     )
   }
 
-  const initial = (name || 'U').trim().charAt(0).toUpperCase()
-
   return (
     <div
       className={`${className} bg-gray-200 text-gray-600 flex items-center justify-center text-[10px] font-medium flex-shrink-0 select-none`}
+      title={name || undefined}
     >
       {initial}
     </div>

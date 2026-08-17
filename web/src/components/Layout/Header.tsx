@@ -2,13 +2,12 @@ import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Link } from 'react-router-dom'
 import { useAuthStore } from '../../stores/authStore'
-import { useDriveImage } from '../../lib/useDriveImage'
+import { UserAvatar } from '../ui/UserAvatar'
 
 export function Header() {
   const { user, logout } = useAuthStore()
   const navigate = useNavigate()
   const [searchValue, setSearchValue] = useState('')
-  const avatarSrc = useDriveImage(user?.avatar_url)
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === 'Enter' && !e.nativeEvent.isComposing && searchValue.trim()) {
@@ -40,15 +39,13 @@ export function Header() {
       <div className="flex justify-end items-center gap-8 text-xs tracking-widest text-gray-400">
         {user && (
           <div className="flex items-center gap-3">
-            <Link to="/profile" className="flex items-center gap-3 hover:opacity-70 transition-opacity">
-              {avatarSrc && (
-                <img
-                  src={avatarSrc}
-                  alt=""
-                  className="w-5 h-5 rounded-full"
-                />
-              )}
-              <span className="text-gray-400">{user.name}</span>
+            <Link to="/profile" className="flex items-center gap-2.5 hover:opacity-75 transition-opacity" title="個人檔案">
+              <UserAvatar
+                avatarUrl={user.avatar_url}
+                name={user.name}
+                className="w-5 h-5 rounded-full ring-1 ring-gray-200"
+              />
+              <span className="text-gray-500 font-medium">{user.name}</span>
             </Link>
             <button
               onClick={logout}
