@@ -14,9 +14,10 @@ import { useCategoryStore } from '../../stores/categoryStore'
 
 interface Props {
   dream: Dream
+  onDreamUpdated?: (dream: Dream) => void
 }
 
-export function DreamContent({ dream }: Props) {
+export function DreamContent({ dream, onDreamUpdated }: Props) {
   const [editing, setEditing] = useState(false)
   const [title, setTitle] = useState(dream.title || '')
   const [tags, setTags] = useState<string[]>(dream.tags || [])
@@ -30,6 +31,13 @@ export function DreamContent({ dream }: Props) {
   const [selectingTitle, setSelectingTitle] = useState(false)
   const updateDream = useDreamStore((s) => s.updateDream)
   const { categories } = useCategoryStore()
+
+  useEffect(() => {
+    setTitle(dream.title || '')
+    setTags(dream.tags || [])
+    setDescription(dream.description)
+    setVisibility(dream.visibility || 'public')
+  }, [dream.title, dream.tags, dream.description, dream.visibility])
 
   const fieldLabels: Record<string, string> = {
     title: '標題',
@@ -78,6 +86,7 @@ export function DreamContent({ dream }: Props) {
       }
       const updated = await repo.update(dream.id, data)
       updateDream(updated)
+      if (onDreamUpdated) onDreamUpdated(updated)
       setEditing(false)
     } catch (err) {
       console.error('Failed to update dream:', err)
@@ -232,6 +241,7 @@ export function DreamContent({ dream }: Props) {
                           const repo = getDreamRepository()
                           const updated = await repo.update(dream.id, { title: candidate, title_candidates: [] })
                           updateDream(updated)
+                          if (onDreamUpdated) onDreamUpdated(updated)
                         } catch (err) {
                           console.error('Failed to select title candidate:', err)
                         } finally {

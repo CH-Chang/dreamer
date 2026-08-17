@@ -11,10 +11,15 @@ import type { Dream } from '../../types/dream'
 
 export function DreamDetailPage() {
   const { id } = useParams<{ id: string }>()
-  const { dreams, addDream } = useDreamStore()
+  const { dreams, addDream, updateDream } = useDreamStore()
   const [fetchedDream, setFetchedDream] = useState<Dream | null>(null)
   const [loading, setLoading] = useState(false)
   const dream = dreams.find((d) => d.id === id) || fetchedDream
+
+  const handleDreamUpdated = (updated: Dream) => {
+    updateDream(updated)
+    setFetchedDream(updated)
+  }
 
   useEffect(() => {
     if (dream) return
@@ -69,7 +74,7 @@ export function DreamDetailPage() {
         </Link>
         <DreamShareButtons description={dream.description} url={appUrl} />
       </div>
-      <DreamContent dream={dream} />
+      <DreamContent dream={dream} onDreamUpdated={handleDreamUpdated} />
       <div className="mt-6">
         <DreamMediaFeed dreamId={dream.id} title={dream.title} description={dream.description} />
       </div>
