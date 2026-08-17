@@ -8,6 +8,7 @@ import { ComicViewer } from '../Comic/ComicViewer'
 import { GenerateMediaButton } from './GenerateMediaButton'
 import { getVideoBlob } from '../../lib/videoBlobCache'
 import { useAuthStore } from '../../stores/authStore'
+import { MediaFeedSkeleton } from '../ui/Skeleton'
 import type { Video } from '../../types/video'
 import type { Comic } from '../../types/comic'
 
@@ -122,7 +123,7 @@ export function DreamMediaFeed({ dreamId, title, description }: Props) {
       </div>
 
       {loading ? (
-        <p className="text-xs text-gray-300 tracking-wider">載入中...</p>
+        <MediaFeedSkeleton />
       ) : doneItems.length > 0 ? (<>
         <div className="relative">
           <div className="overflow-hidden rounded-lg bg-black aspect-square flex items-center justify-center relative">

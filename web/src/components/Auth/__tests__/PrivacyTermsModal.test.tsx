@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
-import { render, screen, fireEvent } from '@testing-library/react'
+import { render, screen, fireEvent, waitFor } from '@testing-library/react'
 import { PrivacyTermsModal } from '../PrivacyTermsModal'
 
 describe('PrivacyTermsModal', () => {
@@ -107,7 +107,7 @@ describe('PrivacyTermsModal', () => {
     expect(acceptButton).not.toBeDisabled()
   })
 
-  it('calls onAccept with selected language when agreed and submitted', () => {
+  it('calls onAccept with selected language when agreed and submitted', async () => {
     mockNavigatorLanguage('zh-TW')
     const onAccept = vi.fn()
     render(
@@ -134,8 +134,10 @@ describe('PrivacyTermsModal', () => {
     const acceptButton = screen.getByRole('button', { name: '同意條款並完成註冊' })
     fireEvent.click(acceptButton)
 
-    expect(onAccept).toHaveBeenCalledTimes(1)
-    expect(onAccept).toHaveBeenCalledWith('en-US')
+    await waitFor(() => {
+      expect(onAccept).toHaveBeenCalledTimes(1)
+      expect(onAccept).toHaveBeenCalledWith('en-US')
+    })
   })
 
   it('calls onCancel when cancel button is clicked', () => {

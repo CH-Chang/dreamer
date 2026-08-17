@@ -3,6 +3,8 @@ import { motion as m, AnimatePresence } from 'framer-motion'
 import type { PanInfo } from 'framer-motion'
 import { FeedService, type FeedItem as FeedItemType } from '../../lib/feedService'
 import { FeedItem } from './FeedItem'
+import { FeedSkeleton } from '../ui/Skeleton'
+import { Spinner } from '../ui/Spinner'
 
 const SWIPE_THRESHOLD = 80
 export function FeedPage() {
@@ -108,6 +110,10 @@ export function FeedPage() {
     )
   }
 
+  if (loading && items.length === 0) {
+    return <FeedSkeleton />
+  }
+
   if (items.length === 0 && !loading) {
     return (
       <div className="h-screen w-screen bg-black flex items-center justify-center">
@@ -143,9 +149,10 @@ export function FeedPage() {
         )}
       </AnimatePresence>
 
-      {loading && (
-        <div className="absolute bottom-8 left-1/2 -translate-x-1/2">
-          <span className="text-white/40 text-[10px] tracking-widest">載入中...</span>
+      {loading && items.length > 0 && (
+        <div className="absolute bottom-8 left-1/2 -translate-x-1/2 flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-black/70 backdrop-blur-md border border-white/10 z-20 shadow-xl">
+          <Spinner size="xs" variant="light" />
+          <span className="text-white/70 text-[10px] tracking-widest">載入更多...</span>
         </div>
       )}
     </div>

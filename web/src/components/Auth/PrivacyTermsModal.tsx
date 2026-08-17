@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import type { SupportedLanguage } from '../../types/user'
 import { CustomSelect } from '../ui/CustomSelect'
+import { Spinner } from '../ui/Spinner'
 
 const getDetectedLanguage = (): SupportedLanguage => {
   const navLang = typeof navigator !== 'undefined' ? (navigator.language || '') : ''
@@ -14,13 +15,14 @@ interface Props {
   open: boolean
   userEmail: string
   userName: string
-  onAccept: (language: SupportedLanguage) => void
+  onAccept: (language: SupportedLanguage) => void | Promise<void>
   onCancel: () => void
 }
 
 export function PrivacyTermsModal({ open, userEmail, userName, onAccept, onCancel }: Props) {
   const [agreed, setAgreed] = useState(false)
   const [language, setLanguage] = useState<SupportedLanguage>(getDetectedLanguage)
+  const [submitting, setSubmitting] = useState(false)
 
   if (!open) return null
 
@@ -126,18 +128,33 @@ export function PrivacyTermsModal({ open, userEmail, userName, onAccept, onCance
               <button
                 type="button"
                 onClick={onCancel}
-                className="px-5 py-2 text-xs tracking-wider text-gray-400 hover:text-gray-600 transition-colors"
+                disabled={submitting}
+                className="px-5 py-2 text-xs tracking-wider text-gray-400 hover:text-gray-600 disabled:opacity-40 transition-colors"
               >
                 取消
               </button>
               <button
                 type="button"
-                disabled={!agreed}
-                onClick={() => onAccept(language)}
+                disabled={!agreed || submitting}
+                onClick={async () => {
+                  setSubmitting(true)
+                  try {
+                    await onAccept(language)
+                  } finally {
+                    setSubmitting(false)
+                  }
+                }}
                 className="px-6 py-2.5 bg-gray-800 text-white text-xs tracking-[0.15em] font-medium
-                           hover:bg-gray-700 disabled:opacity-30 disabled:cursor-not-allowed transition-all rounded-none"
+                           hover:bg-gray-700 disabled:opacity-30 disabled:cursor-not-allowed transition-all rounded-none inline-flex items-center gap-2"
               >
-                同意條款並完成註冊
+                {submitting ? (
+                  <>
+                    <Spinner size="xs" variant="light" />
+                    <span>註冊中...</span>
+                  </>
+                ) : (
+                  '同意條款並完成註冊'
+                )}
               </button>
             </div>
           </div>

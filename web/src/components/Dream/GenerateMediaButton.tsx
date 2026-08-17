@@ -3,6 +3,7 @@ import { motion as m } from 'framer-motion'
 import { useAuthStore } from '../../stores/authStore'
 import { getVideoRepository, getComicRepository } from '../../repositories/factory'
 import { rateLimitService } from '../../lib/rateLimitService'
+import { Spinner } from '../ui/Spinner'
 
 interface Props {
   dreamId: string
@@ -74,9 +75,21 @@ export function GenerateMediaButton({ dreamId, onCreated }: Props) {
         whileTap={{ scale: 0.97 }}
         onClick={() => setOpen(!open)}
         disabled={!!loading || (videoRemaining !== null && (videoRemaining.daily <= 0 || videoRemaining.monthly <= 0) && comicRemaining !== null && (comicRemaining.daily <= 0 || comicRemaining.monthly <= 0))}
-        className="px-6 py-2 bg-gray-800 text-white text-xs tracking-[0.2em] hover:bg-gray-700 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+        className="px-6 py-2 bg-gray-800 text-white text-xs tracking-[0.2em] hover:bg-gray-700 disabled:opacity-40 disabled:cursor-not-allowed transition-all inline-flex items-center gap-2"
       >
-        {loading === 'video' ? '影片生成中...' : loading === 'comic' ? '漫畫生成中...' : '生成'}
+        {loading === 'video' ? (
+          <>
+            <Spinner size="xs" variant="light" />
+            <span>影片生成中...</span>
+          </>
+        ) : loading === 'comic' ? (
+          <>
+            <Spinner size="xs" variant="light" />
+            <span>漫畫生成中...</span>
+          </>
+        ) : (
+          '生成'
+        )}
       </m.button>
       {open && (
         <div className="absolute bottom-full left-0 mb-2 bg-white border border-gray-200 rounded-lg shadow-sm min-w-[180px] overflow-hidden">

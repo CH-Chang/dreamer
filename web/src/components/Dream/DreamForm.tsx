@@ -5,6 +5,7 @@ import { useDreamStore } from '../../stores/dreamStore'
 import { getDreamRepository } from '../../repositories/factory'
 import { Switch } from '../ui/Switch'
 import { MicButton } from '../ui/MicButton'
+import { Spinner } from '../ui/Spinner'
 
 interface Props {
   date: string
@@ -69,9 +70,16 @@ export function DreamForm({ date }: Props) {
           whileTap={{ scale: 0.97 }}
           onClick={handleSave}
           disabled={saving || !description.trim()}
-          className="px-6 py-2 bg-gray-800 text-white text-xs tracking-[0.2em] hover:bg-gray-700 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+          className="px-6 py-2 bg-gray-800 text-white text-xs tracking-[0.2em] hover:bg-gray-700 disabled:opacity-40 disabled:cursor-not-allowed transition-all inline-flex items-center gap-2"
         >
-          {saving ? 'AI 命名與儲存中...' : '儲存'}
+          {saving ? (
+            <>
+              <Spinner size="xs" variant="light" />
+              <span>AI 命名與儲存中...</span>
+            </>
+          ) : (
+            '儲存'
+          )}
         </m.button>
       </div>
     </div>

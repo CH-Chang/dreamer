@@ -7,6 +7,7 @@ import { rateLimitService } from '../../lib/rateLimitService'
 import { uploadImage } from '../../lib/googleDriveClient'
 import { useDriveImage } from '../../lib/useDriveImage'
 import { CustomSelect } from '../ui/CustomSelect'
+import { ProfileStatsSkeleton, Skeleton } from '../ui/Skeleton'
 import type { Dream } from '../../types/dream'
 import type { User, SupportedLanguage } from '../../types/user'
 
@@ -52,30 +53,40 @@ function resizeImage(file: File, maxSize: number): Promise<string> {
 export function ProfilePage() {
   const { user, setSession, setAvatarBase64, token, avatarBase64 } = useAuthStore()
   const [dreams, setDreams] = useState<Dream[]>([])
+  const [loadingDreams, setLoadingDreams] = useState(true)
   const [myQuota, setMyQuota] = useState<Record<string, { daily_used: number; daily_limit: number; monthly_used: number; monthly_limit: number }> | null>(null)
+  const [loadingQuota, setLoadingQuota] = useState(true)
   const [uploading, setUploading] = useState(false)
   const inputRef = useRef<HTMLInputElement>(null)
   const avatarSrc = useDriveImage(user?.avatar_url)
 
   const loadDreams = useCallback(async () => {
     if (!user) return
-    const repo = getDreamRepository()
-    const all = await repo.findAllByEmail(user.email)
-    setDreams(all)
+    try {
+      const repo = getDreamRepository()
+      const all = await repo.findAllByEmail(user.email)
+      setDreams(all)
+    } finally {
+      setLoadingDreams(false)
+    }
   }, [user])
 
   const loadQuota = useCallback(async () => {
     if (!user) return
-    const [videoUsage, comicUsage, videoLimit, comicLimit] = await Promise.all([
-      rateLimitService.getUsage(user.email, 'video'),
-      rateLimitService.getUsage(user.email, 'comic'),
-      rateLimitService.getLimit(user.email, 'video'),
-      rateLimitService.getLimit(user.email, 'comic'),
-    ])
-    setMyQuota({
-      video: { daily_used: videoUsage.daily, daily_limit: videoLimit.daily, monthly_used: videoUsage.monthly, monthly_limit: videoLimit.monthly },
-      comic: { daily_used: comicUsage.daily, daily_limit: comicLimit.daily, monthly_used: comicUsage.monthly, monthly_limit: comicLimit.monthly },
-    })
+    try {
+      const [videoUsage, comicUsage, videoLimit, comicLimit] = await Promise.all([
+        rateLimitService.getUsage(user.email, 'video'),
+        rateLimitService.getUsage(user.email, 'comic'),
+        rateLimitService.getLimit(user.email, 'video'),
+        rateLimitService.getLimit(user.email, 'comic'),
+      ])
+      setMyQuota({
+        video: { daily_used: videoUsage.daily, daily_limit: videoLimit.daily, monthly_used: videoUsage.monthly, monthly_limit: videoLimit.monthly },
+        comic: { daily_used: comicUsage.daily, daily_limit: comicLimit.daily, monthly_used: comicUsage.monthly, monthly_limit: comicLimit.monthly },
+      })
+    } finally {
+      setLoadingQuota(false)
+    }
   }, [user])
 
   useEffect(() => { loadDreams().catch(console.error) }, [loadDreams])
@@ -206,31 +217,40 @@ export function ProfilePage() {
         {/* Dream Statistics */}
         <m.div variants={slideUp} initial="initial" animate="animate">
           <h2 className="text-sm tracking-wider text-gray-500 mb-4">夢境統計</h2>
-          <div className="grid grid-cols-2 gap-3">
-            {[
-              { label: '總夢境數', value: totalDreams },
-              { label: '本月夢境數', value: monthDreams },
-              { label: '公開夢境數', value: publicDreams },
-              { label: '有媒體的夢境', value: dreamsWithMedia },
-            ].map((stat) => (
-              <div key={stat.label} className="p-4 bg-gray-50 rounded">
-                <p className="text-xs tracking-wider text-gray-400 mb-1">{stat.label}</p>
-                <p className="text-2xl font-serif text-gray-600">{stat.value}</p>
-              </div>
-            ))}
-          </div>
+          {loadingDreams ? (
+            <ProfileStatsSkeleton />
+          ) : (
+            <div className="grid grid-cols-2 gap-3">
+              {[
+                { label: '總夢境數', value: totalDreams },
+                { label: '本月夢境數', value: monthDreams },
+                { label: '公開夢境數', value: publicDreams },
+                { label: '有媒體的夢境', value: dreamsWithMedia },
+              ].map((stat) => (
+                <div key={stat.label} className="p-4 bg-gray-50 rounded">
+                  <p className="text-xs tracking-wider text-gray-400 mb-1">{stat.label}</p>
+                  <p className="text-2xl font-serif text-gray-600">{stat.value}</p>
+                </div>
+              ))}
+            </div>
+          )}
         </m.div>
 
         {/* Quota Display */}
-        {myQuota && (
-          <m.div variants={slideUp} initial="initial" animate="animate">
-            <h2 className="text-sm tracking-wider text-gray-500 mb-4">我的配額使用</h2>
+        <m.div variants={slideUp} initial="initial" animate="animate">
+          <h2 className="text-sm tracking-wider text-gray-500 mb-4">我的配額使用</h2>
+          {loadingQuota ? (
+            <div className="p-4 bg-gray-50 rounded space-y-2">
+              <Skeleton className="h-3 w-48" />
+              <Skeleton className="h-3 w-48" />
+            </div>
+          ) : myQuota ? (
             <div className="p-4 bg-gray-50 rounded space-y-2">
               <p className="text-xs text-gray-500">影片：今日 {myQuota.video.daily_used}/{myQuota.video.daily_limit} · 本月 {myQuota.video.monthly_used}/{myQuota.video.monthly_limit}</p>
               <p className="text-xs text-gray-500">漫畫：今日 {myQuota.comic.daily_used}/{myQuota.comic.daily_limit} · 本月 {myQuota.comic.monthly_used}/{myQuota.comic.monthly_limit}</p>
             </div>
-          </m.div>
-        )}
+          ) : null}
+        </m.div>
       </div>
     </m.div>
   )

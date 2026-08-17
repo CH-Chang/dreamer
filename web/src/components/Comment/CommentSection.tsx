@@ -4,6 +4,7 @@ import { getCommentRepository, getUserRepository } from '../../repositories/fact
 import { useAuthStore } from '../../stores/authStore'
 import { CommentList } from './CommentList'
 import { CommentForm } from './CommentForm'
+import { CommentListSkeleton } from '../ui/Skeleton'
 import type { Participant } from './CommentForm'
 
 interface Props {
@@ -15,23 +16,28 @@ export function CommentSection({ dreamId, dreamEmail }: Props) {
   const [comments, setComments] = useState<Comment[]>([])
   const [participants, setParticipants] = useState<Participant[]>([])
   const [replyTo, setReplyTo] = useState<string | null>(null)
+  const [loading, setLoading] = useState(true)
   const user = useAuthStore(s => s.user)
 
   const fetchComments = useCallback(async () => {
-    const result = await getCommentRepository().findByDreamId(dreamId)
-    setComments(result)
-    const emails = new Set<string>()
-    result.forEach(c => { if (c.email) emails.add(c.email) })
-    if (dreamEmail) emails.add(dreamEmail)
-    const users = await Promise.all(
-      [...emails].map(e => getUserRepository().findByEmail(e).catch(() => null)),
-    )
-    const participantList: Participant[] = users.filter(Boolean).map(u => ({
-      email: u!.email,
-      name: u!.name,
-      avatar_url: u!.avatar_url,
-    }))
-    setParticipants(participantList)
+    try {
+      const result = await getCommentRepository().findByDreamId(dreamId)
+      setComments(result)
+      const emails = new Set<string>()
+      result.forEach(c => { if (c.email) emails.add(c.email) })
+      if (dreamEmail) emails.add(dreamEmail)
+      const users = await Promise.all(
+        [...emails].map(e => getUserRepository().findByEmail(e).catch(() => null)),
+      )
+      const participantList: Participant[] = users.filter(Boolean).map(u => ({
+        email: u!.email,
+        name: u!.name,
+        avatar_url: u!.avatar_url,
+      }))
+      setParticipants(participantList)
+    } finally {
+      setLoading(false)
+    }
   }, [dreamId, dreamEmail])
 
   useEffect(() => { fetchComments() }, [fetchComments])
@@ -56,13 +62,17 @@ export function CommentSection({ dreamId, dreamEmail }: Props) {
         placeholder="留言..."
       />
       <div className="mt-3">
-        <CommentList
-          comments={sortedComments}
-          participants={participants}
-          currentEmail={user?.email ?? ''}
-          onReply={setReplyTo}
-          onDelete={handleDelete}
-        />
+        {loading ? (
+          <CommentListSkeleton />
+        ) : (
+          <CommentList
+            comments={sortedComments}
+            participants={participants}
+            currentEmail={user?.email ?? ''}
+            onReply={setReplyTo}
+            onDelete={handleDelete}
+          />
+        )}
       </div>
       {replyTo && (
         <div className="ml-6 mt-2">

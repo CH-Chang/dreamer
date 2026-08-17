@@ -6,6 +6,7 @@ import { getDreamRepository } from '../../repositories/factory'
 import { DreamContent } from './DreamContent'
 import { DreamMediaFeed } from './DreamMediaFeed'
 import { CommentSection } from '../Comment/CommentSection'
+import { DreamDetailSkeleton } from '../ui/Skeleton'
 import type { Dream } from '../../types/dream'
 
 export function DreamDetailPage() {
@@ -30,21 +31,23 @@ export function DreamDetailPage() {
   }, [id])
 
   if (!dream) {
+    if (loading) {
+      return (
+        <div className="py-6">
+          <DreamDetailSkeleton />
+        </div>
+      )
+    }
+
     return (
       <div className="text-center py-20">
-        {loading ? (
-          <p className="text-xs text-gray-300 tracking-wider">載入中...</p>
-        ) : (
-          <>
-            <p className="text-xs text-gray-400 tracking-wider">找不到夢境記錄</p>
-            <Link
-              to="/calendar"
-              className="text-xs text-gray-400 hover:text-gray-600 mt-3 inline-block tracking-wider transition-colors"
-            >
-              ← 返回日曆
-            </Link>
-          </>
-        )}
+        <p className="text-xs text-gray-400 tracking-wider">找不到夢境記錄</p>
+        <Link
+          to="/calendar"
+          className="text-xs text-gray-400 hover:text-gray-600 mt-3 inline-block tracking-wider transition-colors"
+        >
+          ← 返回日曆
+        </Link>
       </div>
     )
   }

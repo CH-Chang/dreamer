@@ -8,6 +8,8 @@ import { geminiTextClient } from '../../lib/geminiTextClient'
 import { TagInput } from '../ui/TagInput'
 import { Switch } from '../ui/Switch'
 import { MicButton } from '../ui/MicButton'
+import { Spinner } from '../ui/Spinner'
+import { Skeleton } from '../ui/Skeleton'
 import { useCategoryStore } from '../../stores/categoryStore'
 
 interface Props {
@@ -138,9 +140,16 @@ export function DreamContent({ dream }: Props) {
             <button
               onClick={handlePolish}
               disabled={polishing || !description.trim()}
-              className="text-xs tracking-wider px-3 py-1.5 rounded-md border border-gray-200 text-gray-400 hover:text-gray-600 hover:border-gray-400 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+              className="text-xs tracking-wider px-3 py-1.5 rounded-md border border-gray-200 text-gray-500 hover:text-gray-700 hover:border-gray-400 transition-all disabled:opacity-40 disabled:cursor-not-allowed inline-flex items-center gap-1.5"
             >
-              {polishing ? '潤飾中...' : '✨ 潤飾'}
+              {polishing ? (
+                <>
+                  <Spinner size="xs" variant="gray" />
+                  <span>潤飾中...</span>
+                </>
+              ) : (
+                '✨ 潤飾'
+              )}
             </button>
             <MicButton onTranscript={(text) => setDescription((prev) => prev + text)} disabled={saving || polishing} />
           </div>
@@ -155,9 +164,16 @@ export function DreamContent({ dream }: Props) {
               whileTap={{ scale: 0.97 }}
               onClick={handleSave}
               disabled={saving}
-              className="px-6 py-2 bg-gray-800 text-white text-xs tracking-[0.2em] hover:bg-gray-700 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+              className="px-6 py-2 bg-gray-800 text-white text-xs tracking-[0.2em] hover:bg-gray-700 disabled:opacity-40 disabled:cursor-not-allowed transition-all inline-flex items-center gap-2"
             >
-              {saving ? '儲存中...' : '儲存'}
+              {saving ? (
+                <>
+                  <Spinner size="xs" variant="light" />
+                  <span>儲存中...</span>
+                </>
+              ) : (
+                '儲存'
+              )}
             </m.button>
           </div>
         </div>
@@ -199,7 +215,10 @@ export function DreamContent({ dream }: Props) {
           {dream.title_candidates && dream.title_candidates.length > 0 && (
             <div className="flex flex-wrap items-center gap-1.5 mt-3">
               {selectingTitle ? (
-                <span className="text-[10px] tracking-wider text-gray-300">選取中...</span>
+                <div className="inline-flex items-center gap-1.5 py-0.5">
+                  <Spinner size="xs" variant="gray" />
+                  <span className="text-[10px] tracking-wider text-gray-400">選取中...</span>
+                </div>
               ) : (
                 <>
                   <span className="text-[10px] tracking-wider text-gray-300 mr-1">快速選標題：</span>
@@ -274,7 +293,16 @@ export function DreamContent({ dream }: Props) {
             </div>
             <div className="flex-1 overflow-y-auto px-5 py-3 space-y-3">
               {loadingLogs ? (
-                <p className="text-xs text-gray-300 text-center py-4">載入中...</p>
+                <div className="space-y-3 py-2">
+                  <div className="space-y-1.5">
+                    <Skeleton className="h-2.5 w-24" />
+                    <Skeleton className="h-3 w-48" />
+                  </div>
+                  <div className="space-y-1.5">
+                    <Skeleton className="h-2.5 w-20" />
+                    <Skeleton className="h-3 w-56" />
+                  </div>
+                </div>
               ) : editLogs.length === 0 ? (
                 <p className="text-xs text-gray-300 text-center py-4">尚無編輯紀錄</p>
               ) : (

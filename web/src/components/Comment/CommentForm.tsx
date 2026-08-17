@@ -2,6 +2,7 @@ import { useState, useRef, useEffect } from 'react'
 import type { CreateCommentInput } from '../../types/comment'
 import { getCommentRepository } from '../../repositories/factory'
 import { UserAvatar } from '../ui/UserAvatar'
+import { Spinner } from '../ui/Spinner'
 
 export interface Participant {
   email: string
@@ -123,9 +124,9 @@ export function CommentForm({ dreamId, targetType, targetId, parentId, participa
           <button
             onClick={handleSubmit}
             disabled={!text.trim() || submitting}
-            className="bg-gray-100 hover:bg-gray-200 disabled:opacity-30 text-gray-700 text-xs px-3 py-1 rounded transition-colors"
+            className="bg-gray-100 hover:bg-gray-200 disabled:opacity-30 text-gray-700 text-xs px-3 py-1 rounded transition-colors inline-flex items-center justify-center gap-1 min-w-[48px]"
           >
-            送出
+            {submitting ? <Spinner size="xs" variant="gray" /> : '送出'}
           </button>
           {onCancel && (
             <button onClick={onCancel} className="text-gray-400 hover:text-gray-600 text-[10px]">

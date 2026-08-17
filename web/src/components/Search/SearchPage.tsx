@@ -5,6 +5,7 @@ import { parseSearchQuery } from '../../lib/searchParser'
 import { searchDreams } from '../../lib/searchService'
 import { useAuthStore } from '../../stores/authStore'
 import { DreamPreview } from '../Dream/DreamPreview'
+import { SearchListSkeleton } from '../ui/Skeleton'
 import type { Dream } from '../../types/dream'
 
 export function SearchPage() {
@@ -43,7 +44,7 @@ export function SearchPage() {
       <p className="text-xs text-gray-400 tracking-wider mb-6">{q}</p>
 
       {loading ? (
-        <p className="text-xs text-gray-300 tracking-wider">搜尋中...</p>
+        <SearchListSkeleton />
       ) : results.length > 0 ? (
         <div className="space-y-4">
           <p className="text-xs text-gray-300 tracking-wider">
