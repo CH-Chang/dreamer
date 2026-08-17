@@ -16,7 +16,8 @@ export async function getServerAccessToken(): Promise<string> {
     const client = await auth.getClient()
     const tokenRes = await client.getAccessToken()
     return tokenRes.token || ''
-  } catch (err) {
+  } catch (err: any) {
+    console.warn('Google Server Auth failed (ADC credentials expired or invalid):', err?.message || err)
     return ''
   }
 }

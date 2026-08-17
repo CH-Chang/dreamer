@@ -51,12 +51,11 @@ export function useAuth() {
   ): Promise<User> => {
     useAuthStore.setState({ token: accessToken })
     const repo = getUserRepository()
-    const count = await repo.findCount()
     const newUser = await repo.create({
       email: userInfo.email,
       name: userInfo.name,
       avatar_url: userInfo.picture,
-      role: count === 0 ? 'admin' : 'user',
+      role: 'user',
       language,
     })
 

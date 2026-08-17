@@ -55,12 +55,11 @@ usersRoute.post('/', authMiddleware, async (c) => {
     const updated = await repo.findByEmail(user.email)
     return c.json(updated)
   } else {
-    const count = await repo.findCount()
     const created = await repo.create({
       email: user.email,
       name: body.name || user.name || '',
       avatar_url: body.avatar_url || user.picture || '',
-      role: body.role || (count === 0 ? 'admin' : 'user'),
+      role: body.role || 'user',
       language: body.language || 'zh-TW',
     })
     return c.json(created, 201)

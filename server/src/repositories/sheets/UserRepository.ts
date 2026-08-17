@@ -36,8 +36,8 @@ export class UserRepository implements IUserRepository {
       await appendSheetRow('users', [[
         newUser.email, newUser.name, newUser.avatar_url || '', newUser.role, newUser.created_at, newUser.language || 'zh-TW',
       ]])
-    } catch {
-      // Sheets offline or unconfigured
+    } catch (err) {
+      console.error('Failed to append user to Google Sheets:', err)
     }
     try {
       await query(
@@ -81,8 +81,8 @@ export class UserRepository implements IUserRepository {
           await updateSheetRow('users', rowIdx + 1, newValues)
         }
       }
-    } catch {
-      // Sheets offline
+    } catch (err) {
+      console.error('Failed to update user in Google Sheets:', err)
     }
   }
 }
