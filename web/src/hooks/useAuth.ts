@@ -18,6 +18,7 @@ export function useAuth() {
   const navigate = useNavigate()
 
   const handleLoginToken = async (accessToken: string): Promise<AuthLoginResult> => {
+    useAuthStore.setState({ token: accessToken })
     const userInfoRes = await fetch(
       'https://www.googleapis.com/oauth2/v1/userinfo',
       { headers: { Authorization: `Bearer ${accessToken}` } },
@@ -44,6 +45,7 @@ export function useAuth() {
     accessToken: string,
     language: SupportedLanguage = 'zh-TW',
   ): Promise<User> => {
+    useAuthStore.setState({ token: accessToken })
     const repo = getUserRepository()
     const count = await repo.findCount()
     const newUser = await repo.create({
