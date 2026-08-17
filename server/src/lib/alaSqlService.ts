@@ -24,6 +24,17 @@ let initializingPromise: Promise<void> | null = null
 
 const SHEET_NAMES = ['users', 'dreams', 'videos', 'categories', 'comics', 'rate_limits', 'comments', 'edit_logs'] as const
 
+const TABLE_SCHEMAS: Record<string, string> = {
+  users: 'email STRING PRIMARY KEY, name STRING, avatar_url STRING, role STRING, created_at STRING, language STRING, ai_mode STRING, custom_gcp_project_id STRING, custom_gcp_location STRING',
+  categories: 'id STRING PRIMARY KEY, name STRING, color STRING, icon STRING, email STRING, sort_order INT, created_at STRING',
+  dreams: 'id STRING PRIMARY KEY, email STRING, date STRING, description STRING, title STRING, tags STRING, visibility STRING, title_candidates STRING, created_at STRING, updated_at STRING',
+  edit_logs: 'id STRING PRIMARY KEY, dream_id STRING, edited_at STRING, changes STRING, created_at STRING',
+  videos: 'id STRING PRIMARY KEY, dream_id STRING, email STRING, status STRING, video_url STRING, with_character BOOLEAN, created_at STRING, updated_at STRING',
+  comics: 'id STRING PRIMARY KEY, dream_id STRING, email STRING, status STRING, image_url STRING, with_character BOOLEAN, created_at STRING, updated_at STRING',
+  rate_limits: 'id STRING PRIMARY KEY, type STRING, scope STRING, daily_limit INT, monthly_limit INT, created_at STRING, updated_at STRING',
+  comments: 'id STRING PRIMARY KEY, dream_id STRING, target_type STRING, target_id STRING, email STRING, content STRING, parent_id STRING, mentions STRING, created_at STRING, updated_at STRING',
+}
+
 export async function initDatabase(force = false): Promise<void> {
   if (dbInited && !force) return
   if (initializingPromise && !force) return initializingPromise
@@ -36,20 +47,27 @@ export async function initDatabase(force = false): Promise<void> {
     }
 
     for (const sheetName of SHEET_NAMES) {
+      const schema = TABLE_SCHEMAS[sheetName]
       try {
         const rows = await fetchSheetAsRows(sheetName)
         const objects = parseRowsToObjects(rows)
         await alasql.promise(`DROP TABLE IF EXISTS ${sheetName}`)
-        if (objects.length > 0) {
-          await alasql.promise(`CREATE TABLE ${sheetName}`)
-          await alasql.promise(`INSERT INTO ${sheetName} SELECT * FROM ?`, [objects])
+        if (schema) {
+          await alasql.promise(`CREATE TABLE ${sheetName} (${schema})`)
         } else {
-          await alasql.promise(`CREATE TABLE ${sheetName} (dummy TEXT)`)
+          await alasql.promise(`CREATE TABLE ${sheetName}`)
+        }
+        if (objects.length > 0) {
+          await alasql.promise(`INSERT INTO ${sheetName} SELECT * FROM ?`, [objects])
         }
       } catch (err) {
         console.warn(`Failed to fetch and parse sheet ${sheetName}:`, err)
         await alasql.promise(`DROP TABLE IF EXISTS ${sheetName}`)
-        await alasql.promise(`CREATE TABLE ${sheetName} (dummy TEXT)`)
+        if (schema) {
+          await alasql.promise(`CREATE TABLE ${sheetName} (${schema})`)
+        } else {
+          await alasql.promise(`CREATE TABLE ${sheetName}`)
+        }
       }
     }
     dbInited = true

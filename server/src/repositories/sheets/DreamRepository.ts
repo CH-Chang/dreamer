@@ -125,30 +125,40 @@ export class DreamRepository implements IDreamRepository {
     const updateValues: unknown[] = [now]
     const changes: Record<string, { from: string; to: string }> = {}
 
+    const merged: Dream = {
+      ...existing,
+      updated_at: now,
+    }
+
     if (data.title !== undefined && data.title !== existing.title) {
       updateFields.push('title = ?')
       updateValues.push(data.title)
       changes.title = { from: existing.title || '', to: data.title }
+      merged.title = data.title
     }
     if (data.description !== undefined && data.description !== existing.description) {
       updateFields.push('description = ?')
       updateValues.push(data.description)
       changes.description = { from: existing.description, to: data.description }
+      merged.description = data.description
     }
     if (data.tags !== undefined) {
       updateFields.push('tags = ?')
       updateValues.push(JSON.stringify(data.tags))
       changes.tags = { from: JSON.stringify(existing.tags || []), to: JSON.stringify(data.tags) }
+      merged.tags = data.tags
     }
     if (data.title_candidates !== undefined) {
       updateFields.push('title_candidates = ?')
       updateValues.push(JSON.stringify(data.title_candidates))
       changes.title_candidates = { from: JSON.stringify(existing.title_candidates || []), to: JSON.stringify(data.title_candidates) }
+      merged.title_candidates = data.title_candidates
     }
     if (data.visibility !== undefined && data.visibility !== existing.visibility) {
       updateFields.push('visibility = ?')
       updateValues.push(data.visibility)
       changes.visibility = { from: existing.visibility, to: data.visibility }
+      merged.visibility = data.visibility
     }
 
     updateValues.push(id)
@@ -160,15 +170,18 @@ export class DreamRepository implements IDreamRepository {
       const rows = await fetchSheetAsRows('dreams')
       const rowIndex = rows.findIndex(r => r[0] === id)
       if (rowIndex > 0) {
-        const updatedDream = await this.findById(id)
-        if (updatedDream) {
-          await updateSheetRow('dreams', rowIndex + 1, [
-            updatedDream.id, updatedDream.email, updatedDream.date, updatedDream.description,
-            updatedDream.title || '', JSON.stringify(updatedDream.tags || []), updatedDream.visibility,
-            JSON.stringify(updatedDream.title_candidates || []),
-            updatedDream.created_at, updatedDream.updated_at
-          ])
-        }
+        await updateSheetRow('dreams', rowIndex + 1, [
+          merged.id,
+          merged.email,
+          merged.date,
+          merged.description,
+          merged.title || '',
+          JSON.stringify(merged.tags || []),
+          merged.visibility || 'public',
+          JSON.stringify(merged.title_candidates || []),
+          merged.created_at,
+          merged.updated_at,
+        ])
       }
     } catch (err) {
       console.error('DreamRepository: Google Sheets updateSheetRow failed', err)
@@ -183,9 +196,7 @@ export class DreamRepository implements IDreamRepository {
       }
     }
 
-    const updated = await this.findById(id)
-    if (!updated) throw new Error('Dream not found after update')
-    return updated
+    return merged
   }
 
   async delete(id: string, email: string): Promise<void> {
