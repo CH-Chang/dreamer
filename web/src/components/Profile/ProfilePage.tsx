@@ -6,6 +6,7 @@ import { getDreamRepository, getUserRepository } from '../../repositories/factor
 import { rateLimitService } from '../../lib/rateLimitService'
 import { uploadImage } from '../../lib/googleDriveClient'
 import { useDriveImage } from '../../lib/useDriveImage'
+import { CustomSelect } from '../ui/CustomSelect'
 import type { Dream } from '../../types/dream'
 import type { User, SupportedLanguage } from '../../types/user'
 
@@ -91,8 +92,7 @@ export function ProfilePage() {
     inputRef.current?.click()
   }
 
-  const handleLanguageChange = async (e: React.ChangeEvent<HTMLSelectElement>) => {
-    const newLang = e.target.value as SupportedLanguage
+  const handleLanguageChange = async (newLang: SupportedLanguage) => {
     if (!user) return
     try {
       const repo = getUserRepository()
@@ -188,16 +188,18 @@ export function ProfilePage() {
               <h2 className="text-sm tracking-wider text-gray-700">偏好語言 / Language</h2>
               <p className="text-xs text-gray-400 mt-0.5">影響 AI 故事、漫畫及影片的生成風格與語系</p>
             </div>
-            <select
+            <CustomSelect<SupportedLanguage>
               value={user.language || 'zh-TW'}
               onChange={handleLanguageChange}
               aria-label="偏好語言"
-              className="text-xs bg-white border border-gray-200 rounded px-3 py-1.5 text-gray-700 focus:outline-none focus:border-gray-400 cursor-pointer"
-            >
-              <option value="zh-TW">繁體中文 (zh-TW)</option>
-              <option value="en-US">English (en-US)</option>
-              <option value="zh-CN">简体中文 (zh-CN)</option>
-            </select>
+              options={[
+                { value: 'zh-TW', label: '繁體中文 (zh-TW)' },
+                { value: 'en-US', label: 'English (en-US)' },
+                { value: 'zh-CN', label: '简体中文 (zh-CN)' },
+              ]}
+              className="w-44"
+              buttonClassName="w-full"
+            />
           </div>
         </m.div>
 

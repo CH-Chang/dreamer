@@ -78,8 +78,8 @@ describe('ProfilePage', () => {
     expect(screen.getByText('test@example.com')).toBeInTheDocument()
     expect(screen.getByText(/偏好語言/)).toBeInTheDocument()
 
-    const select = screen.getByRole('combobox', { name: '偏好語言' }) as HTMLSelectElement
-    expect(select.value).toBe('zh-TW')
+    const combobox = screen.getByRole('combobox', { name: '偏好語言' })
+    expect(combobox).toHaveTextContent('繁體中文 (zh-TW)')
     await waitFor(() => expect(screen.getByText(/我的配額使用/)).toBeInTheDocument())
   })
 
@@ -96,8 +96,8 @@ describe('ProfilePage', () => {
       </MemoryRouter>
     )
 
-    const select = (await screen.findByRole('combobox', { name: '偏好語言' })) as HTMLSelectElement
-    expect(select.value).toBe('en-US')
+    const combobox = await screen.findByRole('combobox', { name: '偏好語言' })
+    expect(combobox).toHaveTextContent('English (en-US)')
     await waitFor(() => expect(screen.getByText(/我的配額使用/)).toBeInTheDocument())
   })
 
@@ -114,8 +114,11 @@ describe('ProfilePage', () => {
       </MemoryRouter>
     )
 
-    const select = screen.getByRole('combobox', { name: '偏好語言' })
-    fireEvent.change(select, { target: { value: 'en-US' } })
+    const combobox = screen.getByRole('combobox', { name: '偏好語言' })
+    fireEvent.click(combobox)
+
+    const englishOption = screen.getByRole('option', { name: 'English (en-US)' })
+    fireEvent.click(englishOption)
 
     await waitFor(() => {
       expect(mockUpdate).toHaveBeenCalledWith('test@example.com', { language: 'en-US' })
@@ -141,8 +144,11 @@ describe('ProfilePage', () => {
       </MemoryRouter>
     )
 
-    const select = screen.getByRole('combobox', { name: '偏好語言' })
-    fireEvent.change(select, { target: { value: 'zh-CN' } })
+    const combobox = screen.getByRole('combobox', { name: '偏好語言' })
+    fireEvent.click(combobox)
+
+    const zhCnOption = screen.getByRole('option', { name: '简体中文 (zh-CN)' })
+    fireEvent.click(zhCnOption)
 
     await waitFor(() => {
       expect(mockUpdate).toHaveBeenCalledWith('test@example.com', { language: 'zh-CN' })

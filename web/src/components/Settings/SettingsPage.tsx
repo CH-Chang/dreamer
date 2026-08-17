@@ -5,6 +5,7 @@ import { useSettingsStore } from '../../stores/settingsStore'
 import { useAuthStore } from '../../stores/authStore'
 import { ConnectionTest } from './ConnectionTest'
 import { MessageBox } from '../ui/MessageBox'
+import { CustomSelect } from '../ui/CustomSelect'
 import { getRateLimitRepository } from '../../repositories/factory'
 import type { RateLimit } from '../../types/rateLimit'
 
@@ -382,14 +383,16 @@ export function SettingsPage() {
                         onChange={(e) => setNewUserEmail(e.target.value)}
                         className="px-2 py-1 text-xs border border-gray-200 rounded w-44"
                       />
-                      <select
+                      <CustomSelect<'video' | 'comic'>
                         value={newType}
-                        onChange={(e) => setNewType(e.target.value as 'video' | 'comic')}
-                        className="px-2 py-1 text-xs border border-gray-200 rounded"
-                      >
-                        <option value="video">影片</option>
-                        <option value="comic">漫畫</option>
-                      </select>
+                        onChange={setNewType}
+                        options={[
+                          { value: 'video', label: '影片' },
+                          { value: 'comic', label: '漫畫' },
+                        ]}
+                        className="w-24"
+                        buttonClassName="w-full !py-1 !px-2"
+                      />
                       <input
                         type="number"
                         placeholder="每日"

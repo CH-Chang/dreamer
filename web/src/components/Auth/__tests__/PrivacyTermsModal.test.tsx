@@ -52,8 +52,8 @@ describe('PrivacyTermsModal', () => {
 
     expect(screen.getByText(/Test User/)).toBeInTheDocument()
     expect(screen.getByText(/test@example.com/)).toBeInTheDocument()
-    const select = screen.getByRole('combobox') as HTMLSelectElement
-    expect(select.value).toBe('zh-TW')
+    const combobox = screen.getByRole('combobox')
+    expect(combobox).toHaveTextContent('繁體中文 (zh-TW)')
   })
 
   it('autodetects en-US when browser language starts with en', () => {
@@ -68,8 +68,8 @@ describe('PrivacyTermsModal', () => {
       />
     )
 
-    const select = screen.getByRole('combobox') as HTMLSelectElement
-    expect(select.value).toBe('en-US')
+    const combobox = screen.getByRole('combobox')
+    expect(combobox).toHaveTextContent('English (en-US)')
   })
 
   it('autodetects zh-CN when browser language starts with zh-CN', () => {
@@ -84,8 +84,8 @@ describe('PrivacyTermsModal', () => {
       />
     )
 
-    const select = screen.getByRole('combobox') as HTMLSelectElement
-    expect(select.value).toBe('zh-CN')
+    const combobox = screen.getByRole('combobox')
+    expect(combobox).toHaveTextContent('简体中文 (zh-CN)')
   })
 
   it('disables accept button until terms are agreed', () => {
@@ -120,8 +120,13 @@ describe('PrivacyTermsModal', () => {
       />
     )
 
-    const select = screen.getByRole('combobox')
-    fireEvent.change(select, { target: { value: 'en-US' } })
+    // Open CustomSelect
+    const combobox = screen.getByRole('combobox')
+    fireEvent.click(combobox)
+
+    // Select English
+    const englishOption = screen.getByRole('option', { name: 'English (en-US)' })
+    fireEvent.click(englishOption)
 
     const checkbox = screen.getByRole('checkbox')
     fireEvent.click(checkbox)

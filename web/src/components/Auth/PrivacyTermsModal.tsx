@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import type { SupportedLanguage } from '../../types/user'
+import { CustomSelect } from '../ui/CustomSelect'
 
 const getDetectedLanguage = (): SupportedLanguage => {
   const navLang = typeof navigator !== 'undefined' ? (navigator.language || '') : ''
@@ -94,16 +95,19 @@ export function PrivacyTermsModal({ open, userEmail, userName, onAccept, onCance
               <label htmlFor="registration-language-select" className="text-xs text-gray-600 font-medium tracking-wider">
                 偏好語言 / Language
               </label>
-              <select
+              <CustomSelect<SupportedLanguage>
                 id="registration-language-select"
+                aria-label="偏好語言"
                 value={language}
-                onChange={(e) => setLanguage(e.target.value as SupportedLanguage)}
-                className="text-xs bg-white border border-gray-200 rounded px-2.5 py-1 text-gray-700 focus:outline-none focus:border-gray-400"
-              >
-                <option value="zh-TW">繁體中文 (zh-TW)</option>
-                <option value="en-US">English (en-US)</option>
-                <option value="zh-CN">简体中文 (zh-CN)</option>
-              </select>
+                onChange={setLanguage}
+                options={[
+                  { value: 'zh-TW', label: '繁體中文 (zh-TW)' },
+                  { value: 'en-US', label: 'English (en-US)' },
+                  { value: 'zh-CN', label: '简体中文 (zh-CN)' },
+                ]}
+                className="w-44"
+                buttonClassName="w-full"
+              />
             </div>
 
             <label className="flex items-center gap-3 cursor-pointer select-none">
