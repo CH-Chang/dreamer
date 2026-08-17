@@ -1,7 +1,37 @@
 import { Hono } from 'hono'
 import { getServerAccessToken } from '../lib/googleAuth'
+import { authMiddleware, type AuthEnv } from '../middleware/auth'
+import { ensureDriveFolder, uploadBase64ToDrive } from '../lib/driveClient'
+import { config } from '../config'
 
-export const mediaRoute = new Hono()
+export const mediaRoute = new Hono<AuthEnv>()
+
+mediaRoute.post('/upload', authMiddleware, async (c) => {
+  const body = await c.req.json<{
+    base64Data: string
+    mimeType: string
+    filename: string
+    folderName?: string
+  }>()
+
+  if (!body.base64Data || !body.mimeType || !body.filename) {
+    return c.json({ error: 'Missing required upload fields: base64Data, mimeType, filename' }, 400)
+  }
+
+  try {
+    const folderName = body.folderName || config.driveFolderName
+    const folderId = await ensureDriveFolder(folderName)
+    const fileId = await uploadBase64ToDrive(body.filename, body.base64Data, body.mimeType, folderId)
+
+    return c.json({
+      fileId,
+      driveUrl: `drive://${fileId}`,
+    })
+  } catch (err) {
+    console.error('Failed to upload media to drive:', err)
+    return c.json({ error: 'Failed to upload media' }, 500)
+  }
+})
 
 mediaRoute.get('/:fileId', async (c) => {
   const fileId = c.req.param('fileId')
@@ -43,3 +73,4 @@ mediaRoute.get('/:fileId', async (c) => {
     return c.text('Failed to proxy media', 500)
   }
 })
+

@@ -19,25 +19,29 @@ export function useAuth() {
 
   const handleLoginToken = async (accessToken: string): Promise<AuthLoginResult> => {
     useAuthStore.setState({ token: accessToken })
-    const userInfoRes = await fetch(
-      'https://www.googleapis.com/oauth2/v1/userinfo',
-      { headers: { Authorization: `Bearer ${accessToken}` } },
-    )
-    const userInfo: GoogleUserInfo = await userInfoRes.json()
+    const res = await fetch('/api/users/me', {
+      headers: { Authorization: `Bearer ${accessToken}` },
+    })
 
-    const repo = getUserRepository()
-    const existingUser = await repo.findByEmail(userInfo.email)
+    if (!res.ok) {
+      throw new Error('Authentication failed')
+    }
 
-    if (existingUser) {
+    const data = (await res.json()) as {
+      user: User | null
+      authUser: GoogleUserInfo
+    }
+
+    if (data.user) {
       // Existing user: Log in directly!
-      useAuthStore.getState().setSession(existingUser, accessToken)
-      prefetchAvatar(existingUser, accessToken)
+      useAuthStore.getState().setSession(data.user, accessToken)
+      prefetchAvatar(data.user, accessToken)
       navigate('/calendar')
-      return { status: 'logged_in', user: existingUser }
+      return { status: 'logged_in', user: data.user }
     }
 
     // New user: Needs explicit Privacy Policy consent!
-    return { status: 'needs_terms', userInfo, accessToken }
+    return { status: 'needs_terms', userInfo: data.authUser, accessToken }
   }
 
   const completeRegistration = async (
