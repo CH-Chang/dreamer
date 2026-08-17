@@ -232,7 +232,9 @@ export function DreamContent({ dream }: Props) {
                           const repo = getDreamRepository()
                           const updated = await repo.update(dream.id, { title: candidate, title_candidates: [] })
                           updateDream(updated)
-                        } catch {
+                        } catch (err) {
+                          console.error('Failed to select title candidate:', err)
+                        } finally {
                           setSelectingTitle(false)
                         }
                       }}
